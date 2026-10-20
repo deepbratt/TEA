@@ -1,0 +1,10 @@
+id: crawl.console-errors
+title: Errors in the browser console
+category: functional
+severity: low
+detect: crawl
+rule: scanner:crawl.console-errors
+fix_prompt: prompts/crawl/console-errors.md
+suggest_only: false
+pack: free
+version: 1

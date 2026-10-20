@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 230" width="960" height="230" role="img" aria-labelledby="t d">
+  <title id="t">How TEA works</title>
+  <desc id="d">Seven steps light up in turn: connect, read agent docs, scan the URL, code health, production readiness, report, then fix and retest, which loops back to the report.</desc>
+  <defs>
+    <style>
+      text { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      .node rect { fill: #fffaf2; stroke: #e2d3bd; stroke-width: 2; }
+      .node .label { font-size: 15px; font-weight: 700; fill: #2b1d12; }
+      .node .sub { font-size: 12px; fill: #7a6a5c; }
+      .node .icon { font-size: 22px; }
+      .glow { fill: #e8a33d; opacity: 0; }
+      .g1 { animation: glow 7s infinite; }
+      .g2 { animation: glow 7s 1s infinite; }
+      .g3 { animation: glow 7s 2s infinite; }
+      .g4 { animation: glow 7s 3s infinite; }
+      .g5 { animation: glow 7s 4s infinite; }
+      .g6 { animation: glow 7s 5s infinite; }
+      .g7 { animation: glow 7s 6s infinite; }
+      @keyframes glow { 0% { opacity: 0; } 4% { opacity: .35; } 14% { opacity: .35; } 20% { opacity: 0; } 100% { opacity: 0; } }
+      .track { fill: none; stroke: #e2d3bd; stroke-width: 3; stroke-dasharray: 6 8; }
+      .flow { animation: dash 1.2s linear infinite; }
+      @keyframes dash { to { stroke-dashoffset: -28; } }
+      .loop { fill: none; stroke: #3fae68; stroke-width: 3; stroke-dasharray: 6 8; }
+    </style>
+  </defs>
+
+  <rect width="960" height="230" rx="24" fill="#faf3e7"/>
+
+  <path id="route" class="track flow" d="M70 95 H890"/>
+  <path class="loop flow" d="M890 125 C 890 200, 760 200, 760 125"/>
+  <text x="826" y="210" text-anchor="middle" font-size="12" fill="#3fae68" font-weight="700">retest until fixed</text>
+
+  <!-- travelling cup -->
+  <circle r="9" fill="#b5651d">
+    <animateMotion dur="7s" repeatCount="indefinite" path="M70 95 H890" keyPoints="0;1" keyTimes="0;1" calcMode="linear"/>
+  </circle>
+
+  <g class="node" transform="translate(12 55)"><rect width="116" height="80" rx="14"/><rect class="glow g1" width="116" height="80" rx="14"/>
+    <text class="icon" x="58" y="30" text-anchor="middle">🔗</text><text class="label" x="58" y="52" text-anchor="middle">Connect</text><text class="sub" x="58" y="69" text-anchor="middle">URL and/or repo</text></g>
+  <g class="node" transform="translate(146 55)"><rect width="116" height="80" rx="14"/><rect class="glow g2" width="116" height="80" rx="14"/>
+    <text class="icon" x="58" y="30" text-anchor="middle">📜</text><text class="label" x="58" y="52" text-anchor="middle">Read docs</text><text class="sub" x="58" y="69" text-anchor="middle">→ features.md</text></g>
+  <g class="node" transform="translate(280 55)"><rect width="116" height="80" rx="14"/><rect class="glow g3" width="116" height="80" rx="14"/>
+    <text class="icon" x="58" y="30" text-anchor="middle">🔍</text><text class="label" x="58" y="52" text-anchor="middle">Scan URL</text><text class="sub" x="58" y="69" text-anchor="middle">read-only</text></g>
+  <g class="node" transform="translate(414 55)"><rect width="116" height="80" rx="14"/><rect class="glow g4" width="116" height="80" rx="14"/>
+    <text class="icon" x="58" y="30" text-anchor="middle">🧹</text><text class="label" x="58" y="52" text-anchor="middle">Code health</text><text class="sub" x="58" y="69" text-anchor="middle">static</text></g>
+  <g class="node" transform="translate(548 55)"><rect width="116" height="80" rx="14"/><rect class="glow g5" width="116" height="80" rx="14"/>
+    <text class="icon" x="58" y="30" text-anchor="middle">🚀</text><text class="label" x="58" y="52" text-anchor="middle">Prod ready</text><text class="sub" x="58" y="69" text-anchor="middle">checklist</text></g>
+  <g class="node" transform="translate(682 55)"><rect width="116" height="80" rx="14"/><rect class="glow g6" width="116" height="80" rx="14"/>
+    <text class="icon" x="58" y="30" text-anchor="middle">☕</text><text class="label" x="58" y="52" text-anchor="middle">Report</text><text class="sub" x="58" y="69" text-anchor="middle">scores + prompts</text></g>
+  <g class="node" transform="translate(816 55)"><rect width="128" height="80" rx="14"/><rect class="glow g7" width="128" height="80" rx="14"/>
+    <text class="icon" x="64" y="30" text-anchor="middle">🛠️</text><text class="label" x="64" y="52" text-anchor="middle">Fix + retest</text><text class="sub" x="64" y="69" text-anchor="middle">agent or you</text></g>
+
+  <text x="480" y="32" text-anchor="middle" font-size="16" font-weight="800" fill="#2b1d12">One command. One report. Retest after every fix.</text>
+</svg>

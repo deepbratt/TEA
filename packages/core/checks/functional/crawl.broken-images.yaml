@@ -1,0 +1,10 @@
+id: crawl.broken-images
+title: Images that fail to load
+category: functional
+severity: low
+detect: crawl
+rule: scanner:crawl.broken-images
+fix_prompt: prompts/crawl/broken-images.md
+suggest_only: false
+pack: free
+version: 1

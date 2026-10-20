@@ -1,0 +1,27 @@
+{
+  "name": "tea-qa",
+  "version": "0.1.0",
+  "description": "TEA: Test Everything Automatically. Spill the TEA on your app.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "tea-qa": "dist/bin.js",
+    "tea": "dist/bin.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  },
+  "files": ["dist"],
+  "engines": { "node": ">=20" },
+  "keywords": ["qa", "testing", "playwright", "security", "vibe-coding", "ai", "e2e"],
+  "repository": { "type": "git", "url": "https://github.com/deepbratt/TEA.git", "directory": "packages/cli" },
+  "dependencies": {
+    "@tea-qa/scanner": "workspace:*",
+    "@tea-qa/core": "workspace:*",
+    "@tea-qa/report": "workspace:*",
+    "@tea-qa/repo-map": "workspace:*",
+    "commander": "^12.1.0"
+  }
+}

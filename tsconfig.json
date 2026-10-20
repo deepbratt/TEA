@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/repo-map" },
+    { "path": "packages/scanner" },
+    { "path": "packages/report" },
+    { "path": "packages/cli" }
+  ]
+}
