@@ -1,0 +1,7 @@
+# Pro check: the rule and fix prompt live in the private TEA pro pack, never in this repo.
+id: supabase.rls.correctness
+title: Supabase row-level security lets one user read another user's rows
+category: security
+severity: critical
+pack: pro
+version: 1

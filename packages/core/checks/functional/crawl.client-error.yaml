@@ -1,0 +1,10 @@
+id: crawl.client-error
+title: Page answers with an unexpected 4xx status
+category: functional
+severity: low
+detect: crawl
+rule: scanner:crawl.client-error
+fix_prompt: prompts/crawl/client-error.md
+suggest_only: false
+pack: free
+version: 1

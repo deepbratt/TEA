@@ -1,0 +1,7 @@
+# Pro check: the rule and fix prompt live in the private TEA pro pack, never in this repo.
+id: auth.idor.deep
+title: Users can read or change other users' or tenants' data (multi-role and write routes)
+category: security
+severity: critical
+pack: pro
+version: 1

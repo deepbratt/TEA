@@ -1,0 +1,7 @@
+# Pro check: the rule and fix prompt live in the private TEA pro pack, never in this repo.
+id: ai.cost-abuse
+title: AI endpoints a user can call without limits (cost and abuse)
+category: security
+severity: high
+pack: pro
+version: 1
