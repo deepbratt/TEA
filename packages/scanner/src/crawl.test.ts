@@ -23,7 +23,7 @@ const pages: Record<string, { status?: number; body: string; delay?: number; typ
   '/slow': { body: html('<h1>Slow</h1>'), delay: 1200 },
   '/js-redirect': { body: html('<script>location.href = OTHER_HOST + "/js-target"</script>') },
   '/js-target': { body: html('should never be requested') },
-  '/writes': { body: html("<h1>Writes</h1><script>fetch('/api/data', { method: 'POST' }); fetch('/api/data', { method: 'DELETE' });</script>") },
+  '/writes': { body: html("<h1>Writes</h1><script>fetch('/api/data', { method: 'POST' }); fetch('/api/data', { method: 'DELETE' }); fetch('/admin/logout');</script>") },
 };
 
 let server: Server;
@@ -83,6 +83,7 @@ describe('crawl', () => {
     expect(hits.every((h) => h.startsWith('GET '))).toBe(true);
     expect(hits).not.toContain('GET /admin');
     expect(hits).not.toContain('GET /admin/settings');
+    expect(hits).not.toContain('GET /admin/logout');
     expect(byPath['/to-admin']!.redirectedOutOfScope).toBe(true);
     expect(byPath['/writes']!.failedRequests).toEqual([]);
     expect(result.external).toEqual(['https://elsewhere.example/x']);

@@ -79,29 +79,35 @@ export async function crawl(opts: CrawlOptions): Promise<CrawlResult> {
   const browser = opts.browser ?? (await chromium.launch());
   const context: BrowserContext = await browser.newContext({
     viewport: opts.viewport ?? { width: 1280, height: 800 },
+    // Service workers can make requests that bypass the route guard below.
+    serviceWorkers: 'block',
   });
   // Scope and read-only guard, applied to every request the browser makes:
   // - writes (POST, PUT, PATCH, DELETE) to the hosts under test are blocked, even from page scripts;
-  // - main-frame navigations must stay in scope (host and skip list). Redirects are followed one
-  //   hop at a time so a redirect to a skipped route or another host is never requested.
+  // - no request of any kind goes to a skipped route on those hosts (a background GET /logout counts);
+  // - requests to those hosts follow redirects one hop at a time, so a redirect into the skip list
+  //   (or, for page navigations, onto another host) is never requested;
+  // - page navigations to other hosts are blocked.
   // Third-party iframes and subresources still load, as they would for any visitor.
   await context.route('**/*', async (route) => {
     const req = route.request();
-    if (!READ_METHODS.has(req.method()) && opts.scope.isAllowed(req.url())) return route.abort('blockedbyclient');
+    const url = req.url();
     let mainFrame = false;
     try {
       mainFrame = req.isNavigationRequest() && req.frame() === req.frame().page().mainFrame();
     } catch {
-      /* service worker requests have no frame */
+      /* requests without a frame */
     }
-    if (!mainFrame) return route.continue();
-    if (!opts.scope.canVisit(req.url())) return route.abort('blockedbyclient');
+    if (!opts.scope.isAllowed(url)) return mainFrame ? route.abort('blockedbyclient') : route.continue();
+    if (!READ_METHODS.has(req.method()) || opts.scope.isSkipped(url)) return route.abort('blockedbyclient');
+
     const res = await route.fetch({ maxRedirects: 0 }).catch(() => null);
     if (!res) return route.abort('failed');
     const location = res.status() >= 300 && res.status() < 400 ? res.headers()['location'] : undefined;
     if (location) {
-      const next = canonicalUrl(location, req.url());
-      if (!next || !opts.scope.canVisit(next)) return route.abort('blockedbyclient');
+      const next = canonicalUrl(location, url);
+      const ok = next && (opts.scope.isAllowed(next) ? !opts.scope.isSkipped(next) : !mainFrame);
+      if (!ok) return route.abort('blockedbyclient');
     }
     return route.fulfill({ response: res });
   });

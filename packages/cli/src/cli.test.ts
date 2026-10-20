@@ -6,7 +6,8 @@ import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { setLogLevel } from '@tea-qa/core';
 import { planLocalStart, resolveTarget, run, UsageError } from './index.js';
-import { loadPlugins } from './run.js';
+import { loadPlugins, restrictUntrustedConfig } from './run.js';
+import { parseConfig } from '@tea-qa/core';
 import { showNoticeOnce } from './notice.js';
 import { appEnv } from './local.js';
 
@@ -117,6 +118,13 @@ describe('loadPlugins', () => {
     expect(ok.plugins[0]!.name).toBe('repo-plugin');
     await expect(loadPlugins(['../outside.mjs'], { baseDir: join(dir, 'cfg'), trusted: true })).rejects.toThrow(/leaves the config folder/);
     await expect(loadPlugins([join(dir, 'outside.mjs')], { baseDir: join(dir, 'cfg'), trusted: true })).rejects.toThrow(/absolute/);
+  });
+
+  it('an untrusted tea.yaml keeps only its safe subset', () => {
+    const c = parseConfig({ failOn: 'none', skip: ['/x'], crawl: { maxPages: 9999, slowPageMs: 60000, timeoutMs: 1000 }, llm: { provider: 'openai' } });
+    const ignored = restrictUntrustedConfig(c);
+    expect(ignored).toEqual(expect.arrayContaining(['failOn', 'llm', 'crawl.maxPages', 'crawl.slowPageMs']));
+    expect(c).toMatchObject({ failOn: 'critical', skip: ['/x'], crawl: { maxPages: 50, slowPageMs: 3000, timeoutMs: 1000 }, llm: { provider: 'none' } });
   });
 
   it('a repo tea.yaml cannot add targets or hosts', async () => {

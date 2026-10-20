@@ -9,6 +9,7 @@ import {
   classifyUrl,
   exceedsThreshold,
   loadConfig,
+  parseConfig,
   log,
   masker,
   overallScore,
@@ -129,18 +130,27 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
   }
 
   // A tea.yaml TEA found on its own (not passed with --config) may come from the repo being
-  // scanned, which is untrusted. It may narrow what TEA does (skip list, limits) but not widen it:
-  // its targets, allowlist, repo path and plugins are ignored unless the user trusts it.
+  // scanned, which is untrusted. Only a safe subset applies: it can't add targets, hosts or
+  // plugins, and it can't weaken the run (fail threshold, slow-page limit, LLM, load).
   const configTrusted = !!opts.config || !!opts.trustRepoConfig;
-  const ignoredConfig = !configFile || configTrusted ? [] : untrustedKeys(config);
-  if (ignoredConfig.length) {
-    const msg = `Ignored ${ignoredConfig.join(', ')} from ${configFile}: a tea.yaml found in the folder being tested can't add targets, hosts or plugins. Pass --config ${configFile} or --trust-repo-config if it's yours.`;
-    log.warn(msg);
-    preNotes.push(msg);
-    Object.assign(config, { urls: [], allowlist: [], repo: undefined, plugins: [] });
+  const untrusted = !!configFile && !configTrusted;
+  if (untrusted) {
+    const ignored = restrictUntrustedConfig(config);
+    if (ignored.length) {
+      const msg = `Ignored ${ignored.join(', ')} from ${configFile}: a tea.yaml found in the folder being tested can't add targets, hosts or plugins, or weaken checks. Pass --config ${configFile} or --trust-repo-config if it's yours.`;
+      log.warn(msg);
+      preNotes.push(msg);
+    }
   }
 
   let url = target.url ?? config.urls[0];
+  if (untrusted && url) {
+    // An untrusted skip list may not hide the page TEA was asked to test.
+    const start = new URL(url).pathname;
+    const kept = config.skip.filter((g) => !new Scope({ urls: [url!], skip: [g] }).isSkipped(start));
+    if (kept.length < config.skip.length) preNotes.push(`Ignored skip patterns from ${configFile} that cover the start page.`);
+    config.skip = kept;
+  }
   const repo = target.repo ?? (config.repo ? resolve(configFile ? resolve(configFile, '..') : process.cwd(), config.repo) : undefined);
   if (!url && !repo) throw new UsageError('Give TEA something to test: a URL, a repo folder, or both.\n  npx tea-qa run https://your-app.com\n  npx tea-qa run ./your-app');
 
@@ -288,14 +298,35 @@ This runs code from that repo on your computer. Only say yes if you trust it. St
   }
 }
 
-/** Settings an untrusted tea.yaml set that would widen what TEA touches or runs. */
-function untrustedKeys(c: TeaConfig): string[] {
-  const keys: string[] = [];
-  if (c.urls.length) keys.push('urls');
-  if (c.allowlist.length) keys.push('allowlist');
-  if (c.repo) keys.push('repo');
-  if (c.plugins.length) keys.push('plugins');
-  return keys;
+/**
+ * Reduce an untrusted tea.yaml to its safe subset, in place: skip list, accounts and viewport
+ * apply; limits may only go down from the defaults; everything else resets. Returns what changed.
+ */
+export function restrictUntrustedConfig(c: TeaConfig): string[] {
+  const d = parseConfig({});
+  const ignored: string[] = [];
+  if (c.urls.length) ignored.push('urls');
+  if (c.allowlist.length) ignored.push('allowlist');
+  if (c.repo) ignored.push('repo');
+  if (c.plugins.length) ignored.push('plugins');
+  if (c.failOn !== d.failOn) ignored.push('failOn');
+  if (JSON.stringify(c.llm) !== JSON.stringify(d.llm)) ignored.push('llm');
+  if (JSON.stringify(c.load) !== JSON.stringify(d.load)) ignored.push('load');
+  const lower = (k: 'maxPages' | 'timeoutMs' | 'slowPageMs') => {
+    if (c.crawl[k] > d.crawl[k]) ignored.push(`crawl.${k}`);
+    return Math.min(c.crawl[k], d.crawl[k]);
+  };
+  Object.assign(c, {
+    urls: [],
+    allowlist: [],
+    repo: undefined,
+    plugins: [],
+    failOn: d.failOn,
+    llm: d.llm,
+    load: d.load,
+    crawl: { ...c.crawl, maxPages: lower('maxPages'), timeoutMs: lower('timeoutMs'), slowPageMs: lower('slowPageMs') },
+  });
+  return ignored;
 }
 
 function printSummary(r: Results, outDir: string): void {
