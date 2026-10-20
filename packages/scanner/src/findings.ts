@@ -1,4 +1,4 @@
-import { matchRoute, type Finding, type PageVisit, type Route } from '@tea-qa/core';
+import { cleanEvidence, matchRoute, untrustedBlock, type Finding, type PageVisit, type Route } from '@tea-qa/core';
 
 export interface CrawlFindingOptions {
   routes?: Route[];
@@ -7,6 +7,12 @@ export interface CrawlFindingOptions {
 }
 
 const MAX_DETAILS = 8;
+
+/**
+ * Text observed on the target (errors, URLs) is untrusted. In summaries it is cleaned and short;
+ * in fix prompts, which get pasted into coding agents, it only appears in an untrustedBlock().
+ */
+const short = (s: string) => cleanEvidence(s, 120);
 
 function where(path: string, routes: Route[] | undefined, kind: Route['kind'] = 'page') {
   const r = routes ? matchRoute(path, routes, kind) : undefined;
@@ -42,10 +48,10 @@ export function crawlFindings(pages: PageVisit[], opts: CrawlFindingOptions): Fi
         area: 'functional',
         severity: p.referrers.length || !p.seededFromCode ? 'high' : 'medium',
         title: `Page does not load: ${p.path}`,
-        summary: `TEA could not load ${p.path} at all (${p.error}). Visitors see an error or a blank screen.`,
+        summary: `TEA could not load ${p.path} at all (${short(p.error)}). Visitors see an error or a blank screen.`,
         steps: [open],
         evidence: ev,
-        fix: `The page ${p.url} fails to load with "${p.error}".${fileHint(ev)} Find out why the request fails or times out and make the page load reliably.`,
+        fix: `The page ${p.path} fails to load (error below).${fileHint(ev)} Find out why the request fails or times out and make the page load reliably.\n\n${untrustedBlock([p.error])}`,
         source: 'crawler',
       });
       continue;
@@ -105,10 +111,10 @@ export function crawlFindings(pages: PageVisit[], opts: CrawlFindingOptions): Fi
         area: 'functional',
         severity: 'medium',
         title: `JavaScript crashes on ${p.path}`,
-        summary: `The page throws an uncaught error while loading ("${p.pageErrors[0]!.slice(0, 120)}"). Parts of the page may not work.`,
+        summary: `The page throws an uncaught error while loading ("${short(p.pageErrors[0]!)}"). Parts of the page may not work.`,
         steps: [open, 'Open the browser dev tools console and see the uncaught error.'],
         evidence: { ...ev, details: p.pageErrors.slice(0, MAX_DETAILS) },
-        fix: `On ${p.path} the browser throws: "${p.pageErrors[0]}".${fileHint(ev)} Find the cause and fix it, and guard against missing data so the page doesn't crash.`,
+        fix: `On ${p.path} the browser throws an uncaught error (below).${fileHint(ev)} Find the cause and fix it, and guard against missing data so the page doesn't crash.\n\n${untrustedBlock(p.pageErrors)}`,
         source: 'crawler',
       });
     }
@@ -119,10 +125,10 @@ export function crawlFindings(pages: PageVisit[], opts: CrawlFindingOptions): Fi
         area: 'functional',
         severity: 'low',
         title: `${consoleErrors.length} console error(s) on ${p.path}`,
-        summary: `The browser console shows errors on this page, e.g. "${consoleErrors[0]!.slice(0, 120)}".`,
+        summary: `The browser console shows errors on this page, e.g. "${short(consoleErrors[0]!)}".`,
         steps: [open, 'Open the browser dev tools console.'],
         evidence: { ...ev, details: consoleErrors.slice(0, MAX_DETAILS) },
-        fix: `Fix these browser console errors on ${p.path}:${fileHint(ev)}\n${consoleErrors.slice(0, 5).map((e) => `- ${e}`).join('\n')}`,
+        fix: `Fix the browser console errors on ${p.path} (below).${fileHint(ev)}\n\n${untrustedBlock(consoleErrors)}`,
         source: 'crawler',
       });
     }
@@ -142,7 +148,7 @@ export function crawlFindings(pages: PageVisit[], opts: CrawlFindingOptions): Fi
         summary: `When ${p.path} loads, it asks your server for data and the server fails. Whatever that data powers (lists, plans, prices) is missing or broken for every visitor.`,
         steps: [open, `Watch the network tab: ${first.method} ${apiPath} fails with ${first.status ?? first.error}.`],
         evidence: { ...ev, ...apiEv, details: serverFailures.slice(0, MAX_DETAILS).map((r) => `${r.method} ${r.url} -> ${r.status ?? r.error}`) },
-        fix: `${first.method} ${apiPath} returns ${first.status ?? first.error} when ${p.path} loads.${fileHint(apiEv)} Fix the server error and make ${p.path} show a helpful message when the request fails instead of an empty view.`,
+        fix: `${first.method} ${apiPath} returns ${first.status ?? 'a network error'} when ${p.path} loads.${fileHint(apiEv)} Fix the server error and make ${p.path} show a helpful message when the request fails instead of an empty view.\n\n${untrustedBlock(serverFailures.map((r) => `${r.method} ${r.url} -> ${r.status ?? r.error}`))}`,
         source: 'crawler',
       });
     }
@@ -156,10 +162,10 @@ export function crawlFindings(pages: PageVisit[], opts: CrawlFindingOptions): Fi
         area: 'functional',
         severity: 'low',
         title: `${missingResources.length} missing file(s) on ${p.path}`,
-        summary: `The page asks for files that don't exist (404), e.g. ${missingResources[0]!.url}.`,
+        summary: `The page asks for files that don't exist (404), e.g. ${short(missingResources[0]!.url)}.`,
         steps: [open, 'Check the network tab for 404 responses.'],
         evidence: { ...ev, details: missingResources.slice(0, MAX_DETAILS).map((r) => `${r.resourceType} ${r.url}`) },
-        fix: `These files return 404 on ${p.path}; add them or remove the references:\n${missingResources.slice(0, 5).map((r) => `- ${r.url}`).join('\n')}`,
+        fix: `Some files return 404 on ${p.path} (below). Add them or remove the references.\n\n${untrustedBlock(missingResources.map((r) => r.url))}`,
         source: 'crawler',
       });
     }
@@ -170,10 +176,10 @@ export function crawlFindings(pages: PageVisit[], opts: CrawlFindingOptions): Fi
         area: 'functional',
         severity: 'low',
         title: `${p.brokenImages.length} broken image(s) on ${p.path}`,
-        summary: `Some images don't load and show as broken icons, e.g. ${p.brokenImages[0]}.`,
+        summary: `Some images don't load and show as broken icons, e.g. ${short(p.brokenImages[0]!)}.`,
         steps: [open],
         evidence: { ...ev, details: p.brokenImages.slice(0, MAX_DETAILS) },
-        fix: `These images are broken on ${p.path}:${fileHint(ev)}\n${p.brokenImages.slice(0, 5).map((u) => `- ${u}`).join('\n')}\nFix the image paths or add the missing files.`,
+        fix: `Some images are broken on ${p.path} (below).${fileHint(ev)} Fix the image paths or add the missing files.\n\n${untrustedBlock(p.brokenImages)}`,
         source: 'crawler',
       });
     }

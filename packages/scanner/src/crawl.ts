@@ -47,6 +47,9 @@ export function canonicalUrl(raw: string, base?: string): string | null {
   }
 }
 
+/** The only methods TEA lets the browser send to the hosts under test. */
+const READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
 const ASSET = /\.(png|jpe?g|gif|svg|webp|avif|ico|css|js|mjs|map|woff2?|ttf|eot|mp4|webm|mp3|pdf|zip|xml|txt|json)$/i;
 
 /**
@@ -77,18 +80,30 @@ export async function crawl(opts: CrawlOptions): Promise<CrawlResult> {
   const context: BrowserContext = await browser.newContext({
     viewport: opts.viewport ?? { width: 1280, height: 800 },
   });
-  // Block page-initiated navigations (JS redirects, meta refresh) to hosts outside the scope.
+  // Scope and read-only guard, applied to every request the browser makes:
+  // - writes (POST, PUT, PATCH, DELETE) to the hosts under test are blocked, even from page scripts;
+  // - main-frame navigations must stay in scope (host and skip list). Redirects are followed one
+  //   hop at a time so a redirect to a skipped route or another host is never requested.
   // Third-party iframes and subresources still load, as they would for any visitor.
-  await context.route('**/*', (route) => {
+  await context.route('**/*', async (route) => {
     const req = route.request();
+    if (!READ_METHODS.has(req.method()) && opts.scope.isAllowed(req.url())) return route.abort('blockedbyclient');
     let mainFrame = false;
     try {
       mainFrame = req.isNavigationRequest() && req.frame() === req.frame().page().mainFrame();
     } catch {
       /* service worker requests have no frame */
     }
-    if (mainFrame && !opts.scope.isAllowed(req.url())) return route.abort('blockedbyclient');
-    return route.continue();
+    if (!mainFrame) return route.continue();
+    if (!opts.scope.canVisit(req.url())) return route.abort('blockedbyclient');
+    const res = await route.fetch({ maxRedirects: 0 }).catch(() => null);
+    if (!res) return route.abort('failed');
+    const location = res.status() >= 300 && res.status() < 400 ? res.headers()['location'] : undefined;
+    if (location) {
+      const next = canonicalUrl(location, req.url());
+      if (!next || !opts.scope.canVisit(next)) return route.abort('blockedbyclient');
+    }
+    return route.fulfill({ response: res });
   });
 
   try {
@@ -140,8 +155,8 @@ async function visitPage(context: BrowserContext, url: string, o: { scope: Scope
   page.on('pageerror', (err) => pageErrors.push(mask(err.message).slice(0, 500)));
   page.on('requestfailed', (req) => {
     const error = req.failure()?.errorText ?? 'failed';
-    // Aborted navigations/prefetches are noise, not failures.
-    if (/ERR_ABORTED|NS_BINDING_ABORTED/.test(error)) return;
+    // Aborted navigations/prefetches are noise; ERR_BLOCKED_BY_CLIENT is TEA's own guard.
+    if (/ERR_ABORTED|NS_BINDING_ABORTED|ERR_BLOCKED_BY_CLIENT/.test(error)) return;
     failedRequests.push({ url: mask(req.url()), method: req.method(), error, resourceType: req.resourceType() });
   });
   page.on('response', (res) => {
@@ -194,6 +209,11 @@ async function visitPage(context: BrowserContext, url: string, o: { scope: Scope
   } catch (err) {
     visit.loadMs = Date.now() - started;
     visit.error = mask((err as Error).message.split('\n')[0]!);
+    // Our own route guard stopped a redirect to a skipped route or another host.
+    if (/ERR_BLOCKED_BY_CLIENT/.test(visit.error)) {
+      visit.redirectedOutOfScope = true;
+      visit.error = 'redirected outside what TEA may test';
+    }
   } finally {
     await page.close();
   }

@@ -31,4 +31,4 @@ The build follows 14 steps, one at a time. A step is ticked only when its tests 
 
 - Repo development needs Node 22.13+ (pnpm 11). The published CLI targets Node 20+, and CI tests both.
 - Code-only mode starts the target app only with consent (`--start` or a yes at the prompt), and never runs installs.
-- Plugins listed in a repo's own `tea.yaml` are not loaded unless the user passes `--config` or `--trust-repo-plugins`.
+- Plugins listed in a repo's own `tea.yaml` are not loaded unless the user passes `--config` or `--trust-repo-config`.

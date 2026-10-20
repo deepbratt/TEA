@@ -131,7 +131,7 @@ npx tea-qa run [url-or-folder] [options]
   --login <email:password>  test account to use (masked everywhere)
   --start                   code-only: start the app with its dev script without asking
   --no-start                code-only: never start the app
-  --trust-repo-plugins      load plugins listed in the repo's own tea.yaml (they run as code)
+  --trust-repo-config      load plugins listed in the repo's own tea.yaml (they run as code)
   --no-ai                   rules only, no LLM calls
   --no-screenshots          do not save page screenshots
   --dry-run                 show what TEA would do, and the estimated cost, without doing it
@@ -171,7 +171,7 @@ Only test apps you own or are authorised to test. TEA shows this notice the firs
 - **Read-only against live URLs.** TEA only opens pages. It never submits forms, logs in, or sends POST/PUT/DELETE requests to a live site. Forms, logins and writes will only ever run in a sandbox you set up (step 10).
 - **Only what you listed.** TEA visits only the hosts you gave it (plus your `allowlist`) and never visits routes in your `skip` list. Links to other sites are listed, never opened, and a page that redirects off your hosts is discarded.
 - **No load tests or active scans against production.** They will run only in sandbox or staging mode with your explicit opt-in.
-- **Your repo is untrusted input.** TEA never runs `npm install` (install scripts are how supply-chain malware gets in), asks before starting your app, refuses dev scripts that look like they download or evaluate code, and ignores plugins listed in a repo's own `tea.yaml` unless you pass `--trust-repo-plugins`. Docs and page text never change what TEA does.
+- **Your repo is untrusted input.** TEA never runs `npm install` (install scripts are how supply-chain malware gets in), asks before starting your app, refuses dev scripts that look like they download or evaluate code, and ignores plugins listed in a repo's own `tea.yaml` unless you pass `--trust-repo-config`. Docs and page text never change what TEA does.
 - **Secrets are masked everywhere.** API keys, tokens, passwords, JWTs and credentials in URLs are masked in the terminal, the report and every JSON file. TEA records the *names* of your env vars, never their values.
 - **Cost guard.** `--dry-run` shows the plan and estimated cost before anything runs. This version makes no LLM calls, so it costs $0.
 

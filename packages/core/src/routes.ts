@@ -29,7 +29,14 @@ export function routePattern(path: string): RegExp {
 
 /** Find the code route that most likely serves a URL path (static routes beat dynamic ones). */
 export function matchRoute(urlPath: string, routes: Route[], kind?: Route['kind']): Route | undefined {
-  const path = normalisePath(decodeURI(urlPath.split('?')[0]!));
+  const raw = urlPath.split('?')[0]!;
+  let decoded = raw;
+  try {
+    decoded = decodeURI(raw);
+  } catch {
+    /* malformed escape sequence: match the raw path */
+  }
+  const path = normalisePath(decoded);
   let best: Route | undefined;
   let bestScore = -1;
   for (const r of routes) {

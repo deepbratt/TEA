@@ -8,3 +8,4 @@ export * from './log.js';
 export * from './routes.js';
 export * from './appmap.js';
 export * from './catalog.js';
+export * from './untrusted.js';

@@ -1,6 +1,6 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
-import { join, relative, resolve, sep } from 'node:path';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import { parse } from 'yaml';
@@ -101,7 +101,15 @@ async function readEntries(root: string, name: string, mode: 'public' | 'pack'):
 
 function resolvePrompt(root: string, prompt: string): string {
   const abs = resolve(root, prompt);
-  if (relative(root, abs).startsWith('..')) throw new CatalogError(`fix_prompt escapes its catalog: ${prompt}`);
+  const rel = relative(root, abs);
+  if (isAbsolute(prompt) || isAbsolute(rel) || rel === '..' || rel.startsWith('..' + sep) || rel.startsWith('../')) {
+    throw new CatalogError(`fix_prompt escapes its catalog: ${prompt}`);
+  }
+  // Follow symlinks too: the real file must still be inside the real catalog folder.
+  if (existsSync(abs)) {
+    const realRel = relative(realpathSync(root), realpathSync(abs));
+    if (isAbsolute(realRel) || realRel === '..' || realRel.startsWith('..' + sep)) throw new CatalogError(`fix_prompt escapes its catalog: ${prompt}`);
+  }
   return abs;
 }
 

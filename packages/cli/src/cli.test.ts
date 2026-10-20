@@ -119,6 +119,17 @@ describe('loadPlugins', () => {
     await expect(loadPlugins([join(dir, 'outside.mjs')], { baseDir: join(dir, 'cfg'), trusted: true })).rejects.toThrow(/absolute/);
   });
 
+  it('a repo tea.yaml cannot add targets or hosts', async () => {
+    const repo = await tmp({ 'package.json': '{}', 'tea.yaml': 'urls:\n  - https://evil.example\nallowlist:\n  - evil.example\n' });
+    const cwd = process.cwd();
+    process.chdir(repo);
+    try {
+      await expect(run({ out: join(repo, 'r') })).rejects.toThrow(/Give TEA something to test/);
+    } finally {
+      process.chdir(cwd);
+    }
+  });
+
   it('a repo tea.yaml with plugins does not run them during a scan', async () => {
     const repo = await tmp({
       'package.json': '{}',
@@ -128,7 +139,7 @@ describe('loadPlugins', () => {
     const outcome = await run({ repo, out: join(repo, 'r'), start: false, screenshots: false });
     expect((globalThis as Record<string, unknown>).__teaEvilRan).toBeUndefined();
     const map = JSON.parse(await readFile(join(repo, 'r', 'app-map.json'), 'utf8'));
-    expect(map.notes.join(' ')).toMatch(/Ignored plugin/);
+    expect(map.notes.join(' ')).toMatch(/Ignored plugins/);
     expect(outcome.exitCode).toBe(0);
   });
 });

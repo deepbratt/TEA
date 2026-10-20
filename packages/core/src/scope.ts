@@ -32,19 +32,42 @@ export class Scope {
   }
 
   isSkipped(pathOrUrl: string): boolean {
-    let path = pathOrUrl;
-    try {
-      path = new URL(pathOrUrl).pathname;
-    } catch {
-      /* already a path */
-    }
-    return this.skipRes.some((re) => re.test(path));
+    const path = normaliseSkipPath(pathOrUrl);
+    // A path that can't be normalised is treated as skipped: fail closed.
+    return path === null || this.skipRes.some((re) => re.test(path));
   }
 
   /** Allowed and not skipped. */
   canVisit(url: string): boolean {
     return this.isAllowed(url) && !this.isSkipped(url);
   }
+}
+
+/**
+ * Canonical form of a path for skip matching, so "/%61dmin", "//admin/", "/admin;x=1" and
+ * "/ADMIN" all match a "/admin/**" glob. Returns null if it can't be decoded cleanly.
+ */
+export function normaliseSkipPath(pathOrUrl: string): string | null {
+  let path: string;
+  try {
+    path = new URL(pathOrUrl, 'http://tea.invalid').pathname; // resolves ./ and ../ segments
+  } catch {
+    return null;
+  }
+  const segments: string[] = [];
+  for (const raw of path.split('/')) {
+    let seg = raw.split(';')[0]!; // drop matrix params
+    try {
+      seg = decodeURIComponent(seg);
+    } catch {
+      return null;
+    }
+    if (seg.includes('/') || seg.includes('\\')) return null; // encoded separators
+    if (seg === '' || seg === '.') continue;
+    if (seg === '..') segments.pop();
+    else segments.push(seg);
+  }
+  return '/' + segments.join('/');
 }
 
 function normaliseHost(h: string): string {
@@ -78,7 +101,8 @@ export function globToRegExp(glob: string): RegExp {
       re += c;
     }
   }
-  return new RegExp(`^${re}/?$`);
+  // Case-insensitive: many servers route /Admin and /admin to the same page.
+  return new RegExp(`^${re}/?$`, 'i');
 }
 
 const LOCAL_HOSTS = /^(localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)(:\d+)?$|\.localhost(:\d+)?$|\.test(:\d+)?$/i;
