@@ -144,13 +144,6 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
   }
 
   let url = target.url ?? config.urls[0];
-  if (untrusted && url) {
-    // An untrusted skip list may not hide the page TEA was asked to test.
-    const start = new URL(url).pathname;
-    const kept = config.skip.filter((g) => !new Scope({ urls: [url!], skip: [g] }).isSkipped(start));
-    if (kept.length < config.skip.length) preNotes.push(`Ignored skip patterns from ${configFile} that cover the start page.`);
-    config.skip = kept;
-  }
   const repo = target.repo ?? (config.repo ? resolve(configFile ? resolve(configFile, '..') : process.cwd(), config.repo) : undefined);
   if (!url && !repo) throw new UsageError('Give TEA something to test: a URL, a repo folder, or both.\n  npx tea-qa run https://your-app.com\n  npx tea-qa run ./your-app');
 
@@ -214,7 +207,16 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
       await assertReachable(url);
       const kind = classifyUrl(url);
       log.step(`Opening ${url} in a real browser (${kind}, read-only, up to ${maxPages} pages)`);
-      const scope = new Scope({ urls: [url, ...effective.urls], allowlist: effective.allowlist, skip: effective.skip });
+      // Runs on the final URL (given, from config, or the locally started app). An untrusted
+      // skip list may not hide the page TEA was asked to test.
+      let skip = effective.skip;
+      if (untrusted) {
+        const start = new URL(url).pathname;
+        const kept = config.skip.filter((g) => !new Scope({ urls: [url!], skip: [g] }).isSkipped(start));
+        if (kept.length < config.skip.length) notes.push(`Ignored skip patterns from ${configFile} that cover the start page.`);
+        skip = [...kept, ...(opts.skip ?? [])];
+      }
+      const scope = new Scope({ urls: [url, ...effective.urls], allowlist: effective.allowlist, skip });
       const seedPaths = (scan?.routes ?? []).filter((r) => r.kind === 'page' && !r.dynamic).map((r) => r.path);
       const result = await crawl({
         startUrl: url,
