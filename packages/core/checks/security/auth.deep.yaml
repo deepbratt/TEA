@@ -1,0 +1,7 @@
+# Pro check: the rule and fix prompt live in the private TEA pro pack, never in this repo.
+id: auth.deep
+title: Weak password reset, session or token handling (expiry, reuse, refresh)
+category: security
+severity: high
+pack: pro
+version: 1

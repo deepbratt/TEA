@@ -1,0 +1,49 @@
+# tea.yaml: optional. TEA works with zero config; use this only to change the defaults.
+# Copy it to your repo root as tea.yaml.
+
+# The app to test. The first URL is the main target. `npx tea-qa run <url>` overrides it.
+urls:
+  - https://staging.your-app.com
+
+# Routes TEA must never visit (globs: * within a segment, ** across segments).
+skip:
+  - /admin/**
+  - /logout
+
+# Extra hosts TEA may visit besides the hosts in `urls`.
+allowlist:
+  - api.your-app.com
+
+# Test accounts, one per role (used by the UI agent from milestone 2). Never real users.
+# Passwords are masked everywhere TEA prints or writes.
+accounts:
+  - role: user
+    email: tea-user@your-app.com
+    password: ${TEA_USER_PASSWORD} # read from the environment
+  - role: admin
+    email: tea-admin@your-app.com
+    password: ${TEA_ADMIN_PASSWORD}
+
+crawl:
+  maxPages: 50 # most pages to visit
+  timeoutMs: 30000 # per page
+  slowPageMs: 3000 # pages slower than this are flagged
+  viewport: { width: 1280, height: 800 }
+
+# Hard caps for load tests (milestone 4).
+load:
+  maxUsers: 100
+  maxDurationSec: 180
+  maxRequests: 20000
+
+# LLM for the planner and UI agent (milestone 2). "none" runs rules only.
+# Keys come from env vars: OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY; Ollama needs none.
+llm:
+  provider: none # none | openai | anthropic | gemini | ollama
+  budgetUsd: 1
+
+# Extra plugins: npm package names or paths relative to this file's repo.
+plugins: []
+
+# Exit 1 when an issue is at least this severe: critical | high | medium | low | none.
+failOn: critical

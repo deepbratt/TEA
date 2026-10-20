@@ -1,0 +1,10 @@
+id: crawl.not-found
+title: Broken link or missing page (404, or a 'not found' view)
+category: functional
+severity: medium
+detect: crawl
+rule: scanner:crawl.not-found
+fix_prompt: prompts/crawl/not-found.md
+suggest_only: false
+pack: free
+version: 1

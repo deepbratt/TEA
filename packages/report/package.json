@@ -1,0 +1,18 @@
+{
+  "name": "@tea-qa/report",
+  "version": "0.1.0",
+  "description": "TEA report: results.json, report.md and report.html",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  },
+  "files": ["dist"],
+  "engines": { "node": ">=20" },
+  "repository": { "type": "git", "url": "https://github.com/deepbratt/TEA.git", "directory": "packages/report" },
+  "dependencies": {
+    "@tea-qa/core": "workspace:*"
+  }
+}

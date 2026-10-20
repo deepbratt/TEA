@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets:
+    name: Secret scan (gitleaks, full history)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | tar -xz gitleaks
+          ./gitleaks detect --source . --config .gitleaks.toml --redact --no-banner -v --log-opts=HEAD
+
+  lint:
+    name: Lint and typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+
+  test:
+    name: Unit tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      # pnpm 11 itself needs Node 22; TEA's runtime supports Node 20+, which the matrix checks.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+        working-directory: packages/scanner
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: node --version && node node_modules/vitest/vitest.mjs run
+      - run: node packages/cli/dist/bin.js --version
+
+  example:
+    name: TEA end to end against examples/buggy-nextjs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+        working-directory: packages/scanner
+      - run: pnpm example:build
+      - name: Start the example app
+        run: |
+          (PORT=3000 pnpm example:start > example.log 2>&1 &)
+          for i in $(seq 1 60); do curl -fs -o /dev/null http://localhost:3000/ && exit 0; sleep 1; done
+          cat example.log; exit 1
+      - name: Spill the TEA
+        run: node packages/cli/dist/bin.js run http://localhost:3000 --repo examples/buggy-nextjs --out tea-report --fail-on none
+      - name: Check every planted bug was caught
+        run: node scripts/verify-example.mjs tea-report
+      - name: Dry run and code-only mode work too
+        run: |
+          node packages/cli/dist/bin.js run examples/buggy-nextjs --dry-run
+          node packages/cli/dist/bin.js run examples/buggy-nextjs --no-start --out tea-report-code-only --fail-on none
+          test -f tea-report-code-only/feature-map.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tea-report
+          path: |
+            tea-report
+            example.log
