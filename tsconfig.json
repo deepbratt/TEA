@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/scanner" },
+    { "path": "packages/browser-agent" },
+    { "path": "packages/report" },
+    { "path": "packages/cli" }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "tea-qa-monorepo",
+  "private": true,
+  "description": "TEA: Test Everything Automatically. Spill the TEA on your app.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "node api.js && tsc -b",
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "tsc -b --clean",
+    "tea": "node packages/cli/dist/bin.js",
+    "example:build": "pnpm --filter buggy-nextjs build",
+    "example:start": "pnpm --filter buggy-nextjs start",
+    "verify:example": "node scripts/verify-example.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

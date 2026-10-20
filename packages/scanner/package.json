@@ -1,0 +1,18 @@
+{
+  "name": "@tea-qa/scanner",
+  "version": "0.1.0",
+  "description": "TEA code discovery: stack detection and route mapping for any repo",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  },
+  "files": ["dist"],
+  "engines": { "node": ">=20" },
+  "repository": { "type": "git", "url": "https://github.com/deepbratt/TEA.git", "directory": "packages/scanner" },
+  "dependencies": {
+    "@tea-qa/core": "workspace:*"
+  }
+}
