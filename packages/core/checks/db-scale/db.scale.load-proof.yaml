@@ -1,0 +1,7 @@
+# Pro check: the rule and fix prompt live in the private TEA pro pack, never in this repo.
+id: db.scale.load-proof
+title: Queries that pass 500 ms as data grows (seeded 10k to 1M rows)
+category: db-scale
+severity: medium
+pack: pro
+version: 1

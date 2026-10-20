@@ -1,0 +1,7 @@
+# Pro check: the rule and fix prompt live in the private TEA pro pack, never in this repo.
+id: concurrency.race
+title: Parallel requests double-charge, double-book or create duplicates
+category: security
+severity: high
+pack: pro
+version: 1

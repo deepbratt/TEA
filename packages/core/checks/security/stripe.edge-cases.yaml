@@ -1,0 +1,7 @@
+# Pro check: the rule and fix prompt live in the private TEA pro pack, never in this repo.
+id: stripe.edge-cases
+title: Stripe webhooks, idempotency and prices trusted from the client
+category: security
+severity: critical
+pack: pro
+version: 1

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.next/
+tea-report/
+coverage/
+.env
+.env.local
+!examples/**/.env*
+test-results/
+
+# private business docs
+Business/
