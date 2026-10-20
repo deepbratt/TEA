@@ -98,15 +98,22 @@ export async function crawl(opts: CrawlOptions): Promise<CrawlResult> {
     } catch {
       /* requests without a frame */
     }
-    if (!opts.scope.isAllowed(url)) return mainFrame ? route.abort('blockedbyclient') : route.continue();
-    if (!READ_METHODS.has(req.method()) || opts.scope.isSkipped(url)) return route.abort('blockedbyclient');
+    const isRead = READ_METHODS.has(req.method());
+    if (!opts.scope.isAllowed(url)) {
+      if (mainFrame) return route.abort('blockedbyclient');
+    } else if (!isRead || opts.scope.isSkipped(url)) {
+      return route.abort('blockedbyclient');
+    }
 
+    // Every request (on any host) follows redirects one hop at a time, so a redirect from
+    // anywhere onto a host under test gets the same checks: no writes (307/308 keep the method),
+    // no skipped routes, and page navigations never leave the hosts under test.
     const res = await route.fetch({ maxRedirects: 0 }).catch(() => null);
     if (!res) return route.abort('failed');
     const location = res.status() >= 300 && res.status() < 400 ? res.headers()['location'] : undefined;
     if (location) {
       const next = canonicalUrl(location, url);
-      const ok = next && (opts.scope.isAllowed(next) ? !opts.scope.isSkipped(next) : !mainFrame);
+      const ok = next && (opts.scope.isAllowed(next) ? isRead && !opts.scope.isSkipped(next) : !mainFrame);
       if (!ok) return route.abort('blockedbyclient');
     }
     return route.fulfill({ response: res });

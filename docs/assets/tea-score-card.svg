@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 340" width="640" height="340" role="img" aria-labelledby="t d">
+  <title id="t">Sample TEA score card</title>
+  <desc id="d">A sample score card: TEA Score 81 out of 100, with sub-scores for features, security, performance, accessibility, code health and production readiness. Sample data, not a security guarantee.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#24170e"/><stop offset="1" stop-color="#4a2b14"/>
+    </linearGradient>
+    <style>
+      text { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; fill: #f4ebe0; }
+      .muted { fill: #f4ebe0; opacity: .65; }
+      .bar-bg { fill: #f4ebe0; opacity: .12; }
+      .bar { transform-box: fill-box; transform-origin: left; animation: grow 1.6s ease-out both; }
+      @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+      .b2 { animation-delay: .15s; } .b3 { animation-delay: .3s; } .b4 { animation-delay: .45s; } .b5 { animation-delay: .6s; } .b6 { animation-delay: .75s; }
+    </style>
+  </defs>
+  <rect width="640" height="340" rx="24" fill="url(#bg)"/>
+  <text x="32" y="44" font-size="14" font-weight="800" letter-spacing="2" fill="#e8a33d" style="fill:#e8a33d">☕ THE TEA ON YOUR APP</text>
+  <text x="608" y="44" font-size="12" text-anchor="end" class="muted">SAMPLE</text>
+
+  <!-- ring -->
+  <g transform="translate(130 160)">
+    <circle r="78" fill="none" stroke="#f4ebe0" stroke-opacity=".15" stroke-width="16"/>
+    <circle r="78" fill="none" stroke="#3fae68" stroke-width="16" stroke-linecap="round" transform="rotate(-90)" stroke-dasharray="0 490">
+      <animate attributeName="stroke-dasharray" from="0 490" to="397 490" dur="1.6s" fill="freeze"/>
+    </circle>
+    <text text-anchor="middle" y="14" font-size="52" font-weight="800">81</text>
+    <text text-anchor="middle" y="40" font-size="14" class="muted">/ 100</text>
+    <text text-anchor="middle" y="112" font-size="14" font-weight="700" style="fill:#e8a33d">A good brew</text>
+  </g>
+
+  <!-- sub-scores -->
+  <g transform="translate(270 82)" font-size="14">
+    <text y="14">Features</text><rect class="bar-bg" x="120" y="2" width="200" height="14" rx="7"/><rect class="bar b1" x="120" y="2" width="164" height="14" rx="7" fill="#e8a33d"/><text x="330" y="14">82</text>
+    <text y="48">Security</text><rect class="bar-bg" x="120" y="36" width="200" height="14" rx="7"/><rect class="bar b2" x="120" y="36" width="148" height="14" rx="7" fill="#e8a33d"/><text x="330" y="48">74</text>
+    <text y="82">Performance</text><rect class="bar-bg" x="120" y="70" width="200" height="14" rx="7"/><rect class="bar b3" x="120" y="70" width="182" height="14" rx="7" fill="#3fae68"/><text x="330" y="82">91</text>
+    <text y="116">Accessibility</text><rect class="bar-bg" x="120" y="104" width="200" height="14" rx="7"/><rect class="bar b4" x="120" y="104" width="176" height="14" rx="7" fill="#e8a33d"/><text x="330" y="116">88</text>
+    <text y="150">Code health</text><rect class="bar-bg" x="120" y="138" width="200" height="14" rx="7"/><rect class="bar b5" x="120" y="138" width="158" height="14" rx="7" fill="#e8a33d"/><text x="330" y="150">79</text>
+    <text y="184">Prod Ready</text><rect class="bar-bg" x="120" y="172" width="200" height="14" rx="7"/><rect class="bar b6" x="120" y="172" width="140" height="14" rx="7" fill="#d9a21b"/><text x="330" y="184">70</text>
+  </g>
+
+  <text x="32" y="300" font-size="13" font-weight="700">TEA checked · score 81 · last run 2026-10-21</text>
+  <text x="32" y="320" font-size="11" class="muted">Sample data. Not a security guarantee, audit or certification.</text>
+</svg>
