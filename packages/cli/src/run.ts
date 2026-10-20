@@ -42,8 +42,8 @@ export interface RunOptions {
   skip?: string[];
   allow?: string[];
   login?: string;
-  /** Import plugins listed in a tea.yaml found inside the repo (they run as code). */
-  trustRepoPlugins?: boolean;
+  /** Honour targets, allowlist, repo path and plugins from a tea.yaml TEA found on its own. */
+  trustRepoConfig?: boolean;
 }
 
 export class UsageError extends Error {}
@@ -79,7 +79,7 @@ export function resolveTarget(o: Pick<RunOptions, 'target' | 'repo' | 'url'>, cw
 
 /**
  * Plugins are code. TEA only imports them when the user vouched for the config: it was passed
- * with --config, or --trust-repo-plugins was given. A tea.yaml that merely sits in a scanned
+ * with --config, or --trust-repo-config was given. A tea.yaml that merely sits in a scanned
  * repo could otherwise make TEA run anything. Relative paths must stay inside the config's folder.
  */
 export async function loadPlugins(names: string[], o: { baseDir: string; trusted: boolean }): Promise<{ plugins: TeaPlugin[]; ignored: string[] }> {
@@ -119,12 +119,25 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
   const { config, file: configFile } = await loadConfig({ path: opts.config, repo: target.repo });
   for (const a of config.accounts) masker.add(a.password);
 
+  const preNotes: string[] = [];
   let login: { email: string; password: string } | undefined;
   if (opts.login) {
     const i = opts.login.indexOf(':');
     if (i < 1) throw new UsageError('--login must look like email:password');
     login = { email: opts.login.slice(0, i), password: opts.login.slice(i + 1) };
     masker.add(login.password);
+  }
+
+  // A tea.yaml TEA found on its own (not passed with --config) may come from the repo being
+  // scanned, which is untrusted. It may narrow what TEA does (skip list, limits) but not widen it:
+  // its targets, allowlist, repo path and plugins are ignored unless the user trusts it.
+  const configTrusted = !!opts.config || !!opts.trustRepoConfig;
+  const ignoredConfig = !configFile || configTrusted ? [] : untrustedKeys(config);
+  if (ignoredConfig.length) {
+    const msg = `Ignored ${ignoredConfig.join(', ')} from ${configFile}: a tea.yaml found in the folder being tested can't add targets, hosts or plugins. Pass --config ${configFile} or --trust-repo-config if it's yours.`;
+    log.warn(msg);
+    preNotes.push(msg);
+    Object.assign(config, { urls: [], allowlist: [], repo: undefined, plugins: [] });
   }
 
   let url = target.url ?? config.urls[0];
@@ -144,7 +157,7 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
     return { exitCode: 0 };
   }
 
-  const notes: string[] = [];
+  const notes: string[] = [...preNotes];
 
   // 1. Discover from code.
   let scan: ScanResult | undefined;
@@ -152,13 +165,8 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
     log.step(`Reading your code in ${repo}`);
     const loaded = await loadPlugins(effective.plugins, {
       baseDir: configFile ? dirname(configFile) : repo,
-      trusted: !!opts.config || !!opts.trustRepoPlugins,
+      trusted: configTrusted,
     });
-    if (loaded.ignored.length) {
-      const msg = `Ignored plugin(s) listed in ${configFile}: ${loaded.ignored.join(', ')}. Plugins run as code, so TEA only loads them with --config <file> or --trust-repo-plugins.`;
-      log.warn(msg);
-      notes.push(msg);
-    }
     scan = await scanRepo(repo, { plugins: loaded.plugins });
     const stack = scan.stack.filter((s) => s.kind !== 'language').map((s) => s.name);
     log.info(`  Stack: ${stack.join(', ') || 'unknown'}`);
@@ -278,6 +286,16 @@ This runs code from that repo on your computer. Only say yes if you trust it. St
   } finally {
     rl.close();
   }
+}
+
+/** Settings an untrusted tea.yaml set that would widen what TEA touches or runs. */
+function untrustedKeys(c: TeaConfig): string[] {
+  const keys: string[] = [];
+  if (c.urls.length) keys.push('urls');
+  if (c.allowlist.length) keys.push('allowlist');
+  if (c.repo) keys.push('repo');
+  if (c.plugins.length) keys.push('plugins');
+  return keys;
 }
 
 function printSummary(r: Results, outDir: string): void {

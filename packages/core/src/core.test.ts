@@ -74,6 +74,15 @@ describe('Scope', () => {
     expect(scope.canVisit('https://staging.example.com/administer')).toBe(true);
   });
 
+  it('cannot be dodged by encoding, case, slashes, dot segments or params', () => {
+    for (const p of ['/%61dmin', '/ADMIN', '//admin/', '/x/../admin/users', '/admin;jsessionid=1', '/Admin/%2E%2E/admin', '/LOGOUT']) {
+      expect(scope.canVisit(`https://staging.example.com${p}`), p).toBe(false);
+    }
+    expect(scope.isSkipped('/admin%2Fusers')).toBe(true); // encoded separator: fail closed
+    expect(scope.isSkipped('/%E0%A4%A')).toBe(true); // bad encoding: fail closed
+    expect(scope.canVisit('https://staging.example.com/pricing')).toBe(true);
+  });
+
   it('globs', () => {
     expect(globToRegExp('/blog/*').test('/blog/post')).toBe(true);
     expect(globToRegExp('/blog/*').test('/blog/a/b')).toBe(false);
@@ -161,6 +170,7 @@ describe('routes', () => {
     expect(matchRoute('/users/7', routes, 'api')?.path).toBe('/users/:id');
     expect(matchRoute('/', routes)?.path).toBe('/');
     expect(matchRoute('/nope', routes)).toBeUndefined();
+    expect(() => matchRoute('/blog/%E0%A4%A', routes)).not.toThrow();
   });
 
   it('detects dynamic segments in any framework syntax', () => {

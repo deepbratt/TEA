@@ -73,6 +73,19 @@ describe('guard rails', () => {
       'a.yaml': 'id: a.b\ntitle: Escaping prompt\ncategory: security\nseverity: low\ndetect: crawl\nrule: x:y\nfix_prompt: ../../etc/passwd\npack: free\nversion: 1\n',
     });
     await expect(loadCatalog({ dirs: [escape] })).rejects.toThrow(/escapes/);
+    const absolute = await folder({
+      'a.yaml': `id: a.b
+title: Absolute prompt
+category: security
+severity: low
+detect: crawl
+rule: x:y
+fix_prompt: ${JSON.stringify(join(tmpdir(), 'x.md'))}
+pack: free
+version: 1
+`,
+    });
+    await expect(loadCatalog({ dirs: [absolute] })).rejects.toThrow(/escapes/);
   });
 });
 

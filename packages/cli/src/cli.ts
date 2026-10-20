@@ -33,7 +33,7 @@ export function buildProgram(): Command {
     .option('--no-screenshots', 'do not save page screenshots')
     .option('--start', 'in code-only mode, start the app with its own dev script without asking (runs code from the repo)')
     .option('--no-start', 'never start the app locally in code-only mode')
-    .option('--trust-repo-plugins', "load plugins listed in the repo's tea.yaml (they run as code)")
+    .option('--trust-repo-config', "trust a tea.yaml found in the tested folder: its urls, allowlist and plugins (plugins run as code)")
     .option('--dry-run', 'show what TEA would do, and the estimated cost, without doing it')
     .option('-v, --verbose', 'show more detail')
     .option('-q, --quiet', 'only print warnings and errors')
@@ -54,7 +54,7 @@ export function buildProgram(): Command {
         ai: o.ai,
         screenshots: o.screenshots,
         start: o.start,
-        trustRepoPlugins: o.trustRepoPlugins,
+        trustRepoConfig: o.trustRepoConfig,
         dryRun: o.dryRun,
       });
       process.exitCode = outcome.exitCode;

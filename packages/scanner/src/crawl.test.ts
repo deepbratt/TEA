@@ -11,7 +11,7 @@ import { crawl, crawlFindings, canonicalUrl } from './index.js';
 const html = (body: string, title = 'T') => `<!doctype html><html><head><title>${title}</title></head><body>${body}</body></html>`;
 
 const pages: Record<string, { status?: number; body: string; delay?: number; type?: string }> = {
-  '/': { body: html('<a href="/about">About</a> <a href="/missing">Gone</a> <a href="https://elsewhere.example/x">Ext</a> <a href="/admin">Admin</a> <a href="/boom#top">Boom</a> <a href="/redirect">Redir</a> <a href="/js-redirect">JS</a> <button>Sign up</button>', 'Home') },
+  '/': { body: html('<a href="/about">About</a> <a href="/missing">Gone</a> <a href="https://elsewhere.example/x">Ext</a> <a href="/admin">Admin</a> <a href="/boom#top">Boom</a> <a href="/redirect">Redir</a> <a href="/js-redirect">JS</a> <a href="/to-admin">Sneaky</a> <a href="/writes">Writes</a> <button>Sign up</button>', 'Home') },
   '/about': {
     body: html(`<h1>About</h1><img src="/nope.png"><form method="post"><label for="e">Email</label><input id="e" name="email" type="email" required></form>
       <script>console.error('boom from about'); fetch('/api/data');</script>`),
@@ -23,6 +23,7 @@ const pages: Record<string, { status?: number; body: string; delay?: number; typ
   '/slow': { body: html('<h1>Slow</h1>'), delay: 1200 },
   '/js-redirect': { body: html('<script>location.href = OTHER_HOST + "/js-target"</script>') },
   '/js-target': { body: html('should never be requested') },
+  '/writes': { body: html("<h1>Writes</h1><script>fetch('/api/data', { method: 'POST' }); fetch('/api/data', { method: 'DELETE' });</script>") },
 };
 
 let server: Server;
@@ -35,6 +36,11 @@ beforeAll(async () => {
   server = createServer((req, res) => {
     const path = new URL(req.url!, 'http://x').pathname;
     hits.push(`${req.method} ${path}`);
+    if (path === '/to-admin') {
+      // Redirect into the skip list: TEA must not follow it.
+      res.writeHead(302, { location: '/admin/settings' });
+      return res.end();
+    }
     if (path === '/redirect') {
       // "localhost" is a different host from the 127.0.0.1 TEA was told to test.
       res.writeHead(302, { location: `http://localhost:${(server.address() as AddressInfo).port}/elsewhere` });
@@ -69,13 +75,16 @@ describe('crawl', () => {
     const result = await crawl({ startUrl: base, seedPaths: ['/spa-missing', '/slow'], scope, outDir: out, maxPages: 20 });
     const byPath = Object.fromEntries(result.pages.map((p) => [p.path, p]));
 
-    expect(Object.keys(byPath).sort()).toEqual(['/', '/about', '/boom', '/js-redirect', '/missing', '/redirect', '/slow', '/spa-missing']);
+    expect(Object.keys(byPath).sort()).toEqual(['/', '/about', '/boom', '/js-redirect', '/missing', '/redirect', '/slow', '/spa-missing', '/to-admin', '/writes']);
     expect(byPath['/redirect']!.redirectedOutOfScope).toBe(true);
     expect(byPath['/redirect']!.links).toEqual([]);
     await new Promise((r) => setTimeout(r, 300));
     expect(hits).not.toContain('GET /js-target');
     expect(hits.every((h) => h.startsWith('GET '))).toBe(true);
     expect(hits).not.toContain('GET /admin');
+    expect(hits).not.toContain('GET /admin/settings');
+    expect(byPath['/to-admin']!.redirectedOutOfScope).toBe(true);
+    expect(byPath['/writes']!.failedRequests).toEqual([]);
     expect(result.external).toEqual(['https://elsewhere.example/x']);
 
     expect(byPath['/']!.buttons).toContain('Sign up');
