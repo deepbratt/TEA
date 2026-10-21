@@ -3,8 +3,9 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
-import { log, mask, masker, onLog, SEVERITIES, type LogEvent, type Severity } from '../core/index.js';
+import { extname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { log, mask, masker, onLog, resolveInside, scoreVerdict, SEVERITIES, type LogEvent, type Severity } from '../core/index.js';
 import { run, UsageError, VERSION } from '../cli/run.js';
 import { teaHome } from '../cli/notice.js';
 import {
@@ -20,7 +21,6 @@ import {
   type DeviceCode,
 } from '../github/index.js';
 import { listFolders } from './folders.js';
-import { renderPage } from './page.js';
 
 /**
  * The local TEA UI: a small web app on 127.0.0.1 that does what `tea-qa run` does.
@@ -76,6 +76,9 @@ interface RunRecord {
   dir: string;
 }
 
+/** The UI's static files (index.html, CSS, ES modules) ship in the package's ui/ folder. */
+const UI_DIR = fileURLToPath(new URL('../../ui/', import.meta.url));
+
 const COOKIE = 'tea_ui';
 const MAX_BODY = 32 * 1024;
 const MAX_EVENTS = 2_000;
@@ -85,6 +88,13 @@ const SERVABLE: Record<string, string> = {
   '.json': 'application/json; charset=utf-8',
   '.png': 'image/png',
 };
+const ASSET_TYPES: Record<string, string> = {
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.svg': 'image/svg+xml',
+};
+/** The UI page runs only its own files: no inline script or style, no third parties. */
+const UI_CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 
 class HttpError extends Error {
   constructor(public status: number, message: string) {
@@ -170,7 +180,16 @@ export function parseRunInput(raw: unknown): RunInput {
 
 /** Everything the UI stores or sends is masked: URLs can carry credentials, errors can quote keys. */
 function publicRun(r: RunRecord) {
-  return masker.maskDeep({ id: r.id, status: r.status, input: r.input, startedAt: r.startedAt, finishedAt: r.finishedAt, score: r.score, counts: r.counts, summary: r.summary, error: r.error });
+  const verdict = r.status === 'done' ? scoreVerdict(r.score ?? null) : undefined;
+  return masker.maskDeep({ id: r.id, status: r.status, input: r.input, startedAt: r.startedAt, finishedAt: r.finishedAt, score: r.score, verdict, counts: r.counts, summary: r.summary, error: r.error });
+}
+
+/** A file of an allowed type, confined to `root`. Used for the UI's assets and run reports. */
+function staticFile(root: string, rel: string, types: Record<string, string>): { body: Buffer; type: string } | null {
+  const file = resolveInside(root, rel);
+  const type = file ? types[extname(file).toLowerCase()] : undefined;
+  if (!file || !type || !existsSync(file) || !statSync(file).isFile()) return null;
+  return { body: readFileSync(file), type };
 }
 
 async function loadHistory(runsDir: string): Promise<RunRecord[]> {
@@ -282,11 +301,9 @@ export async function startUi(opts: UiOptions = {}): Promise<UiServer> {
   }
 
   function serveRunFile(res: ServerResponse, record: RunRecord, rel: string): void {
-    const file = resolve(record.dir, rel);
-    const within = relative(record.dir, file);
-    if (!within || within === '..' || within.startsWith(`..${sep}`) || isAbsolute(within)) throw new HttpError(404, 'Not found.');
-    const type = SERVABLE[extname(file).toLowerCase()];
-    if (!type || !existsSync(file) || !statSync(file).isFile()) throw new HttpError(404, 'Not found.');
+    const found = staticFile(record.dir, rel, SERVABLE);
+    if (!found) throw new HttpError(404, 'Not found.');
+    const { body, type } = found;
     const extra: Record<string, string> =
       type.startsWith('text/html')
         ? {
@@ -295,7 +312,7 @@ export async function startUi(opts: UiOptions = {}): Promise<UiServer> {
             'x-frame-options': 'SAMEORIGIN',
           }
         : {};
-    send(res, 200, readFileSync(file), type, extra);
+    send(res, 200, body, type, extra);
   }
 
   async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -319,10 +336,17 @@ export async function startUi(opts: UiOptions = {}): Promise<UiServer> {
     }
 
     if (req.method === 'GET' && url.pathname === '/') {
-      send(res, 200, renderPage({ version: VERSION }), 'text/html; charset=utf-8', {
-        'content-security-policy': "default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; frame-src 'self'; frame-ancestors 'none'",
-        'x-frame-options': 'DENY',
-      });
+      send(res, 200, readFileSync(join(UI_DIR, 'index.html')), 'text/html; charset=utf-8', { 'content-security-policy': UI_CSP, 'x-frame-options': 'DENY' });
+      return;
+    }
+    if (req.method === 'GET' && url.pathname.startsWith('/assets/')) {
+      const asset = staticFile(UI_DIR, decodeURIComponent(url.pathname.slice('/assets/'.length)), ASSET_TYPES);
+      if (!asset) throw new HttpError(404, 'Not found.');
+      send(res, 200, asset.body, asset.type, { 'content-security-policy': UI_CSP });
+      return;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/info') {
+      json(res, 200, { version: VERSION });
       return;
     }
     if (req.method === 'GET' && url.pathname === '/api/runs') {

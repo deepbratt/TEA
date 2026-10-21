@@ -3,7 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { log } from '../core/index.js';
 
-export const RESPONSIBLE_USE = `Responsible use: only test apps you own or are authorised to test.
+const RESPONSIBLE_USE = `Responsible use: only test apps you own or are authorised to test.
 Against a live URL TEA is read-only: it opens pages and never submits forms, logs in or sends write requests.
 Load tests, active scans and destructive tests never run against production.
 TEA scores are not a security guarantee, audit or certification.`;

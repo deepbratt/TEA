@@ -5,8 +5,8 @@ import { renderHtml } from './html.js';
 import { renderFeatureMap, renderMarkdown } from './markdown.js';
 
 export { renderHtml } from './html.js';
-export { renderMarkdown, renderFeatureMap } from './markdown.js';
-export { plainSummary, scoreVerdict, topFindings, AREA_LABEL } from './summary.js';
+export { renderMarkdown } from './markdown.js';
+export { plainSummary, topFindings, AREA_LABEL } from './summary.js';
 
 export interface WrittenReport {
   dir: string;

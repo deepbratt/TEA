@@ -104,7 +104,8 @@ describe('crawl', () => {
       { path: '/about', kind: 'page', file: 'app/about/page.tsx', line: 1, dynamic: false, source: 'code' },
       { path: '/api/data', kind: 'api', file: 'app/api/data/route.ts', line: 1, dynamic: false, source: 'code' },
     ];
-    const findings = crawlFindings(result.pages, { routes, baseUrl: base, slowPageMs: 1000 });
+    const catalog = await loadCatalog();
+    const findings = crawlFindings(result.pages, { catalog, routes, baseUrl: base, slowPageMs: 1000 });
     const ids = findings.map((f) => f.id);
     expect(ids.some((id) => id.includes('/redirect'))).toBe(false);
     expect(ids).toEqual(
@@ -118,7 +119,6 @@ describe('crawl', () => {
         'crawl.slow:/slow',
       ]),
     );
-    const catalog = await loadCatalog();
     for (const f of findings) expect(catalog.get(checkIdOf(f.id)), `catalog entry for ${f.id}`).toBeDefined();
     const api = findings.find((f) => f.id === 'crawl.api-failure:/about:/api/data')!;
     expect(api.severity).toBe('high');

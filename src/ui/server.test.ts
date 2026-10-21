@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createRequire } from 'node:module';
 import { chromium, type Browser, type Page } from 'playwright';
 import { setLogLevel } from '../core/index.js';
 import { parseRunInput, startUi, type UiServer } from './server.js';
@@ -233,16 +234,16 @@ describe('local UI: GitHub and folders', () => {
       const errors: string[] = [];
       page.on('pageerror', (e) => errors.push(e.message));
       await page.goto(ui2.openUrl);
-      await page.click('#tabGithub');
-      await page.click('#ghCli');
-      await page.click('#ghRepos li:has-text("mira-example/leaf-kettle")');
-      await page.waitForFunction(() => (document.getElementById('urlSuggest')?.children.length ?? 0) > 0);
+      await page.click('#tab-github');
+      await page.click('#gh-cli');
+      await page.click('#gh-repos li:has-text("mira-example/leaf-kettle")');
+      await page.waitForFunction(() => (document.getElementById('url-suggest')?.children.length ?? 0) > 0);
       await page.fill('#url', appUrl);
       await page.click('#form details summary');
-      await page.fill('#maxPages', '3');
+      await page.fill('#max-pages', '3');
       await page.click('#go');
-      await page.waitForFunction(() => document.getElementById('pill')?.textContent === 'Done', undefined, { timeout: 60_000 });
-      expect(await page.textContent('#target')).toContain('github.com/mira-example/leaf-kettle@main');
+      await page.waitForFunction(() => document.getElementById('verdict')?.hidden === false, undefined, { timeout: 60_000 });
+      expect(await page.textContent('#run-target')).toContain('github.com/mira-example/leaf-kettle@main');
       expect(await page.textContent('#log')).toContain('Cloning mira-example/leaf-kettle@main');
       expect(errors).toEqual([]);
     } finally {
@@ -276,13 +277,49 @@ describe('local UI in a real browser', () => {
     await page.goto(ui.openUrl);
     await page.fill('#url', appUrl);
     await page.click('#form details summary');
-      await page.fill('#maxPages', '3');
+      await page.fill('#max-pages', '3');
     await page.click('#go');
-    await page.waitForFunction(() => document.getElementById('pill')?.textContent === 'Done', undefined, { timeout: 60_000 });
-    expect(await page.textContent('#verdict')).toMatch(/Here's the TEA: \d+\/100/);
-    expect(await page.locator('#log div').count()).toBeGreaterThan(0);
+    await page.waitForFunction(() => document.getElementById('verdict')?.hidden === false, undefined, { timeout: 60_000 });
+    expect(await page.textContent('#verdict-label')).toMatch(/Piping hot|A good brew|Lukewarm|Spilled/);
+    expect(Number(await page.textContent('#score'))).toBeGreaterThanOrEqual(0);
+    expect(await page.locator('#issues li').count()).toBeGreaterThan(0); // the 500 page
+    expect(await page.locator('#log li').count()).toBeGreaterThan(0);
     expect(await page.locator('#history li').count()).toBeGreaterThan(0);
     expect(await page.isVisible('#empty')).toBe(false);
     expect(errors).toEqual([]);
+  });
+
+  it.each(['light', 'dark'] as const)('passes an axe accessibility audit (WCAG 2.2 A/AA) in %s mode', async (colorScheme) => {
+    // A separate context may bypass CSP so the audit script can be injected; the page itself
+    // allows only its own files.
+    const context = await browser.newContext({ bypassCSP: true, colorScheme });
+    try {
+      const audit = await context.newPage();
+      await audit.goto(ui.openUrl);
+      // Audit the busiest state: past runs listed and a finished result with issues open.
+      await audit.click('#history li');
+      await audit.waitForFunction(() => document.getElementById('verdict')?.hidden === false && (document.getElementById('issues')?.childElementCount ?? 0) > 0);
+      await audit.addScriptTag({ path: createRequire(import.meta.url).resolve('axe-core/axe.min.js') });
+      const result = await audit.evaluate(async () => {
+        const axe = (window as unknown as { axe: { run(o: unknown): Promise<{ violations: { id: string; impact: string; nodes: unknown[] }[] }> } }).axe;
+        return axe.run({ runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] });
+      });
+      expect(result.violations.map((v) => `${v.impact} ${v.id}: ${JSON.stringify((v.nodes as { target: string[]; failureSummary: string }[]).map((n) => [n.target, n.failureSummary]))}`)).toEqual([]);
+    } finally {
+      await context.close();
+    }
+  });
+
+  it('serves only its own assets, with a strict CSP', async () => {
+    const asset = await authed('/assets/app.css');
+    expect(asset.status).toBe(200);
+    expect(String(asset.headers['content-type'])).toContain('text/css');
+    const page = await authed('/');
+    const csp = String(page.headers['content-security-policy']);
+    expect(csp).toContain("script-src 'self'");
+    expect(csp).not.toContain('unsafe-inline');
+    for (const bad of ['..%2Fpackage.json', '..%2F..%2Fsrc%2Fui%2Fserver.ts', 'index.html', 'js%2F..%2F..%2Fpackage.json']) {
+      expect((await authed(`/assets/${bad}`)).status, bad).toBe(404);
+    }
   });
 });

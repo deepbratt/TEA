@@ -64,3 +64,14 @@ export function countBySeverity(findings: Finding[]): Record<Severity, number> {
   for (const f of findings) out[f.severity]++;
   return out;
 }
+
+export type VerdictTone = 'great' | 'good' | 'meh' | 'bad' | 'none';
+
+/** A one-word verdict for the score, in TEA voice. */
+export function scoreVerdict(score: number | null): { label: string; tone: VerdictTone } {
+  if (score === null) return { label: 'Not brewed yet', tone: 'none' };
+  if (score >= 90) return { label: 'Piping hot', tone: 'great' };
+  if (score >= 75) return { label: 'A good brew', tone: 'good' };
+  if (score >= 50) return { label: 'Lukewarm', tone: 'meh' };
+  return { label: 'Spilled', tone: 'bad' };
+}

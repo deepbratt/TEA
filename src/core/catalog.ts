@@ -1,9 +1,10 @@
-import { existsSync, readFileSync, realpathSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
-import { isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import { parse } from 'yaml';
+import { resolveInside } from './paths.js';
 import type { Severity } from './types.js';
 
 /**
@@ -33,6 +34,8 @@ export interface CheckEntry {
   risk_at_scale?: string;
   /** Set by the loader: which catalog or pack the entry came from, and its root folder. */
   source?: { name: string; root: string };
+  /** Set by the loader: the fix_prompt template's text. */
+  promptTemplate?: string;
 }
 
 export interface PackSource {
@@ -91,26 +94,16 @@ async function readEntries(root: string, name: string, mode: 'public' | 'pack'):
     if (mode === 'pack' && (entry.pack !== 'pro' || !entry.rule || !entry.fix_prompt)) {
       throw new CatalogError(`${name}/${rel}: pack entries must be pro checks with a rule and a fix_prompt.`);
     }
-    if (entry.fix_prompt && !existsSync(resolvePrompt(root, entry.fix_prompt))) {
-      throw new CatalogError(`${name}/${rel}: fix_prompt not found: ${entry.fix_prompt}`);
+    let promptTemplate: string | undefined;
+    if (entry.fix_prompt) {
+      const file = resolveInside(root, entry.fix_prompt);
+      if (!file) throw new CatalogError(`${name}/${rel}: fix_prompt escapes its catalog: ${entry.fix_prompt}`);
+      if (!existsSync(file)) throw new CatalogError(`${name}/${rel}: fix_prompt not found: ${entry.fix_prompt}`);
+      promptTemplate = (await readFile(file, 'utf8')).trim();
     }
-    entries.push({ ...entry, source: { name, root } });
+    entries.push({ ...entry, source: { name, root }, promptTemplate });
   }
   return entries;
-}
-
-function resolvePrompt(root: string, prompt: string): string {
-  const abs = resolve(root, prompt);
-  const rel = relative(root, abs);
-  if (isAbsolute(prompt) || isAbsolute(rel) || rel === '..' || rel.startsWith('..' + sep) || rel.startsWith('../')) {
-    throw new CatalogError(`fix_prompt escapes its catalog: ${prompt}`);
-  }
-  // Follow symlinks too: the real file must still be inside the real catalog folder.
-  if (existsSync(abs)) {
-    const realRel = relative(realpathSync(root), realpathSync(abs));
-    if (isAbsolute(realRel) || realRel === '..' || realRel.startsWith('..' + sep)) throw new CatalogError(`fix_prompt escapes its catalog: ${prompt}`);
-  }
-  return abs;
 }
 
 export interface LoadCatalogOptions {
@@ -167,9 +160,21 @@ export function checkIdOf(findingId: string): string {
   return findingId.split(':')[0]!;
 }
 
-/** Fill a fix-prompt template. Unknown placeholders are left as they are. */
-export async function renderFixPrompt(entry: CheckEntry, vars: Record<string, string | undefined>): Promise<string | undefined> {
-  if (!entry.fix_prompt || !entry.source) return undefined;
-  const template = await readFile(resolvePrompt(entry.source.root, entry.fix_prompt), 'utf8');
-  return template.replace(/\{(\w+)\}/g, (m, k: string) => vars[k] ?? (k === 'file' ? 'the file that renders it' : m)).trim();
+export interface PromptVars {
+  route?: string;
+  /** The likely file, e.g. "app/pricing/page.tsx:12". */
+  file?: string;
+  /** Observed evidence, already wrapped in an untrusted-evidence block. */
+  evidence?: string;
+}
+
+const PROMPT_FALLBACK: Required<PromptVars> = { route: 'this page', file: 'the file that renders it', evidence: '' };
+
+/** Fill a check's fix-prompt template. Missing values get a neutral fallback. */
+export function renderFixPrompt(entry: CheckEntry | undefined, vars: PromptVars): string | undefined {
+  if (!entry?.promptTemplate) return undefined;
+  return entry.promptTemplate
+    .replace(/\{(route|file|evidence)\}/g, (_, k: keyof PromptVars) => vars[k] ?? PROMPT_FALLBACK[k])
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }

@@ -1,6 +1,6 @@
 import type { RepoContext, StackDetection, StackKind } from '../core/index.js';
 
-export interface StackRule {
+interface StackRule {
   id: string;
   name: string;
   kind: StackKind;
@@ -14,7 +14,7 @@ export interface StackRule {
  * Generic stack detection. Adding a stack is one entry here; plugins add route discovery
  * and checks on top for the stacks that need it.
  */
-export const STACK_RULES: StackRule[] = [
+const STACK_RULES: StackRule[] = [
   // Frameworks
   { id: 'nextjs', name: 'Next.js', kind: 'framework', deps: ['next'], files: [/(^|\/)next\.config\.(js|mjs|ts|cjs)$/] },
   { id: 'remix', name: 'Remix / React Router', kind: 'framework', deps: ['@remix-run/react', '@react-router/dev'] },

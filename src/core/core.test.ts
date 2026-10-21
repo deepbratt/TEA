@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   Masker,
+  looksSecretName,
   Scope,
   classifyUrl,
   expandEnv,
@@ -48,6 +49,15 @@ describe('Masker', () => {
     const value = ['abc', 'def', '123456'].join('');
     m.addFromEnv({ ['STRIPE_' + 'SECRET_KEY']: value, NODE_ENV: 'production' });
     expect(m.mask(`${value} production`)).toBe('**** production');
+  });
+
+  it('decides secret env var names by whole name parts', () => {
+    for (const n of ['STRIPE_SECRET_KEY', 'OPENAI_API_KEY', 'DB_PWD', 'GITHUB_TOKEN', 'SUPABASE_SERVICE_ROLE_KEY', 'DATABASE_URL', 'NEXTAUTH_SECRET', 'SMTP_PASS']) {
+      expect(looksSecretName(n), n).toBe(true);
+    }
+    for (const n of ['PWD', 'OLDPWD', 'AUTHOR_NAME', 'KEYBOARD_LAYOUT', 'PATH', 'HOME', 'NODE_ENV', 'TOKENIZER_MODE']) {
+      expect(looksSecretName(n), n).toBe(false);
+    }
   });
 
   it('deep-masks objects', () => {

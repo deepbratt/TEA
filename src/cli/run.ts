@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
-import { dirname, isAbsolute, relative, resolve } from 'node:path';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { dirname, isAbsolute, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { pathToFileURL } from 'node:url';
 import {
@@ -8,11 +8,14 @@ import {
   buildAppMap,
   classifyUrl,
   exceedsThreshold,
+  loadCatalog,
   loadConfig,
   parseConfig,
   log,
   masker,
   overallScore,
+  packsFromEnv,
+  resolveInside,
   scoreAreas,
   sortFindings,
   type Area,
@@ -86,17 +89,14 @@ export function resolveTarget(o: Pick<RunOptions, 'target' | 'repo' | 'url'>, cw
 export async function loadPlugins(names: string[], o: { baseDir: string; trusted: boolean }): Promise<{ plugins: TeaPlugin[]; ignored: string[] }> {
   if (!names.length) return { plugins: [], ignored: [] };
   if (!o.trusted) return { plugins: [], ignored: names };
-  const base = realpathSync(o.baseDir);
   const plugins: TeaPlugin[] = [];
   for (const name of names) {
     let spec = name;
     if (isAbsolute(name)) throw new UsageError(`Plugin path must be relative to the config file, not absolute: ${name}`);
     if (name.startsWith('.')) {
-      const file = resolve(base, name);
-      const real = existsSync(file) ? realpathSync(file) : file;
-      const rel = relative(base, real);
-      if (rel.startsWith('..') || isAbsolute(rel)) throw new UsageError(`Plugin path leaves the config folder: ${name}`);
-      spec = pathToFileURL(real).href;
+      const file = resolveInside(o.baseDir, name);
+      if (!file) throw new UsageError(`Plugin path leaves the config folder: ${name}`);
+      spec = pathToFileURL(file).href;
     }
     log.step(`Loading plugin ${name}`);
     const mod = await import(spec);
@@ -234,7 +234,8 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
       const redirected = pages.filter((p) => p.redirectedOutOfScope);
       if (redirected.length) notes.push(`${redirected.length} page(s) redirected outside the hosts TEA may test and were discarded: ${redirected.map((p) => p.path).join(', ')}.`);
       if (result.external.length) notes.push(`${result.external.length} link(s) to other sites were not opened (only the hosts you listed are tested).`);
-      findings.push(...crawlFindings(pages, { routes: scan?.routes, slowPageMs: effective.crawl.slowPageMs, baseUrl: url }));
+      const catalog = await loadCatalog(packsFromEnv());
+      findings.push(...crawlFindings(pages, { catalog, routes: scan?.routes, slowPageMs: effective.crawl.slowPageMs, baseUrl: url }));
       ran.add('functional').add('performance');
     }
   } finally {
@@ -332,14 +333,14 @@ export function restrictUntrustedConfig(c: TeaConfig): string[] {
 }
 
 function printSummary(r: Results, outDir: string): void {
-  log.info('');
-  log.info(r.summary);
+  log.result('');
+  log.result(r.summary);
   const top = topFindings(r.findings);
   if (top.length) {
-    log.info('\nTop issues:');
-    top.forEach((f, i) => log.info(`  ${i + 1}. [${f.severity}] ${f.title}${f.evidence?.file ? `  (${f.evidence.file})` : ''}`));
+    log.result('\nTop issues:');
+    top.forEach((f, i) => log.result(`  ${i + 1}. [${f.severity}] ${f.title}${f.evidence?.file ? `  (${f.evidence.file})` : ''}`));
   }
-  log.info(`\nFull report: ${resolve(outDir, 'report.html')}`);
+  log.result(`\nFull report: ${resolve(outDir, 'report.html')}`);
 }
 
 function printDryRun(p: { url?: string; repo?: string; maxPages: number; outDir: string; config: TeaConfig; login: boolean; ai: boolean }): void {

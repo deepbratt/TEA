@@ -9,3 +9,4 @@ export * from './routes.js';
 export * from './appmap.js';
 export * from './catalog.js';
 export * from './untrusted.js';
+export * from './paths.js';

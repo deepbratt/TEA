@@ -1,5 +1,5 @@
-import { sortFindings, type AppMap, type Finding, type Results, type Route } from '../core/index.js';
-import { AREA_LABEL, scoreVerdict, summaryBody, topFindings } from './summary.js';
+import { scoreVerdict, sortFindings, type AppMap, type Finding, type Results, type Route } from '../core/index.js';
+import { AREA_LABEL, summaryBody, topFindings } from './summary.js';
 
 const SEV_ICON: Record<Finding['severity'], string> = { critical: '🔴', high: '🟠', medium: '🟡', low: '🔵', info: '⚪' };
 

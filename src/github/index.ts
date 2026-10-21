@@ -1,3 +1,3 @@
-export { GitHubClient, GitHubError, GITHUB_API, validRepoRef, type RepoSummary } from './client.js';
-export { ghCliToken, startDeviceFlow, pollDeviceFlow, GITHUB_OAUTH, DEVICE_SCOPE, type DeviceCode, type DevicePoll } from './auth.js';
-export { cloneRepo, type CloneOptions } from './clone.js';
+export { GitHubClient, GitHubError, GITHUB_API, validRepoRef } from './client.js';
+export { ghCliToken, startDeviceFlow, pollDeviceFlow, GITHUB_OAUTH, type DeviceCode } from './auth.js';
+export { cloneRepo } from './clone.js';

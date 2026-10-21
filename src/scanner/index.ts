@@ -1,2 +1,2 @@
-export { crawl, canonicalUrl, type CrawlOptions, type CrawlResult } from './crawl.js';
-export { crawlFindings, type CrawlFindingOptions } from './findings.js';
+export { crawl, canonicalUrl } from './crawl.js';
+export { crawlFindings } from './findings.js';

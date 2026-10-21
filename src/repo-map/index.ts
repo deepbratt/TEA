@@ -6,10 +6,6 @@ import { firebase, payments, prisma, schemas, supabase } from './plugins/data.js
 import { django, nestjs, nodeServers, pythonWeb, rails } from './plugins/servers.js';
 import { astro, nextjs, nuxt, remix, spaRouter, sveltekit } from './plugins/web-frameworks.js';
 
-export { createRepoContext, walk, lineOf } from './context.js';
-export { detectStack, STACK_RULES, type StackRule } from './detect.js';
-export { isClientExposed, CLIENT_ENV_PREFIXES } from './generic.js';
-
 export const BUILTIN_PLUGINS: TeaPlugin[] = [
   nextjs, sveltekit, nuxt, astro, remix, spaRouter,
   nodeServers, nestjs, pythonWeb, django, rails,

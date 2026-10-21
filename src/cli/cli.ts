@@ -23,7 +23,7 @@ const int = (v: string) => {
 };
 const collect = (v: string, prev: string[] = []) => [...prev, v];
 
-export function buildProgram(): Command {
+function buildProgram(): Command {
   const program = new Command('tea-qa')
     .description('TEA: Test Everything Automatically. Spill the TEA on your app.')
     .version(VERSION)
