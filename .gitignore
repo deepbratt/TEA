@@ -2,12 +2,12 @@ node_modules/
 dist/
 *.tsbuildinfo
 .next/
-tea-report/
+tea-report*/
 coverage/
 .env
 .env.local
 !examples/**/.env*
 test-results/
-
-# private business docs
-Business/
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["src/index.ts", "src/cli/bin.ts", "scripts/*.mjs", "ui/app.js"],
+      "project": ["src/**/*.ts", "scripts/**/*.mjs", "ui/**/*.js"],
+      "ignoreDependencies": ["axe-core"]
+    }
+  },
+  "ignoreWorkspaces": ["examples/buggy-next-app"],
+  "ignoreExportsUsedInFile": true
+}
