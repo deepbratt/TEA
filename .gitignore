@@ -2,7 +2,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 .next/
-tea-report/
+tea-report*/
 coverage/
 .env
 .env.local

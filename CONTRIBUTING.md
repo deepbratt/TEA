@@ -4,25 +4,24 @@ Thanks for helping spill the TEA. TEA is for founders who can't write tests, so 
 
 ## Setup
 
-You need Node.js 22.13+ (for pnpm 11; TEA itself runs on Node 20+) and pnpm.
+You need Node.js 22+ and npm (TEA itself runs on Node 20+; its unit-test runner needs 22).
 
 ```bash
-pnpm install
-pnpm build
-pnpm --filter @tea-qa/scanner exec playwright install chromium
-pnpm test
+npm install          # install scripts are disabled in .npmrc (supply-chain safety)
+npm run build
+npm run browsers     # headless Chromium for the crawler
+npm test
 ```
 
 ## Try it against the example app
 
 ```bash
-pnpm example:build
-PORT=3000 pnpm example:start            # in one terminal
-pnpm tea run http://localhost:3000 --repo examples/buggy-nextjs
+npm run demo         # builds TEA and the example, starts it, runs TEA, verifies the seeded bugs
+npm run demo -- --skip-build --keep   # reuse builds and leave the example running
 node scripts/verify-example.mjs tea-report
 ```
 
-`examples/buggy-nextjs` has a bug planted for every check TEA ships (see its README). CI runs TEA against it and fails if any planted bug is missed. When you add a check, plant a bug for it and add it to `scripts/verify-example.mjs`.
+`examples/buggy-next-app` (Leaf & Kettle, a made-up tea shop) has a bug planted for every check in the plan, listed in `tea-seeded-bugs.json` with the step that catches it. CI runs `npm run demo`, which fails if a bug an existing check covers is missed, or if TEA reports anything that isn't a seeded bug. When you add a check, add `caughtBy` to its bugs in the manifest.
 
 ## Layout
 
@@ -45,7 +44,7 @@ node scripts/verify-example.mjs tea-report
 
 ## Pull requests
 
-Keep PRs focused, describe what a founder would notice, and make sure `pnpm build && pnpm lint && pnpm test` passes. CI also runs gitleaks over the whole history; only `examples/` may hold (deliberately fake) secrets, so build fake keys in tests at runtime.
+Keep PRs focused, describe what a founder would notice, and make sure `npm run build && npm run lint && npm test` passes. CI also runs gitleaks over the whole history; only `examples/` may hold (deliberately fake) secrets, so build fake keys in tests at runtime.
 
 ## Adding a check
 
