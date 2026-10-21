@@ -128,12 +128,16 @@ describe('local UI runs', () => {
     }
   });
 
-  it('reports a bad target as a failed run, not a crash', async () => {
-    const started = await authed('/api/runs', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url: 'http://127.0.0.1:1' }) });
+  it('reports a bad target as a failed run, not a crash, and masks credentials', async () => {
+    const started = await authed('/api/runs', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url: 'http://admin:s3cretpass@127.0.0.1:1' }) });
+    expect(started.body).not.toContain('s3cretpass');
     const { id } = JSON.parse(started.body);
     await authed(`/api/runs/${id}/events`);
     const run = JSON.parse((await authed(`/api/runs/${id}`)).body);
     expect(run.status).toBe('failed');
     expect(run.error).toMatch(/could not reach/);
+    expect(JSON.stringify(run)).not.toContain('s3cretpass');
+    const saved = (await import('node:fs')).readFileSync(join(dir, 'runs', id, 'run.json'), 'utf8');
+    expect(saved).not.toContain('s3cretpass');
   });
 });
