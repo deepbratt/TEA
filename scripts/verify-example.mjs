@@ -13,7 +13,7 @@ const dir = process.argv[2] ?? 'tea-report';
 const results = JSON.parse(readFileSync(join(dir, 'results.json'), 'utf8'));
 const appMap = JSON.parse(readFileSync(join(dir, 'app-map.json'), 'utf8'));
 const { bugs } = JSON.parse(readFileSync(join(root, 'examples/buggy-next-app/tea-seeded-bugs.json'), 'utf8'));
-const { loadCatalog } = await import(pathToFileURL(join(root, 'packages/core/dist/index.js')).href);
+const { loadCatalog } = await import(pathToFileURL(join(root, 'dist/core/index.js')).href);
 const catalog = await loadCatalog();
 
 const findingIds = new Set(results.findings.map((f) => f.id));

@@ -61,8 +61,8 @@ jobs:
         run: npm run demo
       - name: Dry run and code-only mode work too
         run: |
-          node packages/cli/dist/bin.js run examples/buggy-next-app --dry-run
-          node packages/cli/dist/bin.js run examples/buggy-next-app --no-start --out tea-report-code-only --fail-on none
+          node dist/cli/bin.js run examples/buggy-next-app --dry-run
+          node dist/cli/bin.js run examples/buggy-next-app --no-start --out tea-report-code-only --fail-on none
           test -f tea-report-code-only/feature-map.md
       - uses: actions/upload-artifact@v4
         if: always()

@@ -16,7 +16,7 @@ export default tseslint.config(
   },
   {
     // Code evaluated inside the browser page by Playwright.
-    files: ['packages/scanner/src/crawl.ts'],
+    files: ['src/scanner/crawl.ts', 'src/ui/page.ts'],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
   {

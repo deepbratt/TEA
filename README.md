@@ -27,7 +27,7 @@ You built your app with Lovable, Bolt, v0, Replit, Cursor, Windsurf or Claude Co
 
 ## Contents
 
-- [Quick start](#-quick-start-2-minutes) · [What you get](#-what-you-get) · [How it works](#-how-it-works) · [features.md](#-featuresmd-claimed-vs-reality) · [Fix modes](#-fix-modes) · [Checks are data](#-checks-are-data) · [Any stack](#-works-with-any-stack) · [tea.yaml](#-teayaml-optional) · [Responsible use](#-responsible-use) · [Roadmap](#-roadmap) · [Plugins](#-writing-a-plugin) · [Contributing](#-contributing)
+- [Quick start](#-quick-start-2-minutes) · [The TEA UI](#%EF%B8%8F-the-tea-ui) · [What you get](#-what-you-get) · [How it works](#-how-it-works) · [features.md](#-featuresmd-claimed-vs-reality) · [Fix modes](#-fix-modes) · [Checks are data](#-checks-are-data) · [Any stack](#-works-with-any-stack) · [tea.yaml](#-teayaml-optional) · [Responsible use](#-responsible-use) · [Roadmap](#-roadmap) · [Plugins](#-writing-a-plugin) · [Contributing](#-contributing)
 
 ## ⚡ Quick start (2 minutes)
 
@@ -40,6 +40,7 @@ You need Node.js 20 or newer.
 > git clone https://github.com/deepbratt/TEA.git && cd TEA
 > npm run demo                       # one command: installs, builds, tests the example app, shows the report
 > npm start -- https://your-app.com  # then test your own app (same options as `npx tea-qa run`)
+> npm run ui                         # or do it all from the local web UI
 > ```
 
 ```bash
@@ -57,6 +58,30 @@ npx tea-qa run https://your-app.com --repo ./your-app --dry-run
 ```
 
 Then open `tea-report/report.html`. The first run downloads a headless Chromium; if it doesn't, run `npx playwright install chromium`.
+
+## 🖥️ The TEA UI
+
+Prefer clicking to typing? `npx tea-qa ui` opens a local web app that does everything the CLI does:
+
+```bash
+npx tea-qa ui          # opens http://127.0.0.1:4747 in your browser
+```
+
+- Enter your app's URL and/or repo folder, and press **☕ Spill the TEA**.
+- Watch TEA work live: every page it visits and every step it takes.
+- Get the score, the counts by severity and the full report (with copy-paste fix prompts) right in the page.
+- Every run is kept under `tea-report/runs/`, so you can reopen past runs and compare before and after a fix.
+
+```mermaid
+flowchart LR
+    B[Your browser] -- "one-time token,<br/>then a same-site cookie" --> U[TEA UI<br/>127.0.0.1 only]
+    U -- "same engine<br/>as the CLI" --> E[TEA engine]
+    E -- "read-only crawl" --> A[Your app]
+    E --> R[(tea-report/runs)]
+    U -- "live progress<br/>(server-sent events)" --> B
+```
+
+The UI only listens on your own computer, needs the one-time link TEA prints, and refuses requests from other websites, so a page you have open elsewhere can't start a run or read your results. Starting your app from its dev script is a checkbox that's off by default.
 
 <!-- Demo GIF placeholder: a 20-second recording of `npx tea-qa run` and the report opening. -->
 <!-- <p align="center"><img src="docs/assets/demo.gif" alt="TEA demo" width="100%"></p> -->
@@ -148,10 +173,11 @@ flowchart LR
 ```
 
 <details>
-<summary><b>Package map</b></summary>
+<summary><b>Code map</b> (one package, one folder per part under <code>src/</code>)</summary>
 
 ```mermaid
 flowchart TB
+    UI[ui<br/>local web app] --> CLI
     CLI[cli<br/>tea-qa commands] --> CORE[core<br/>config, safety, scoring,<br/>check catalog, results schema]
     MCP[mcp<br/>MCP server · planned] --> CORE
     CORE --> MAP[repo-map<br/>stack, routes, endpoints]
@@ -249,7 +275,7 @@ TEA never merges and never pushes to main. Findings that touch auth, payments, s
 Every check is a catalog entry, not hard-coded logic, so checks can be added, ranked and updated without a TEA upgrade.
 
 ```yaml
-# packages/core/checks/functional/crawl.server-error.yaml
+# checks/functional/crawl.server-error.yaml
 id: crawl.server-error
 title: Page crashes with a server error (5xx)
 category: functional
@@ -340,7 +366,7 @@ npx tea-qa run [url-or-folder] [options]
   -v, --verbose / -q, --quiet
 ```
 
-`tea` is a short alias for `tea-qa`. Planned commands: `tea-qa retest`, `tea-qa mcp`, and `tea-qa run --targets targets.yaml` for many apps at once.
+`tea` is a short alias for `tea-qa`. `tea-qa ui [--port 4747] [--no-open]` opens the local web UI. Planned commands: `tea-qa retest`, `tea-qa mcp`, and `tea-qa run --targets targets.yaml` for many apps at once.
 
 </details>
 
@@ -403,7 +429,7 @@ Every LLM step will be optional and pluggable (OpenAI, Anthropic, Gemini, or loc
 A plugin adds knowledge about one stack, and switches on when that stack is detected:
 
 ```ts
-import { definePlugin } from '@tea-qa/core';
+import { definePlugin } from 'tea-qa';
 
 export default definePlugin({
   name: 'my-framework',

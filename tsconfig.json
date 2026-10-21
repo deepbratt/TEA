@@ -1,10 +1,15 @@
 {
-  "files": [],
-  "references": [
-    { "path": "packages/core" },
-    { "path": "packages/repo-map" },
-    { "path": "packages/scanner" },
-    { "path": "packages/report" },
-    { "path": "packages/cli" }
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "composite": false,
+    "declarationMap": false
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "src/**/*.test.ts"
   ]
 }
