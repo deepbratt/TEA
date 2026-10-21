@@ -35,7 +35,8 @@ TEA is one npm package (`tea-qa`) with one folder per part. The example app in `
 | `src/scanner` | Read-only URL scan: Playwright crawl and passive checks |
 | `src/report` | `results.json`, `report.md`, `report.html`, feature map, plain-English summary |
 | `src/cli` | The `tea-qa` / `tea` command and pipeline orchestration (`run()`) |
-| `src/ui` | The local web UI (`tea-qa ui`): a loopback-only server and a single self-contained page |
+| `src/ui` | The local web UI (`tea-qa ui`): a loopback-only server, a single self-contained page, and the folder picker |
+| `src/github` | Read-only GitHub access for the UI: connect (CLI login, device flow, token), repos, branches, live URLs, shallow clone |
 
 ## Rules
 

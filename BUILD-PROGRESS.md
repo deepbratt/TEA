@@ -29,7 +29,7 @@ The build follows 14 steps, one at a time. A step is ticked only when its tests 
 
 ## Notes
 
-- `tea-qa ui` (`npm run ui` from source) runs the same engine from a local web page on 127.0.0.1 with a one-time token; runs are kept in `tea-report/runs/`.
+- `tea-qa ui` (`npm run ui` from source) runs the same engine from a local web page on 127.0.0.1 with a one-time token; runs are kept in `tea-report/runs/`. Source code comes from a folder (with a folder picker) or a GitHub repo (connect via `gh` login, device flow with `TEA_GITHUB_CLIENT_ID`, or a read-only token; shallow read-only clone in `~/.tea-qa/repos`).
 
 - One package; `examples/*` is the only npm workspace. `.npmrc` sets `ignore-scripts=true` so dependency install scripts never run. `npm run demo` is the one-command end-to-end run.
 - Repo development needs Node 22+ (Vitest 5). The CLI targets Node 20+: CI runs the end-to-end demo on Node 20 and 22.

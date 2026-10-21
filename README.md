@@ -67,7 +67,10 @@ Prefer clicking to typing? `npx tea-qa ui` opens a local web app that does every
 npx tea-qa ui          # opens http://127.0.0.1:4747 in your browser
 ```
 
-- Enter your app's URL and/or repo folder, and press **☕ Spill the TEA**.
+- Enter your app's live URL and pick where the code is:
+  - **📁 Folder on this computer:** type a path or click **Browse…** to choose it.
+  - **🐙 GitHub repo:** connect GitHub, search your repos, pick a branch. TEA makes a shallow, read-only copy (it never writes to GitHub) and suggests live URLs from the repo's homepage and recent deployments (for example Vercel previews).
+- Press **☕ Spill the TEA**.
 - Watch TEA work live: every page it visits and every step it takes.
 - Get the score, the counts by severity and the full report (with copy-paste fix prompts) right in the page.
 - Every run is kept under `tea-report/runs/`, so you can reopen past runs and compare before and after a fix.
@@ -82,6 +85,16 @@ flowchart LR
 ```
 
 The UI only listens on your own computer, needs the one-time link TEA prints, and refuses requests from other websites, so a page you have open elsewhere can't start a run or read your results. Starting your app from its dev script is a checkbox that's off by default.
+
+**Connecting GitHub.** Three ways, all kept in memory only (never saved to disk) and masked everywhere:
+
+| Option | What you need |
+|---|---|
+| **Use my GitHub CLI login** | [`gh`](https://cli.github.com) installed and signed in (`gh auth login`). Zero setup. |
+| **Sign in with GitHub** | A GitHub OAuth App with *device flow* enabled; set its client id as `TEA_GITHUB_CLIENT_ID` before `tea-qa ui`. You enter a short code on github.com. |
+| **Paste a token** | A [fine-grained token](https://github.com/settings/personal-access-tokens/new) with read-only **Contents** and **Metadata** on the repos you want to test. |
+
+A repo cloned from GitHub has no installed dependencies, and TEA never installs them, so give TEA your app's live (or preview) URL to test it running; the code then points every issue at its file.
 
 <!-- Demo GIF placeholder: a 20-second recording of `npx tea-qa run` and the report opening. -->
 <!-- <p align="center"><img src="docs/assets/demo.gif" alt="TEA demo" width="100%"></p> -->

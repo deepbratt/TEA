@@ -6,6 +6,20 @@ import type { AddressInfo } from 'node:net';
 import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { log, mask, masker, onLog, SEVERITIES, type LogEvent, type Severity } from '../core/index.js';
 import { run, UsageError, VERSION } from '../cli/run.js';
+import { teaHome } from '../cli/notice.js';
+import {
+  cloneRepo,
+  ghCliToken,
+  GitHubClient,
+  GitHubError,
+  GITHUB_API,
+  GITHUB_OAUTH,
+  pollDeviceFlow,
+  startDeviceFlow,
+  validRepoRef,
+  type DeviceCode,
+} from '../github/index.js';
+import { listFolders } from './folders.js';
 import { renderPage } from './page.js';
 
 /**
@@ -18,6 +32,15 @@ export interface UiOptions {
   port?: number;
   /** Where runs and their reports are stored. */
   runsDir?: string;
+  /** Where GitHub repos are cloned (default: ~/.tea-qa/repos). */
+  cloneDir?: string;
+  /** OAuth App client id for "Sign in with GitHub" (device flow). Default: TEA_GITHUB_CLIENT_ID. */
+  githubClientId?: string;
+  /** For tests: GitHub endpoints and a stand-in for `gh auth token`. */
+  githubApi?: string;
+  githubOAuth?: string;
+  gitBase?: string;
+  ghToken?: () => Promise<string | null>;
 }
 
 export interface UiServer {
@@ -35,6 +58,8 @@ export interface RunInput {
   failOn?: Severity | 'none';
   start?: boolean;
   skip?: string[];
+  /** Test a GitHub repo: TEA makes a shallow read-only clone and uses it as the repo. */
+  github?: { owner: string; repo: string; branch?: string };
 }
 
 interface RunRecord {
@@ -116,7 +141,16 @@ export function parseRunInput(raw: unknown): RunInput {
   const r = raw as Record<string, unknown>;
   const str = (k: string) => (typeof r[k] === 'string' && (r[k] as string).trim() ? (r[k] as string).trim() : undefined);
   const input: RunInput = { url: str('url'), repo: str('repo') };
-  if (!input.url && !input.repo) throw new HttpError(400, 'Give TEA a URL, a repo folder, or both.');
+  if (r.github !== undefined && r.github !== null) {
+    const g = r.github as Record<string, unknown>;
+    const owner = typeof g.owner === 'string' ? g.owner : '';
+    const repo = typeof g.repo === 'string' ? g.repo : '';
+    const branch = typeof g.branch === 'string' && g.branch ? g.branch : undefined;
+    if (!validRepoRef(owner, repo, branch)) throw new HttpError(400, 'Not a valid GitHub repository or branch.');
+    if (input.repo) throw new HttpError(400, 'Choose a folder or a GitHub repo, not both.');
+    input.github = { owner, repo, ...(branch ? { branch } : {}) };
+  }
+  if (!input.url && !input.repo && !input.github) throw new HttpError(400, 'Give TEA a URL, a repo folder or GitHub repo, or both.');
   if (r.maxPages !== undefined) {
     const n = Number(r.maxPages);
     if (!Number.isInteger(n) || n < 1 || n > 500) throw new HttpError(400, 'Max pages must be between 1 and 500.');
@@ -168,6 +202,23 @@ export async function startUi(opts: UiOptions = {}): Promise<UiServer> {
   let busy = false;
   let origin = '';
 
+  // GitHub connection for this UI session: in memory only, never written to disk, always masked.
+  const cacheDir = resolve(opts.cloneDir ?? join(teaHome(), 'repos'));
+  const githubApi = opts.githubApi ?? GITHUB_API;
+  const githubOAuth = opts.githubOAuth ?? GITHUB_OAUTH;
+  const clientId = opts.githubClientId ?? process.env.TEA_GITHUB_CLIENT_ID ?? '';
+  const github: { token?: string; login?: string; via?: 'cli' | 'device' | 'token'; device?: DeviceCode } = {};
+
+  async function connectGitHub(token: string, via: 'cli' | 'device' | 'token'): Promise<void> {
+    masker.add(token);
+    const user = await new GitHubClient(token, githubApi).user();
+    Object.assign(github, { token, login: user.login, via, device: undefined });
+  }
+  const gh = () => {
+    if (!github.token) throw new HttpError(401, 'Connect GitHub first.');
+    return new GitHubClient(github.token, githubApi);
+  };
+
   const pushEvent = (record: RunRecord, e: LogEvent) => {
     if (record.events.length < MAX_EVENTS) record.events.push(e);
     for (const res of streams.get(record.id) ?? []) res.write(`event: log\ndata: ${JSON.stringify(e)}\n\n`);
@@ -192,9 +243,15 @@ export async function startUi(opts: UiOptions = {}): Promise<UiServer> {
     await save();
     void (async () => {
       try {
+        let repo = input.repo;
+        if (input.github) {
+          const { owner, repo: name, branch } = input.github;
+          log.step(`Cloning ${owner}/${name}${branch ? `@${branch}` : ''} from GitHub (shallow, read-only)`);
+          repo = await cloneRepo({ owner, repo: name, branch, token: github.token, cacheDir, gitBase: opts.gitBase });
+        }
         const outcome = await run({
           url: input.url,
-          repo: input.repo,
+          repo,
           out: record.dir,
           maxPages: input.maxPages,
           failOn: input.failOn ?? 'none',
@@ -277,6 +334,79 @@ export async function startUi(opts: UiOptions = {}): Promise<UiServer> {
       json(res, 202, publicRun(record));
       return;
     }
+    // Folder picker: folder names only, never file contents.
+    if (req.method === 'GET' && url.pathname === '/api/folders') {
+      try {
+        json(res, 200, await listFolders(url.searchParams.get('path') ?? undefined));
+      } catch (err) {
+        throw new HttpError(400, (err as Error).message);
+      }
+      return;
+    }
+
+    // GitHub: connect (CLI login, device flow, or a pasted token), list repos, branches, live URLs.
+    if (req.method === 'GET' && url.pathname === '/api/github') {
+      json(res, 200, { connected: !!github.token, login: github.login, via: github.via, deviceFlow: !!clientId });
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/github/connect') {
+      const body = (await readJson(req)) as { method?: string; token?: string };
+      if (body.method === 'cli') {
+        const token = await (opts.ghToken ?? ghCliToken)();
+        if (!token) throw new HttpError(400, 'No GitHub CLI login found. Install gh and run `gh auth login`, or use another option.');
+        await connectGitHub(token, 'cli');
+      } else if (body.method === 'token') {
+        const token = typeof body.token === 'string' ? body.token.trim() : '';
+        if (!/^[A-Za-z0-9_]{20,255}$/.test(token)) throw new HttpError(400, "That doesn't look like a GitHub token.");
+        await connectGitHub(token, 'token');
+      } else {
+        throw new HttpError(400, 'Unknown connect method.');
+      }
+      json(res, 200, { connected: true, login: github.login, via: github.via });
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/github/device') {
+      if (!clientId) throw new HttpError(400, 'Sign in with GitHub needs TEA_GITHUB_CLIENT_ID (a GitHub OAuth App with device flow enabled).');
+      const body = (await readJson(req)) as { action?: string };
+      if (body.action === 'start') {
+        github.device = await startDeviceFlow(clientId, githubOAuth);
+        json(res, 200, { userCode: github.device.userCode, verificationUri: github.device.verificationUri, interval: github.device.interval });
+        return;
+      }
+      if (!github.device) throw new HttpError(400, 'Start sign-in first.');
+      if (Date.now() > github.device.expiresAt) throw new HttpError(400, 'The code expired. Start again.');
+      const poll = await pollDeviceFlow(clientId, github.device.deviceCode, githubOAuth);
+      if (poll.status === 'done') {
+        await connectGitHub(poll.token, 'device');
+        json(res, 200, { status: 'done', login: github.login });
+      } else if (poll.status === 'failed') {
+        github.device = undefined;
+        json(res, 200, { status: 'failed', reason: poll.reason });
+      } else {
+        json(res, 200, { status: poll.status, interval: poll.status === 'slow_down' ? poll.interval : github.device.interval });
+      }
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/github/disconnect') {
+      for (const k of Object.keys(github)) delete (github as Record<string, unknown>)[k];
+      json(res, 200, { connected: false });
+      return;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/github/repos') {
+      const page = Math.max(1, Math.min(20, Number(url.searchParams.get('page') ?? 1) || 1));
+      json(res, 200, { repos: await gh().repos(page) });
+      return;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/github/repo') {
+      const owner = url.searchParams.get('owner') ?? '';
+      const repo = url.searchParams.get('repo') ?? '';
+      if (!validRepoRef(owner, repo)) throw new HttpError(400, 'Not a valid repository name.');
+      const client = gh();
+      const [branches, urls] = await Promise.all([client.branches(owner, repo), client.liveUrls(owner, repo).catch(() => [])]);
+      json(res, 200, { branches, urls });
+      return;
+    }
+
     const m = /^\/api\/runs\/([\w-]+)(\/events)?$/.exec(url.pathname);
     if (req.method === 'GET' && m) {
       const record = runs.get(m[1]!);
@@ -309,9 +439,11 @@ export async function startUi(opts: UiOptions = {}): Promise<UiServer> {
 
   const server = createServer((req, res) => {
     handle(req, res).catch((err) => {
-      const status = err instanceof HttpError ? err.status : 500;
+      const known = err instanceof HttpError || err instanceof GitHubError;
+      // GitHub failures are the user's to fix (token, access), not a TEA crash.
+      const status = err instanceof HttpError ? err.status : err instanceof GitHubError ? (err.status === 401 ? 401 : 502) : 500;
       if (status === 500) log.error(`UI error: ${(err as Error).message}`);
-      if (!res.headersSent) json(res, status, { error: err instanceof HttpError ? err.message : 'Something went wrong.' });
+      if (!res.headersSent) json(res, status, { error: known ? mask((err as Error).message) : 'Something went wrong.' });
       else res.end();
     });
   });
