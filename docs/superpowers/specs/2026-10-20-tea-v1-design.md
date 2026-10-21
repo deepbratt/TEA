@@ -51,7 +51,7 @@ before/after score card. That share is how TEA spreads.
 
 ## Architecture
 
-pnpm monorepo, TypeScript, Node 20+.
+npm workspaces monorepo, TypeScript, Node 20+.
 
 | Package | Role |
 |---|---|
@@ -100,7 +100,7 @@ are npm packages listed in `tea.yaml` `plugins:`.
 - Report skeleton: `report.html` (self-contained), `report.md`, `results.json`.
 - Code-only: if no URL, start the app locally only when deps are already installed
   (never run install); otherwise code-only discovery.
-- Demo: `examples/buggy-nextjs` deliberately buggy app, tested end to end in CI.
+- Demo: `examples/buggy-next-app` deliberately buggy app, tested end to end in CI (`npm run demo`).
 
 ## Decided by the builder (my calls)
 
@@ -116,5 +116,5 @@ are npm packages listed in `tea.yaml` `plugins:`.
 - Error pages don't also produce JS/console findings; "Failed to load resource" console lines
   are reported from the network instead (one bug, one finding).
 - Commander for CLI, `yaml` + `zod` for config, Vitest for tests, plain `tsc` builds.
-- Repo development needs Node 22.13+ (pnpm 11); the published CLI supports Node 20+ and CI
-  runs the tests on both.
+- Repo development needs Node 22+ (Vitest 5); the published CLI supports Node 20+ and CI
+  runs the end-to-end demo on both.

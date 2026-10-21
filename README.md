@@ -34,7 +34,13 @@ You built your app with Lovable, Bolt, v0, Replit, Cursor, Windsurf or Claude Co
 You need Node.js 20 or newer.
 
 > [!IMPORTANT]
-> TEA is not on npm yet. Until the first release, run it from source: clone this repo, run `pnpm install && pnpm build`, and use `pnpm tea` wherever this page says `npx tea-qa`.
+> TEA is not on npm yet. Until the first release, run it from source:
+>
+> ```bash
+> git clone https://github.com/deepbratt/TEA.git && cd TEA
+> npm run demo                       # one command: installs, builds, tests the example app, shows the report
+> npm start -- https://your-app.com  # then test your own app (same options as `npx tea-qa run`)
+> ```
 
 ```bash
 # 1. Test a live app (read-only)
@@ -77,7 +83,7 @@ Top issues:
  5. [medium] Broken link to /terms
 ```
 
-A real run against [`examples/buggy-nextjs`](examples/buggy-nextjs). Issue 1 is the classic launch bug: the pricing page loads, but shows no plans, so nobody can pay.
+A real run against [`examples/buggy-next-app`](examples/buggy-next-app), a made-up tea shop full of seeded bugs (`npm run demo` reproduces it). Issue 1 is the classic launch bug: the pricing page loads, but shows no plans, so nobody can pay.
 
 </td>
 <td width="45%" valign="top">
