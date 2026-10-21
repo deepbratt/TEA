@@ -4,7 +4,20 @@
  * well-known secret patterns (API keys, JWTs, private keys).
  */
 
-const SECRET_NAME = /(SECRET|TOKEN|PASSWORD|PASSWD|PWD|PRIVATE|API_?KEY|ACCESS_?KEY|CREDENTIAL|AUTH|SERVICE_ROLE|DSN|DATABASE_URL|CONNECTION_STRING)/i;
+/**
+ * Env var names that hold secrets, matched on whole name parts (split on _ or -), so
+ * STRIPE_SECRET_KEY and DB_PWD match but PWD (the current folder), AUTHOR or KEYBOARD don't.
+ */
+const SECRET_PARTS = new Set(['SECRET', 'SECRETS', 'TOKEN', 'TOKENS', 'PASSWORD', 'PASSWD', 'PASS', 'PWD', 'PRIVATE', 'KEY', 'APIKEY', 'CREDENTIAL', 'CREDENTIALS', 'AUTH', 'DSN', 'SALT', 'COOKIE', 'SESSION']);
+const SECRET_PHRASES = ['SERVICE_ROLE', 'DATABASE_URL', 'CONNECTION_STRING', 'ACCESS_KEY'];
+const NOT_SECRET = new Set(['PWD', 'OLDPWD', 'INIT_CWD']);
+
+export function looksSecretName(name: string): boolean {
+  const upper = name.toUpperCase();
+  if (NOT_SECRET.has(upper)) return false;
+  if (SECRET_PHRASES.some((p) => upper.includes(p))) return true;
+  return upper.split(/[_-]+/).some((part) => SECRET_PARTS.has(part));
+}
 
 const PATTERNS: RegExp[] = [
   /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g,
@@ -34,7 +47,7 @@ export class Masker {
   /** Register every env var whose name looks secret. */
   addFromEnv(env: NodeJS.ProcessEnv = process.env): void {
     for (const [name, value] of Object.entries(env)) {
-      if (value && SECRET_NAME.test(name)) this.add(value);
+      if (value && looksSecretName(name)) this.add(value);
     }
   }
 
@@ -75,9 +88,6 @@ export function redact(value: string): string {
   return `${value.slice(0, keep)}****`;
 }
 
-export function looksSecretName(name: string): boolean {
-  return SECRET_NAME.test(name);
-}
 
 /** Process-wide masker used by the logger and report writers. */
 export const masker = new Masker();

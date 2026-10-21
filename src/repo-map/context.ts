@@ -11,7 +11,7 @@ const IGNORED_DIRS = new Set([
 const MAX_FILES = 25_000;
 const MAX_READ_BYTES = 2 * 1024 * 1024;
 
-export async function walk(root: string): Promise<string[]> {
+async function walk(root: string): Promise<string[]> {
   const out: string[] = [];
   async function visit(dir: string): Promise<void> {
     if (out.length >= MAX_FILES) return;
@@ -104,6 +104,6 @@ export function lineOf(text: string, index: number): number {
   return line;
 }
 
-export const SOURCE_EXT = /\.(m?[jt]sx?|cjs|vue|svelte|astro|py|rb|php|go|java|kt|cs)$/;
+const SOURCE_EXT = /\.(m?[jt]sx?|cjs|vue|svelte|astro|py|rb|php|go|java|kt|cs)$/;
 export const isTestPath = (f: string) => /(\.test|\.spec|\.stories)\.[a-z]+$/.test(f) || /(^|\/)(__tests__|__fixtures__|tests?|e2e|cypress)\//.test(f);
 export const isSource = (f: string) => SOURCE_EXT.test(f) && !isTestPath(f);

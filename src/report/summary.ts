@@ -1,4 +1,4 @@
-import { countBySeverity, sortFindings, type Area, type Finding } from '../core/index.js';
+import { countBySeverity, scoreVerdict, sortFindings, type Area, type Finding } from '../core/index.js';
 
 export const AREA_LABEL: Record<Area, string> = {
   functional: 'Functional',
@@ -9,15 +9,6 @@ export const AREA_LABEL: Record<Area, string> = {
   load: 'Load',
   code: 'Code quality',
 };
-
-/** A one-word verdict for the score, in TEA voice. */
-export function scoreVerdict(score: number | null): { label: string; tone: 'great' | 'good' | 'meh' | 'bad' | 'none' } {
-  if (score === null) return { label: 'Not brewed yet', tone: 'none' };
-  if (score >= 90) return { label: 'Piping hot', tone: 'great' };
-  if (score >= 75) return { label: 'A good brew', tone: 'good' };
-  if (score >= 50) return { label: 'Lukewarm', tone: 'meh' };
-  return { label: 'Spilled', tone: 'bad' };
-}
 
 export function topFindings(findings: Finding[], n = 5): Finding[] {
   return sortFindings(findings.filter((f) => f.severity !== 'info')).slice(0, n);

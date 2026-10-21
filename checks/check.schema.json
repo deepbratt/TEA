@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/deepbratt/TEA/packages/core/checks/check.schema.json",
+  "$id": "https://github.com/deepbratt/TEA/checks/check.schema.json",
   "title": "TEA check catalog entry",
   "description": "One check. Free entries carry their rule and fix prompt. Pro entries in the public catalog are stubs: id, title, category, severity and pack only.",
   "type": "object",

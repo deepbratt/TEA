@@ -1,20 +1,10 @@
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { useTempDirs } from '../__tests__/temp.js';
 import { CatalogError, checkIdOf, loadCatalog, packsFromEnv, renderFixPrompt } from './index.js';
 
-const dirs: string[] = [];
-async function folder(files: Record<string, string>): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'tea-catalog-'));
-  dirs.push(root);
-  for (const [rel, content] of Object.entries(files)) {
-    await mkdir(dirname(join(root, rel)), { recursive: true });
-    await writeFile(join(root, rel), content);
-  }
-  return root;
-}
-afterAll(() => Promise.all(dirs.map((d) => rm(d, { recursive: true, force: true }))));
+const folder = useTempDirs('catalog');
 
 const proEntry = `id: auth.idor.deep
 title: Real pro IDOR probe
@@ -42,7 +32,7 @@ describe('built-in catalog', () => {
 
   it('renders fix prompts from templates', async () => {
     const c = await loadCatalog();
-    const text = await renderFixPrompt(c.get('crawl.server-error')!, { route: '/pricing', evidence: 'HTTP 500', file: 'app/pricing/page.tsx' });
+    const text = renderFixPrompt(c.get('crawl.server-error'), { route: '/pricing', evidence: 'HTTP 500', file: 'app/pricing/page.tsx' });
     expect(text).toContain('/pricing');
     expect(text).toContain('app/pricing/page.tsx');
     expect(text).not.toContain('{route}');
@@ -103,7 +93,7 @@ describe('pro packs', () => {
     expect(c.packs[0]!.loaded).toBe(true);
     expect(c.get('auth.idor.deep')).toMatchObject({ rule: 'pro:auth.idor.deep', version: 3 });
     expect(c.lockedPro.map((e) => e.id)).not.toContain('auth.idor.deep');
-    expect(await renderFixPrompt(c.get('auth.idor.deep')!, { route: '/api/orders/1' })).toBe('Fix /api/orders/1');
+    expect(renderFixPrompt(c.get('auth.idor.deep'), { route: '/api/orders/1' })).toBe('Fix /api/orders/1');
   });
 
   it('only accept full pro entries', async () => {

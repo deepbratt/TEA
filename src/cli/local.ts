@@ -72,7 +72,7 @@ export async function freePort(): Promise<number> {
   });
 }
 
-async function waitForHttp(url: string, timeoutMs: number, child: ChildProcess): Promise<boolean> {
+export async function waitForHttp(url: string, timeoutMs: number, child: ChildProcess): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (child.exitCode !== null) return false;
@@ -86,7 +86,7 @@ async function waitForHttp(url: string, timeoutMs: number, child: ChildProcess):
   return false;
 }
 
-function killTree(child: ChildProcess): Promise<void> {
+export function killTree(child: ChildProcess): Promise<void> {
   return new Promise((resolve) => {
     if (child.exitCode !== null || !child.pid) return resolve();
     child.once('exit', () => resolve());

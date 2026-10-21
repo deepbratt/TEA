@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process';
 export const GITHUB_OAUTH = 'https://github.com';
 
 /** Read-only scope for the OAuth device flow: repo contents and metadata. */
-export const DEVICE_SCOPE = 'repo read:user';
+const DEVICE_SCOPE = 'repo read:user';
 
 /** The token of the GitHub CLI (`gh auth token`), if gh is installed and signed in. */
 export function ghCliToken(timeoutMs = 10_000): Promise<string | null> {

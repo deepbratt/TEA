@@ -1,7 +1,8 @@
 import { mask } from './mask.js';
 
 export type LogLevel = 'quiet' | 'normal' | 'verbose';
-export type LogKind = 'info' | 'step' | 'debug' | 'warn' | 'error';
+/** `result` is the end-of-run summary printed for the terminal; the UI shows its own instead. */
+export type LogKind = 'info' | 'step' | 'debug' | 'warn' | 'error' | 'result';
 
 export interface LogEvent {
   kind: LogKind;
@@ -32,15 +33,20 @@ function emit(kind: LogKind, raw: string): string {
   return message;
 }
 
+function print(line: string): void {
+  if (level !== 'quiet') process.stdout.write(`${line}\n`);
+}
+
 /** All TEA output goes through here so secrets are always masked. */
 export const log = {
   info(msg: string): void {
-    const m = emit('info', msg);
-    if (level !== 'quiet') process.stdout.write(m + '\n');
+    print(emit('info', msg));
   },
   step(msg: string): void {
-    const m = emit('step', msg);
-    if (level !== 'quiet') process.stdout.write(`☕ ${m}\n`);
+    print(`☕ ${emit('step', msg)}`);
+  },
+  result(msg: string): void {
+    print(emit('result', msg));
   },
   debug(msg: string): void {
     const m = emit('debug', msg);

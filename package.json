@@ -18,7 +18,8 @@
   },
   "files": [
     "dist",
-    "checks"
+    "checks",
+    "ui"
   ],
   "engines": {
     "node": ">=20"
@@ -40,8 +41,8 @@
     "examples/*"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -53,7 +54,8 @@
     "demo": "node scripts/demo.mjs",
     "example:build": "npm run build -w buggy-next-app",
     "example:start": "npm run start -w buggy-next-app",
-    "verify:example": "node scripts/verify-example.mjs"
+    "verify:example": "node scripts/verify-example.mjs",
+    "knip": "knip"
   },
   "dependencies": {
     "ajv": "^8.17.1",
@@ -65,8 +67,10 @@
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@types/node": "^22.20.5",
+    "axe-core": "^4.14.0",
     "eslint": "^9.39.5",
     "globals": "^17.13.0",
+    "knip": "^6.42.1",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.72.0",
     "vite": "^7.3.7",

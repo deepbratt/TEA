@@ -3,7 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { buildAppMap, masker, overallScore, scoreAreas, type Finding, type Results } from '../core/index.js';
-import { plainSummary, renderHtml, renderMarkdown, scoreVerdict, writeReport } from './index.js';
+import { plainSummary, renderHtml, renderMarkdown, writeReport } from './index.js';
+import { scoreVerdict } from '../core/index.js';
 
 const findings: Finding[] = [
   {

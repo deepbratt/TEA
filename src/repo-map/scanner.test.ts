@@ -1,24 +1,8 @@
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { useTempDirs } from '../__tests__/temp.js';
 import { scanRepo } from './index.js';
 
-const dirs: string[] = [];
-
-async function repo(files: Record<string, string>): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'tea-scan-'));
-  dirs.push(root);
-  for (const [rel, content] of Object.entries(files)) {
-    await mkdir(dirname(join(root, rel)), { recursive: true });
-    await writeFile(join(root, rel), content);
-  }
-  return root;
-}
-
-afterAll(async () => {
-  await Promise.all(dirs.map((d) => rm(d, { recursive: true, force: true })));
-});
+const repo = useTempDirs('scan');
 
 const pkg = (deps: Record<string, string>) => JSON.stringify({ name: 'x', dependencies: deps });
 const paths = (r: { routes: { path: string; kind: string }[] }, kind: string) =>

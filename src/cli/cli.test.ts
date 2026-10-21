@@ -1,26 +1,15 @@
 import { createServer, type Server } from 'node:http';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { setLogLevel } from '../core/index.js';
-import { planLocalStart, resolveTarget, run, UsageError } from './index.js';
-import { loadPlugins, restrictUntrustedConfig } from './run.js';
-import { parseConfig } from '../core/index.js';
+import { parseConfig, setLogLevel } from '../core/index.js';
+import { useTempDirs } from '../__tests__/temp.js';
+import { loadPlugins, resolveTarget, restrictUntrustedConfig, run, UsageError } from './run.js';
 import { showNoticeOnce } from './notice.js';
-import { appEnv } from './local.js';
+import { appEnv, planLocalStart } from './local.js';
 
-const dirs: string[] = [];
-async function tmp(files: Record<string, string> = {}): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'tea-cli-'));
-  dirs.push(root);
-  for (const [rel, content] of Object.entries(files)) {
-    await mkdir(dirname(join(root, rel)), { recursive: true });
-    await writeFile(join(root, rel), content);
-  }
-  return root;
-}
+const tmp = useTempDirs('cli');
 
 let server: Server;
 let base: string;
@@ -46,7 +35,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   server?.close();
-  await Promise.all(dirs.map((d) => rm(d, { recursive: true, force: true })));
 });
 
 describe('responsible-use notice', () => {

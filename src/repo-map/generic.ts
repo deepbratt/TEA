@@ -2,7 +2,7 @@ import { isDynamicPath, normalisePath, type Discovery, type EnvVar, type FormInf
 import { isSource, isTestPath, lineOf } from './context.js';
 
 /** Prefixes that frameworks inline into the browser bundle. */
-export const CLIENT_ENV_PREFIXES = ['NEXT_PUBLIC_', 'VITE_', 'EXPO_PUBLIC_', 'REACT_APP_', 'NUXT_PUBLIC_', 'PUBLIC_', 'GATSBY_', 'VUE_APP_'];
+const CLIENT_ENV_PREFIXES = ['NEXT_PUBLIC_', 'VITE_', 'EXPO_PUBLIC_', 'REACT_APP_', 'NUXT_PUBLIC_', 'PUBLIC_', 'GATSBY_', 'VUE_APP_'];
 
 const ENV_PATTERNS = [
   /process\.env\.([A-Z_][A-Z0-9_]*)/g,
@@ -19,7 +19,7 @@ const ENV_PATTERNS = [
 const ENV_FILE = /(^|\/)\.env(\.[\w.-]+)?$/;
 const ENV_TEMPLATE = /\.(example|sample|template|dist|defaults)$/;
 
-export function isClientExposed(name: string): boolean {
+function isClientExposed(name: string): boolean {
   return CLIENT_ENV_PREFIXES.some((p) => name.startsWith(p));
 }
 

@@ -1,5 +1,9 @@
-import { countBySeverity, sortFindings, type AppMap, type Finding, type Results, type Route } from '../core/index.js';
-import { AREA_LABEL, scoreVerdict, summaryBody, topFindings } from './summary.js';
+import { readFileSync } from 'node:fs';
+import { countBySeverity, scoreVerdict, sortFindings, type AppMap, type Finding, type Results, type Route } from '../core/index.js';
+import { AREA_LABEL, summaryBody, topFindings } from './summary.js';
+
+/** The same design tokens as the local UI, inlined so a report stays one self-contained file. */
+const THEME_CSS = readFileSync(new URL('../../ui/theme.css', import.meta.url), 'utf8');
 
 const esc = (s: unknown) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -56,39 +60,36 @@ export function renderHtml(results: Results, appMap: AppMap): string {
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TEA report: ${results.score ?? '–'}/100</title>
 <style>
-:root{--bg:#faf6ef;--panel:#fff;--ink:#2b1d12;--muted:#7a6a5c;--line:#eadfce;--brand:#b5651d;--brand-2:#e8a33d;
---crit:#c0262d;--high:#e0662b;--med:#d9a21b;--low:#3b7fc4;--info:#8a8a8a;--ok:#2f8f4e;--code:#f3ece1}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#17110c;--panel:#221911;--ink:#f4ebe0;--muted:#b3a291;--line:#3a2c20;--code:#2c2117}}
-:root[data-theme=dark]{--bg:#17110c;--panel:#221911;--ink:#f4ebe0;--muted:#b3a291;--line:#3a2c20;--code:#2c2117}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-main{max-width:1080px;margin:0 auto;padding:24px 16px 64px}a{color:var(--brand)}code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px}
-code{background:var(--code);padding:1px 5px;border-radius:4px}
-.hero{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px}
-.brand{font-weight:800;letter-spacing:.04em;color:var(--brand);text-transform:uppercase;font-size:12px}.hero h1{margin:4px 0 8px;font-size:28px;line-height:1.2}
-.verdict{display:inline-block;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--code);margin-bottom:8px}
-.ring{width:150px;height:150px}.ring-bg{fill:none;stroke:var(--line);stroke-width:12}.ring-fg{fill:none;stroke:var(--brand-2);stroke-width:12;stroke-linecap:round}
-.tone-bad .ring-fg{stroke:var(--crit)}.tone-meh .ring-fg{stroke:var(--med)}.tone-good .ring-fg{stroke:var(--brand-2)}.tone-great .ring-fg{stroke:var(--ok)}
-.ring-num{font:800 36px system-ui;text-anchor:middle;fill:var(--ink)}.ring-of{font:600 13px system-ui;text-anchor:middle;fill:var(--muted)}
+${THEME_CSS}
+main{max-width:1080px;margin:0 auto;padding:24px 16px 64px}code,pre,.mono{font-family:var(--font-mono);font-size:13px}
+main{max-width:1080px;margin:0 auto;padding:24px 16px 64px}a{color:var(--accent)}code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px}
+code{background:var(--tint);padding:1px 5px;border-radius:4px}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px}
+.brand{font-weight:600;color:var(--accent);font-size:13px}.hero h1{margin:4px 0 8px;font:600 30px/1.2 var(--font-display)}h2{font-family:var(--font-display)}
+.verdict{display:inline-block;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--tint);margin-bottom:8px}
+.ring{width:150px;height:150px}.ring-bg{fill:none;stroke:var(--line);stroke-width:12}.ring-fg{fill:none;stroke:var(--tea-good);stroke-width:12;stroke-linecap:round}
+.tone-bad .ring-fg{stroke:var(--tea-bad)}.tone-meh .ring-fg{stroke:var(--tea-meh)}.tone-good .ring-fg{stroke:var(--tea-good)}.tone-great .ring-fg{stroke:var(--tea-great)}
+.ring-num{font:600 38px var(--font-display);text-anchor:middle;fill:var(--ink)}.ring-of{font:500 13px var(--font-ui);text-anchor:middle;fill:var(--muted)}
 .counts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.count{font-size:13px;padding:2px 10px;border-radius:999px;border:1px solid var(--line)}
 h2{margin:36px 0 12px;font-size:20px}.areas{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
-.area-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}.area-card .n{font-size:26px;font-weight:800}.area-card.not-run .n{font-size:14px;color:var(--muted);font-weight:600;padding:8px 0}
+.area-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}.area-card .n{font-size:26px;font-weight:800}.area-card.not-run .n{font-size:14px;color:var(--muted);font-weight:600;padding:8px 0}
 .area-card .l{color:var(--muted);font-size:13px}
-.issue{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--info);border-radius:12px;padding:14px 16px;margin:10px 0}
+.issue{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--info);border-radius:12px;padding:14px 16px;margin:10px 0}
 .issue.sev-critical{border-left-color:var(--crit)}.issue.sev-high{border-left-color:var(--high)}.issue.sev-medium{border-left-color:var(--med)}.issue.sev-low{border-left-color:var(--low)}
 .issue header{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.issue h3{flex-basis:100%;margin:4px 0 0;font-size:16px}
-.badge{font-size:11px;font-weight:800;text-transform:uppercase;color:#fff;padding:2px 8px;border-radius:6px;background:var(--info)}
+.badge{font-size:11.5px;font-weight:700;color:#fff;padding:2px 8px;border-radius:6px;background:var(--info)}
 .badge.sev-critical{background:var(--crit)}.badge.sev-high{background:var(--high)}.badge.sev-medium{background:var(--med);color:#2b1d12}.badge.sev-low{background:var(--low)}
 .area{font-size:12px;color:var(--muted)}.issue-body{display:grid;grid-template-columns:1fr 220px;gap:16px}.issue-body p{margin:8px 0}.meta{font-size:13px;color:var(--muted)}
 .shot img{width:100%;max-height:200px;object-fit:cover;object-position:top;border:1px solid var(--line);border-radius:8px}
-.fix{margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden}.fix-head{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--code);font-size:13px}
-.fix pre{margin:0;padding:10px;white-space:pre-wrap;word-break:break-word}.copy{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:2px 10px;cursor:pointer}
+.fix{margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden}.fix-head{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--tint);font-size:13px}
+.fix pre{margin:0;padding:10px;white-space:pre-wrap;word-break:break-word}.copy{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:2px 10px;cursor:pointer}
 details{margin:6px 0}summary{cursor:pointer;color:var(--muted);font-size:13px}
-table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px}
-th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:12.5px;color:var(--muted)}
 .table-wrap{overflow-x:auto}.ok{color:var(--ok);font-weight:600}.bad{color:var(--crit);font-weight:600}.muted{color:var(--muted)}
-.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px}.chip small{color:var(--muted)}
-.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}.fact{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}.fact b{display:block;font-size:12px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}.gallery figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px}.chip small{color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}.fact{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}.fact b{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}.gallery figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .gallery img{width:100%;height:140px;object-fit:cover;object-position:top;display:block}.gallery figcaption{padding:6px 10px;font-size:13px}
 footer{margin-top:48px;color:var(--muted);font-size:13px;text-align:center}
 @media (max-width:720px){.hero{grid-template-columns:1fr;text-align:center}.ring{margin:0 auto}.counts{justify-content:center}.issue-body{grid-template-columns:1fr}}
@@ -97,12 +98,12 @@ footer{margin-top:48px;color:var(--muted);font-size:13px;text-align:center}
 <section class="hero tone-${v.tone}">
   ${ring(results.score)}
   <div>
-    <div class="brand">TEA · Test Everything Automatically</div>
+    <div class="brand">TEA, Test Everything Automatically</div>
     <h1>Here's the TEA on your app: ${results.score ?? '–'}/100</h1>
     <span class="verdict">${esc(v.label)}</span>
     <p>${esc(summaryBody(results.summary))}</p>
     <div class="counts">${(['critical', 'high', 'medium', 'low'] as const).map((s) => `<span class="count">${counts[s]} ${s}</span>`).join('')}</div>
-    <p class="meta">${esc([results.target.url, results.target.repo].filter(Boolean).join(' + '))} · ${esc(results.startedAt)}</p>
+    <p class="meta">Tested ${esc([results.target.url, results.target.repo].filter(Boolean).join(' + '))} on ${esc(new Date(results.startedAt).toUTCString())}</p>
   </div>
 </section>
 
@@ -138,7 +139,7 @@ ${appMap.pages.some((p) => p.screenshot) ? `<h2>Pages TEA visited (${appMap.page
     .map((p) => `<figure><a href="${safeHref(p.screenshot)}"><img loading="lazy" src="${safeHref(p.screenshot)}" alt="Screenshot of ${esc(p.path)}"></a><figcaption><code>${esc(p.path)}</code> ${p.status && p.status >= 400 ? `<span class="bad">${p.status}</span>` : `<span class="muted">${p.status ?? ''}${p.loadMs ? ` · ${(p.loadMs / 1000).toFixed(1)}s` : ''}</span>`}</figcaption></figure>`)
     .join('')}</div>` : ''}
 
-<footer>Made with TEA ${esc(results.tool.version)} · <a href="https://github.com/deepbratt/TEA">github.com/deepbratt/TEA</a> · Spill the TEA on your app.</footer>
+<footer>Made with TEA ${esc(results.tool.version)}, the open-source QA tester: <a href="https://github.com/deepbratt/TEA">github.com/deepbratt/TEA</a></footer>
 </main>
 <script>
 document.querySelectorAll('.copy').forEach(function(b){b.addEventListener('click',function(){var t=b.closest('.fix').querySelector('pre').textContent;
