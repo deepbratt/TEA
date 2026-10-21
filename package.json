@@ -1,44 +1,75 @@
 {
-  "name": "tea-qa-monorepo",
-  "private": true,
+  "name": "tea-qa",
+  "version": "0.1.0",
   "description": "TEA: Test Everything Automatically. Spill the TEA on your app.",
   "license": "MIT",
   "type": "module",
+  "bin": {
+    "tea-qa": "dist/cli/bin.js",
+    "tea": "dist/cli/bin.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "checks"
+  ],
   "engines": {
     "node": ">=20"
   },
+  "keywords": [
+    "qa",
+    "testing",
+    "playwright",
+    "security",
+    "vibe-coding",
+    "ai",
+    "e2e"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deepbratt/TEA.git"
+  },
+  "workspaces": [
+    "examples/*"
+  ],
   "scripts": {
-    "build": "tsc -b",
-    "typecheck": "tsc -b --pretty",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "tsc -b --clean",
-    "tea": "node packages/cli/dist/bin.js",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "start": "npm run build --silent && node dist/cli/bin.js run",
+    "ui": "npm run build --silent && node dist/cli/bin.js ui",
+    "tea": "node dist/cli/bin.js",
     "browsers": "playwright install chromium",
     "demo": "node scripts/demo.mjs",
     "example:build": "npm run build -w buggy-next-app",
     "example:start": "npm run start -w buggy-next-app",
-    "verify:example": "node scripts/verify-example.mjs",
-    "start": "npm run build --silent && node packages/cli/dist/bin.js run"
+    "verify:example": "node scripts/verify-example.mjs"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "commander": "^12.1.0",
+    "playwright": "^1.49.0",
+    "yaml": "^2.6.1",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@types/node": "^22.20.5",
     "eslint": "^9.39.5",
     "globals": "^17.13.0",
-    "playwright": "^1.49.0",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.72.0",
     "vite": "^7.3.7",
     "vitest": "^5.0.5"
-  },
-  "workspaces": [
-    "packages/core",
-    "packages/repo-map",
-    "packages/scanner",
-    "packages/report",
-    "packages/cli",
-    "examples/*"
-  ]
+  }
 }

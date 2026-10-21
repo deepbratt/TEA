@@ -83,7 +83,7 @@ try {
   await waitFor(url, 90_000, app);
 
   say('Spilling the TEA');
-  await run('node', ['packages/cli/dist/bin.js', 'run', url, '--repo', 'examples/buggy-next-app', '--out', 'tea-report', '--fail-on', 'none']);
+  await run('node', ['dist/cli/bin.js', 'run', url, '--repo', 'examples/buggy-next-app', '--out', 'tea-report', '--fail-on', 'none']);
   say('Checking TEA caught every seeded bug it should');
   await run('node', ['scripts/verify-example.mjs', 'tea-report']);
   say(`Done. Open ${join(root, 'tea-report', 'report.html')}`);

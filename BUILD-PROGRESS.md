@@ -4,7 +4,7 @@ The build follows 14 steps, one at a time. A step is ticked only when its tests 
 
 **Repo split.** This repo (`deepbratt/TEA`) is the public, MIT-licensed engine: CLI, scanners, the check catalog with all **free** checks, the report, retest, MCP and the GitHub Action. Paid **pro** checks appear here only as stub catalog entries (`pack: pro`, id and title, no rule, no prompt). Their real rules, the ranked fix prompts and TEA Cloud live in the private `deepbratt/Tea-paid` repo.
 
-**Package map.** `cli`, `core`, `scanner` (URL scan), `repo-map` (repo discovery: stack, routes, endpoints, forms, env var names; added to the plan's map because every later step needs it), `report`, plus `docs-reader`, `spec`, `codehealth`, `prodready`, `fix`, `mcp` and `runners/{web,mobile,desktop}`, each created in its step.
+**Code map.** One npm package (`tea-qa`), one folder per part of the plan's package map: `src/cli`, `src/core`, `src/scanner` (URL scan), `src/repo-map` (repo discovery: stack, routes, endpoints, forms, env var names; added because every later step needs it), `src/report`, `src/ui` (local web UI, added on request), plus `src/docs-reader`, `src/spec`, `src/codehealth`, `src/prodready`, `src/fix`, `src/mcp` and `src/runners/{web,mobile,desktop}`, each created in its step. The check catalog lives in `checks/`.
 
 ## Steps
 
@@ -29,7 +29,9 @@ The build follows 14 steps, one at a time. A step is ticked only when its tests 
 
 ## Notes
 
-- npm workspaces; `.npmrc` sets `ignore-scripts=true` so dependency install scripts never run. `npm run demo` is the one-command end-to-end run.
+- `tea-qa ui` (`npm run ui` from source) runs the same engine from a local web page on 127.0.0.1 with a one-time token; runs are kept in `tea-report/runs/`.
+
+- One package; `examples/*` is the only npm workspace. `.npmrc` sets `ignore-scripts=true` so dependency install scripts never run. `npm run demo` is the one-command end-to-end run.
 - Repo development needs Node 22+ (Vitest 5). The CLI targets Node 20+: CI runs the end-to-end demo on Node 20 and 22.
 - Code-only mode starts the target app only with consent (`--start` or a yes at the prompt), and never runs installs.
 - Plugins listed in a repo's own `tea.yaml` are not loaded unless the user passes `--config` or `--trust-repo-config`.

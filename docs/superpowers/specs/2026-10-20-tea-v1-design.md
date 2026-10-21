@@ -51,7 +51,7 @@ before/after score card. That share is how TEA spreads.
 
 ## Architecture
 
-npm workspaces monorepo, TypeScript, Node 20+.
+One npm package (`tea-qa`) with one folder per part under `src/`, TypeScript, Node 20+. (Originally a multi-package monorepo; merged into one codebase on 2026-10-21, with a local web UI added.)
 
 | Package | Role |
 |---|---|
