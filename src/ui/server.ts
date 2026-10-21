@@ -4,7 +4,7 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
-import { log, onLog, SEVERITIES, type LogEvent, type Severity } from '../core/index.js';
+import { log, mask, masker, onLog, SEVERITIES, type LogEvent, type Severity } from '../core/index.js';
 import { run, UsageError, VERSION } from '../cli/run.js';
 import { renderPage } from './page.js';
 
@@ -134,8 +134,9 @@ export function parseRunInput(raw: unknown): RunInput {
   return input;
 }
 
+/** Everything the UI stores or sends is masked: URLs can carry credentials, errors can quote keys. */
 function publicRun(r: RunRecord) {
-  return { id: r.id, status: r.status, input: r.input, startedAt: r.startedAt, finishedAt: r.finishedAt, score: r.score, counts: r.counts, summary: r.summary, error: r.error };
+  return masker.maskDeep({ id: r.id, status: r.status, input: r.input, startedAt: r.startedAt, finishedAt: r.finishedAt, score: r.score, counts: r.counts, summary: r.summary, error: r.error });
 }
 
 async function loadHistory(runsDir: string): Promise<RunRecord[]> {
@@ -209,7 +210,7 @@ export async function startUi(opts: UiOptions = {}): Promise<UiServer> {
         record.counts = counts;
       } catch (err) {
         record.status = 'failed';
-        record.error = err instanceof UsageError ? err.message : `TEA crashed: ${(err as Error).message}`;
+        record.error = mask(err instanceof UsageError ? err.message : `TEA crashed: ${(err as Error).message}`);
         pushEvent(record, { kind: 'error', message: record.error, at: new Date().toISOString() });
       } finally {
         unsubscribe();
