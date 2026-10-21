@@ -1,0 +1,62 @@
+// Leaf & Kettle data model. The app uses an in-memory stand-in (lib/db.ts) with the same API,
+// so the example runs without a database; the schema is what a real deployment would migrate.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id       String  @id
+  email    String  @unique
+  name     String
+  role     String  @default("customer")
+  orders   Order[]
+  reviews  Review[]
+}
+
+model Product {
+  id     String  @id
+  name   String
+  price  Int
+  origin String
+  items  OrderItem[]
+}
+
+// BUG (missing index): orders are always filtered by userId and sorted by createdAt,
+// but there is no @@index([userId, createdAt]).
+model Order {
+  id        String      @id
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  status    String
+  createdAt DateTime    @default(now())
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+}
+
+model Review {
+  id     String @id
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  body   String
+  rating Int
+}
+
+model PasswordReset {
+  token  String @id
+  userId String
+  // BUG (reset token never expires): no expiresAt and no usedAt.
+}

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>TEA: Test Everything Automatically</title>
+  <link rel="icon" href="/assets/cup.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/theme.css">
+  <link rel="stylesheet" href="/assets/app.css">
+  <script type="module" src="/assets/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#result-panel">Skip to results</a>
+  <header class="top">
+    <img class="top-cup" src="/assets/cup.svg" alt="" width="28" height="28">
+    <p class="brand"><b>TEA</b> <span>Test Everything Automatically</span></p>
+    <p class="top-meta" id="version"></p>
+  </header>
+
+  <main class="layout">
+    <section class="brew" aria-labelledby="brew-title">
+      <h1 id="brew-title" class="visually-hidden">Test an app</h1>
+      <form id="form" novalidate autocomplete="off">
+        <ol class="steps">
+          <li class="step">
+            <h2 class="step-title"><span class="step-n" aria-hidden="true">1</span><label for="url">Where is your app running?</label></h2>
+            <input id="url" name="url" type="url" inputmode="url" placeholder="https://your-app.com" aria-describedby="url-help">
+            <p class="help" id="url-help">TEA only opens pages here. It never submits forms or changes data.</p>
+            <div class="suggest" id="url-suggest" aria-label="Suggested URLs"></div>
+          </li>
+
+          <li class="step">
+            <h2 class="step-title"><span class="step-n" aria-hidden="true">2</span>Where is the code? <span class="optional">Optional</span></h2>
+            <p class="help">With the code, every issue points to the file that most likely causes it.</p>
+            <div class="tabs" role="tablist" aria-label="Source code">
+              <button type="button" role="tab" id="tab-folder" aria-controls="pane-folder" aria-selected="true">Folder on this computer</button>
+              <button type="button" role="tab" id="tab-github" aria-controls="pane-github" aria-selected="false" tabindex="-1">GitHub repo</button>
+            </div>
+
+            <div role="tabpanel" id="pane-folder" aria-labelledby="tab-folder" class="pane">
+              <div class="field-row">
+                <input id="repo" name="repo" type="text" aria-label="Folder path" placeholder="C:\code\my-app or ./my-app" spellcheck="false">
+                <button type="button" class="btn" id="browse">Browse</button>
+              </div>
+            </div>
+
+            <div role="tabpanel" id="pane-github" aria-labelledby="tab-github" class="pane" hidden>
+              <div id="gh-off">
+                <p class="help">TEA makes a read-only copy of one branch and never writes to GitHub. Your login stays in memory and is never saved.</p>
+                <div class="stack">
+                  <button type="button" class="btn" id="gh-cli">Use my GitHub CLI login</button>
+                  <button type="button" class="btn" id="gh-device" aria-describedby="gh-device-help">Sign in with GitHub</button>
+                  <p class="help small" id="gh-device-help" hidden>Needs a GitHub OAuth App: set TEA_GITHUB_CLIENT_ID before starting TEA.</p>
+                  <button type="button" class="btn btn-quiet" id="gh-token-show" aria-expanded="false" aria-controls="gh-token-box">Paste a token instead</button>
+                </div>
+                <div class="field-row" id="gh-token-box" hidden>
+                  <input id="gh-token" type="password" aria-label="GitHub token" placeholder="github_pat_…" autocomplete="off">
+                  <button type="button" class="btn" id="gh-token-go">Connect</button>
+                </div>
+                <div class="device" id="gh-device-box" hidden>
+                  <p>Enter this code on GitHub</p>
+                  <p class="device-code" id="gh-code"></p>
+                  <a id="gh-verify" target="_blank" rel="noopener">Open GitHub to enter the code</a>
+                  <p class="help" id="gh-device-state" role="status">Waiting for you to approve…</p>
+                </div>
+              </div>
+              <div id="gh-on" hidden>
+                <p class="gh-user">Connected as <b id="gh-login"></b> <button type="button" class="link" id="gh-out">Disconnect</button></p>
+                <input id="gh-search" type="search" aria-label="Search your repos" placeholder="Search your repos">
+                <ul class="pick-list" id="gh-repos" role="listbox" aria-label="Your repos"></ul>
+                <div id="gh-picked" hidden>
+                  <label for="gh-branch">Branch</label>
+                  <select id="gh-branch"></select>
+                </div>
+              </div>
+              <p class="error" id="gh-error" role="alert"></p>
+            </div>
+          </li>
+
+          <li class="step">
+            <details class="options">
+              <summary><h2 class="step-title"><span class="step-n" aria-hidden="true">3</span>Options</h2></summary>
+              <label class="check">
+                <input id="start" type="checkbox">
+                <span>If there's no URL, start my app with its own dev script.
+                  <span class="help">This runs code from your repo on this computer, so only use it with code you trust. TEA never installs dependencies.</span></span>
+              </label>
+              <label for="max-pages">Most pages to open</label>
+              <input id="max-pages" type="number" min="1" max="500" value="50">
+              <label for="skip">Pages to never open <span class="help">(one per line)</span></label>
+              <textarea id="skip" rows="3" placeholder="/logout&#10;/admin/**" spellcheck="false"></textarea>
+            </details>
+          </li>
+        </ol>
+
+        <button class="btn btn-primary" id="go" type="submit">Spill the TEA</button>
+        <p class="error" id="form-error" role="alert"></p>
+        <p class="fineprint">Only test apps you own or are allowed to test. TEA's score is not a security guarantee, audit or certification.</p>
+      </form>
+
+      <section class="history" aria-labelledby="history-title">
+        <h2 id="history-title" class="section-title">Past runs</h2>
+        <ul class="history-list" id="history"></ul>
+        <p class="help" id="history-empty">Your runs will be listed here, so you can compare before and after a fix.</p>
+      </section>
+    </section>
+
+    <section class="result" id="result-panel" aria-labelledby="result-title" tabindex="-1">
+      <h2 id="result-title" class="visually-hidden">Result</h2>
+
+      <div class="empty" id="empty">
+        <img src="/assets/cup.svg" alt="" width="88" height="88">
+        <p class="empty-title">Nothing brewed yet</p>
+        <p class="help">Add your app's URL, and the code if you have it, then choose Spill the TEA.</p>
+      </div>
+
+      <div id="run" hidden>
+        <p class="run-target" id="run-target"></p>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+
+        <div class="verdict" id="verdict" hidden>
+          <svg class="cup" id="cup" viewBox="0 0 120 120" role="img" aria-labelledby="cup-label">
+            <title id="cup-label">TEA score</title>
+            <defs><clipPath id="cup-inside"><path d="M22 34 h76 v20 a38 38 0 0 1 -76 0 z"/></clipPath></defs>
+            <path class="cup-steam" d="M48 24 q-6 -7 0 -14 M62 24 q-6 -7 0 -14 M76 24 q-6 -7 0 -14"/>
+            <g clip-path="url(#cup-inside)"><rect class="cup-tea" id="cup-tea" x="20" y="92" width="80" height="0"/></g>
+            <path class="cup-body" d="M22 34 h76 v20 a38 38 0 0 1 -76 0 z"/>
+            <path class="cup-handle" d="M98 44 a13 13 0 0 1 0 26"/>
+            <path class="cup-saucer" d="M14 98 h92"/>
+          </svg>
+          <div class="verdict-text">
+            <p class="score"><span id="score">–</span><span class="score-of">/100</span></p>
+            <p class="verdict-label" id="verdict-label"></p>
+            <p class="summary" id="summary"></p>
+            <div class="severity" id="severity" aria-label="Issues by severity"></div>
+            <p class="actions">
+              <a class="btn btn-primary" id="open-report" target="_blank" rel="noopener">Open the full report</a>
+              <a class="link" id="open-md" target="_blank" rel="noopener">report.md</a>
+              <a class="link" id="open-json" target="_blank" rel="noopener">results.json</a>
+            </p>
+          </div>
+        </div>
+
+        <section class="top-issues" id="top-issues" hidden aria-labelledby="top-title">
+          <h3 id="top-title" class="section-title">Fix these first</h3>
+          <ol class="issues" id="issues"></ol>
+        </section>
+
+        <p class="error" id="run-error" role="alert"></p>
+
+        <details class="log-box" id="log-box">
+          <summary>What TEA did <span class="help" id="progress"></span></summary>
+          <ol class="log" id="log"></ol>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="picker" aria-labelledby="picker-title">
+    <form method="dialog" class="picker">
+      <div class="picker-head">
+        <h2 id="picker-title" class="section-title">Choose your app's folder</h2>
+        <button class="link" value="cancel">Close</button>
+      </div>
+      <div class="field-row">
+        <input id="pick-path" type="text" aria-label="Folder path" spellcheck="false">
+        <button type="button" class="btn" id="pick-go">Open</button>
+      </div>
+      <div class="suggest" id="pick-roots" aria-label="Drives"></div>
+      <ul class="pick-list tall" id="pick-list"></ul>
+      <div class="picker-foot">
+        <p class="help small">Folders marked "app" contain a package.json or similar.</p>
+        <button type="button" class="btn btn-primary" id="pick-use">Use this folder</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>
