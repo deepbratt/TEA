@@ -124,9 +124,20 @@ export interface PageVisit {
   redirectedOutOfScope?: boolean;
 }
 
+/** An HTTP call the code makes to an API: fetch/axios/... call sites and form actions. */
+export interface ApiCall {
+  /** Normalised path; template parts become ":param", a leading base URL is dropped. */
+  path: string;
+  method: string;
+  file: string;
+  line: number;
+  via: 'code' | 'form';
+}
+
 export interface Discovery {
   stack: StackDetection[];
   routes: Route[];
+  apiCalls: ApiCall[];
   forms: FormInfo[];
   auth: string[];
   envVars: EnvVar[];
@@ -161,4 +172,11 @@ export interface Results {
   summary: string;
   ran: string[];
   notRun: string[];
+  /** Present when the run had a quality gate. */
+  gate?: GateOutcome;
+}
+
+export interface GateOutcome {
+  status: 'passed' | 'failed';
+  conditions: { metric: string; op: 'lt' | 'gt'; value: number; actual: number | null; failed: boolean }[];
 }

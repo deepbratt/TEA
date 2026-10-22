@@ -8,6 +8,6 @@ coverage/
 .env.local
 !examples/**/.env*
 test-results/
-branch_structure.json
-temp_auto_push.bat
-temp_interactive_push.bat
+.tea/
+tea.config.yaml
+web/next-env.d.ts

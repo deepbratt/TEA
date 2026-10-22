@@ -32,5 +32,5 @@ export function definePlugin(plugin: TeaPlugin): TeaPlugin {
 }
 
 export function emptyDiscovery(): Discovery {
-  return { stack: [], routes: [], forms: [], auth: [], envVars: [], envFiles: [], database: [], payments: [], openapi: [], notes: [] };
+  return { stack: [], routes: [], apiCalls: [], forms: [], auth: [], envVars: [], envFiles: [], database: [], payments: [], openapi: [], notes: [] };
 }

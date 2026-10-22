@@ -25,7 +25,9 @@ node scripts/verify-example.mjs tea-report
 
 ## Layout
 
-TEA is one npm package (`tea-qa`) with one folder per part. The example app in `examples/` is a separate npm workspace because it is a test target, not part of TEA.
+TEA is one npm package (`tea-qa`) with one folder per part. The example app in `examples/` and the Workbench in `web/` are npm workspaces: the example because it is a test target, the Workbench because it is a Next.js app with its own build.
+
+Working on the Workbench: `npm run ui:dev` (hot reload on 127.0.0.1:4747, no token in dev), and `node scripts/workbench-e2e.mjs` drives it in a real browser, including axe in light and dark mode.
 
 | Package | What it does |
 |---|---|
@@ -35,8 +37,10 @@ TEA is one npm package (`tea-qa`) with one folder per part. The example app in `
 | `src/scanner` | Read-only URL scan: Playwright crawl and passive checks |
 | `src/report` | `results.json`, `report.md`, `report.html`, feature map, plain-English summary |
 | `src/cli` | The `tea-qa` / `tea` command and pipeline orchestration (`run()`) |
-| `src/ui` | The local web UI (`tea-qa ui`): a loopback-only server, a single self-contained page, and the folder picker |
-| `src/github` | Read-only GitHub access for the UI: connect (CLI login, device flow, token), repos, branches, live URLs, shallow clone |
+| `src/wiring` | Frontend-to-API wiring checks: calls nothing serves, wrong methods, endpoints nothing calls |
+| `src/workspace` | The Workbench backend: `tea.config.yaml` (projects, rules, gate; validated, comment-keeping writes), analyses (`RunManager`), folder picker |
+| `web/` | The TEA Workbench (`tea-qa ui`): a Next.js app. Pages are server components that call the engine from `dist/`; API routes under `web/app/api`; `proxy.ts` enforces loopback, the one-time token and same-origin writes |
+| `theme/` | Design tokens shared by the Workbench and the HTML report |
 
 ## Rules
 

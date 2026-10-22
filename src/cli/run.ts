@@ -5,8 +5,10 @@ import { pathToFileURL } from 'node:url';
 import {
   AREAS,
   Scope,
+  applyRules,
   buildAppMap,
   classifyUrl,
+  evaluateGate,
   exceedsThreshold,
   loadCatalog,
   loadConfig,
@@ -16,17 +18,21 @@ import {
   overallScore,
   packsFromEnv,
   resolveInside,
+  ruleNumber,
   scoreAreas,
   sortFindings,
   type Area,
   type Finding,
+  type Gate,
   type PageVisit,
   type Results,
+  type Rules,
   type Severity,
   type TeaConfig,
   type TeaPlugin,
 } from '../core/index.js';
-import { scanRepo, type ScanResult } from '../repo-map/index.js';
+import { scanSources, sourceFromPath, type ScanSourcesResult, type SourceFolder } from '../repo-map/index.js';
+import { wiringFindings } from '../wiring/index.js';
 import { crawl, crawlFindings } from '../scanner/index.js';
 import { AREA_LABEL, plainSummary, topFindings, writeReport } from '../report/index.js';
 import { planLocalStart, startLocalApp, type LocalApp } from './local.js';
@@ -48,6 +54,12 @@ export interface RunOptions {
   login?: string;
   /** Honour targets, allowlist, repo path and plugins from a tea.yaml TEA found on its own. */
   trustRepoConfig?: boolean;
+  /** Several code folders, e.g. a frontend and a backend. Takes the place of `repo`. */
+  sources?: SourceFolder[];
+  /** The quality profile: per-check enabled, severity and params. */
+  rules?: Rules;
+  /** When given, the gate decides the exit code instead of --fail-on. */
+  gate?: Gate;
 }
 
 export class UsageError extends Error {}
@@ -117,7 +129,10 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
   const startedAt = new Date().toISOString();
   masker.addFromEnv();
   const target = resolveTarget(opts);
-  const { config, file: configFile } = await loadConfig({ path: opts.config, repo: target.repo });
+  for (const src of opts.sources ?? []) {
+    if (!existsSync(src.path) || !statSync(src.path).isDirectory()) throw new UsageError(`Folder "${src.name}" not found: ${src.path}`);
+  }
+  const { config, file: configFile } = await loadConfig({ path: opts.config, repo: target.repo ?? opts.sources?.[0]?.path });
   for (const a of config.accounts) masker.add(a.password);
 
   const preNotes: string[] = [];
@@ -145,7 +160,9 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
 
   let url = target.url ?? config.urls[0];
   const repo = target.repo ?? (config.repo ? resolve(configFile ? resolve(configFile, '..') : process.cwd(), config.repo) : undefined);
-  if (!url && !repo) throw new UsageError('Give TEA something to test: a URL, a repo folder, or both.\n  npx tea-qa run https://your-app.com\n  npx tea-qa run ./your-app');
+  const sources: SourceFolder[] = opts.sources?.length ? opts.sources.map((src) => ({ ...src, path: resolve(src.path) })) : repo ? [sourceFromPath(repo)] : [];
+  const repoLabel = sources.map((src) => src.path).join(' + ') || undefined;
+  if (!url && !sources.length) throw new UsageError('Give TEA something to test: a URL, a repo folder, or both.\n  npx tea-qa run https://your-app.com\n  npx tea-qa run ./your-app');
 
   const outDir = resolve(opts.out ?? 'tea-report');
   const maxPages = opts.maxPages ?? config.crawl.maxPages;
@@ -156,29 +173,34 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
   if (configFile) log.info(`Using ${configFile}`);
 
   if (opts.dryRun) {
-    printDryRun({ url, repo, maxPages, outDir, config: effective, login: !!login, ai: opts.ai !== false });
+    printDryRun({ url, repo: repoLabel, maxPages, outDir, config: effective, login: !!login, ai: opts.ai !== false });
     return { exitCode: 0 };
   }
 
   const notes: string[] = [...preNotes];
 
+  const catalog = await loadCatalog(packsFromEnv());
+  const rules = opts.rules ?? {};
+
   // 1. Discover from code.
-  let scan: ScanResult | undefined;
-  if (repo) {
-    log.step(`Reading your code in ${repo}`);
+  let scan: ScanSourcesResult | undefined;
+  if (sources.length) {
+    log.step(`Reading your code in ${sources.map((src) => (sources.length > 1 ? `${src.name} (${src.role})` : src.path)).join(', ')}`);
     const loaded = await loadPlugins(effective.plugins, {
-      baseDir: configFile ? dirname(configFile) : repo,
+      baseDir: configFile ? dirname(configFile) : sources[0]!.path,
       trusted: configTrusted,
     });
-    scan = await scanRepo(repo, { plugins: loaded.plugins });
-    const stack = scan.stack.filter((s) => s.kind !== 'language').map((s) => s.name);
+    scan = await scanSources(sources, { plugins: loaded.plugins });
+    const stack = scan.stack.filter((st) => st.kind !== 'language').map((st) => st.name);
     log.info(`  Stack: ${stack.join(', ') || 'unknown'}`);
-    log.info(`  Found ${scan.routes.filter((r) => r.kind === 'page').length} pages, ${scan.routes.filter((r) => r.kind === 'api').length} API endpoints, ${scan.forms.length} forms`);
+    log.info(`  Found ${scan.routes.filter((r) => r.kind === 'page').length} pages, ${scan.routes.filter((r) => r.kind === 'api').length} API endpoints, ${scan.apiCalls.length} API calls, ${scan.forms.length} forms`);
   }
 
   // Code-only: starting the app runs code from the repo, so it needs the user's consent.
   let local: LocalApp | undefined;
-  if (!url && repo && opts.start !== false) {
+  const startable = sources.find((src) => src.role !== 'backend')?.path;
+  if (!url && startable && opts.start !== false) {
+    const repo = startable;
     const plan = planLocalStart(repo);
     if (!plan.ok) {
       notes.push(`TEA did not start the app locally: ${plan.reason}.`);
@@ -234,8 +256,8 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
       const redirected = pages.filter((p) => p.redirectedOutOfScope);
       if (redirected.length) notes.push(`${redirected.length} page(s) redirected outside the hosts TEA may test and were discarded: ${redirected.map((p) => p.path).join(', ')}.`);
       if (result.external.length) notes.push(`${result.external.length} link(s) to other sites were not opened (only the hosts you listed are tested).`);
-      const catalog = await loadCatalog(packsFromEnv());
-      findings.push(...crawlFindings(pages, { catalog, routes: scan?.routes, slowPageMs: effective.crawl.slowPageMs, baseUrl: url }));
+      const slowPageMs = ruleNumber(catalog, rules, 'crawl.slow', 'thresholdMs') ?? effective.crawl.slowPageMs;
+      findings.push(...crawlFindings(pages, { catalog, routes: scan?.routes, slowPageMs, baseUrl: url }));
       ran.add('functional').add('performance');
     }
   } finally {
@@ -243,18 +265,25 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
   }
   if (login) notes.push('A --login was given. Signed-in journeys arrive with the UI agent in the next TEA version; this run stayed signed out.');
 
-  // 3. Score and report.
-  const areas = scoreAreas(findings, ran);
-  const score = overallScore(areas, findings);
+  // Frontend-to-API wiring: every call the UI makes must reach a route the backend serves.
+  if (scan?.wiring.comparable) {
+    findings.push(...wiringFindings(scan.wiring, catalog));
+    ran.add('api');
+  }
+
+  // 3. Apply the rules, score and report.
+  const kept = applyRules(findings, catalog, rules);
+  const areas = scoreAreas(kept, ran);
+  const score = overallScore(areas, kept);
   const notRun = AREAS.filter((a) => !ran.has(a));
-  const sorted = sortFindings(findings);
-  const appMap = buildAppMap({ discovery: scan, pages, target: { url, repo }, startUrl: url });
+  const sorted = sortFindings(kept);
+  const appMap = buildAppMap({ discovery: scan, pages, target: { url, repo: repoLabel }, startUrl: url });
   appMap.notes.push(...notes);
   const results: Results = {
     tool: { name: 'tea-qa', version: VERSION },
     startedAt,
     finishedAt: new Date().toISOString(),
-    target: { url: target.url ?? (local ? undefined : url), repo },
+    target: { url: target.url ?? (local ? undefined : url), repo: repoLabel },
     score,
     areas,
     findings: sorted,
@@ -262,7 +291,7 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
       score,
       findings: sorted,
       pagesChecked: pages.length,
-      stack: (scan?.stack ?? []).filter((s) => !['language', 'builder'].includes(s.kind)).map((s) => s.name),
+      stack: (scan?.stack ?? []).filter((st) => !['language', 'builder'].includes(st.kind)).map((st) => st.name),
       ranLabels: [...ran].map((a) => AREA_LABEL[a]),
       notRunLabels: notRun.map((a) => AREA_LABEL[a]),
     }),
@@ -270,11 +299,18 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
     notRun,
   };
   if (local) results.target.url = `${url} (started locally)`;
+  if (opts.gate) results.gate = evaluateGate(opts.gate, results);
 
   const written = await writeReport(outDir, results, appMap);
   printSummary(results, outDir);
-  const failed = exceedsThreshold(sorted, failOn);
-  if (failed) log.warn(`Failing because there are ${failOn} (or worse) issues. Use --fail-on none to always exit 0.`);
+  let failed: boolean;
+  if (results.gate) {
+    failed = results.gate.status === 'failed';
+    log.result(`Quality gate: ${failed ? 'Failed' : 'Passed'}`);
+  } else {
+    failed = exceedsThreshold(sorted, failOn);
+    if (failed) log.warn(`Failing because there are ${failOn} (or worse) issues. Use --fail-on none to always exit 0.`);
+  }
   return { results, exitCode: failed ? 1 : 0, reportDir: written.dir };
 }
 
