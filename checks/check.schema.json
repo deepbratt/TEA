@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/deepbratt/TEA/checks/check.schema.json",
+  "title": "TEA check catalog entry",
+  "description": "One check. Every check is open source. A check whose detector is not built yet (no rule) is listed as planned.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "category",
+    "severity",
+    "version"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$",
+      "description": "Stable id, e.g. auth.idor.basic"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "One plain-English sentence for non-technical users: what this check catches."
+    },
+    "category": {
+      "enum": [
+        "functional",
+        "security",
+        "wiring",
+        "db-scale",
+        "prod-ready",
+        "code-health",
+        "performance",
+        "accessibility",
+        "seo",
+        "features",
+        "ux"
+      ]
+    },
+    "severity": {
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ]
+    },
+    "stacks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Stacks it applies to; empty or missing means any stack"
+    },
+    "detect": {
+      "enum": [
+        "static-rule",
+        "crawl",
+        "sandbox-test",
+        "ai-review"
+      ]
+    },
+    "rule": {
+      "type": "string",
+      "description": "Detector reference, <package>:<detector id>"
+    },
+    "criteria": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pass": {
+          "type": "string"
+        },
+        "warn": {
+          "type": "string"
+        },
+        "fail": {
+          "type": "string"
+        }
+      }
+    },
+    "fix_prompt": {
+      "type": "string",
+      "description": "Template path relative to the catalog root, with {file}, {route}, {evidence} placeholders"
+    },
+    "suggest_only": {
+      "type": "boolean",
+      "description": "Never auto-fixed. Always true for auth, payments, secrets and migrations"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "risk_at_scale": {
+      "type": "string",
+      "description": "e.g. fails at ~200k rows"
+    },
+    "params": {
+      "type": "object",
+      "description": "Settings users can change in their rules",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "default",
+          "description"
+        ],
+        "properties": {
+          "default": {
+            "type": [
+              "number",
+              "string",
+              "boolean"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  },
+  "if": {
+    "required": [
+      "rule"
+    ]
+  },
+  "then": {
+    "required": [
+      "fix_prompt"
+    ]
+  }
+}

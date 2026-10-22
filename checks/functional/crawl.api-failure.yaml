@@ -1,0 +1,10 @@
+id: crawl.api-failure
+title: An API call the page makes fails (5xx or network error)
+description: "A page opens, but a request it makes to your API fails, so part of the page stays empty or broken."
+category: functional
+severity: high
+detect: crawl
+rule: scanner:crawl.api-failure
+fix_prompt: prompts/crawl/api-failure.md
+suggest_only: false
+version: 1

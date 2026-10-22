@@ -1,0 +1,8 @@
+# Planned check: its detector (sandbox tests, build step 10) is not built yet, so TEA lists it but cannot run it.
+id: ai.cost-abuse
+title: AI endpoints a user can call without limits (cost and abuse)
+description: "AI features anyone can call without limits, which can run up your AI bill. Coming soon: needs sandbox tests."
+category: security
+severity: high
+detect: sandbox-test
+version: 1

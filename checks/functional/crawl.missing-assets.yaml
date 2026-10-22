@@ -1,0 +1,10 @@
+id: crawl.missing-assets
+title: The page requests files that don't exist (404)
+description: "Scripts, styles or fonts the page needs that aren't there."
+category: functional
+severity: low
+detect: crawl
+rule: scanner:crawl.missing-assets
+fix_prompt: prompts/crawl/missing-assets.md
+suggest_only: false
+version: 1

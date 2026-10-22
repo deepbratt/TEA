@@ -1,0 +1,10 @@
+# gitleaks config for TEA. Everything is scanned with the default rules, except examples/:
+# the example app holds deliberately fake keys (e.g. sk_test_FAKE...) for TEA to find.
+title = "TEA gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Deliberately fake secrets in the example apps only"
+paths = ['''^examples/''']

@@ -1,0 +1,8 @@
+# Planned check: its detector (sandbox tests, build step 10) is not built yet, so TEA lists it but cannot run it.
+id: stripe.edge-cases
+title: Stripe webhooks, idempotency and prices trusted from the client
+description: "Payments that trust prices from the browser, or webhooks that can be faked or replayed. Coming soon: needs sandbox tests."
+category: security
+severity: critical
+detect: sandbox-test
+version: 1

@@ -1,0 +1,8 @@
+# Planned check: its detector (sandbox tests, build step 10) is not built yet, so TEA lists it but cannot run it.
+id: supabase.rls.correctness
+title: Supabase row-level security lets one user read another user's rows
+description: "Supabase security rules that let one user read another user's rows. Coming soon: needs sandbox tests."
+category: security
+severity: critical
+detect: sandbox-test
+version: 1
