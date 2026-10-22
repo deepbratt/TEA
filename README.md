@@ -17,6 +17,8 @@ Point it at your app's folder and URL. Get one plain-English report, a quality g
 <p align="center">
   <a href="#-quick-start">Quick start</a> ·
   <a href="#%EF%B8%8F-the-tea-workbench">Workbench</a> ·
+  <a href="#-how-to-use-it-step-by-step">How to use</a> ·
+  <a href="#%EF%B8%8F-configuration-guide">Configuration</a> ·
   <a href="#-works-with-any-stack">Any stack</a> ·
   <a href="#-use-it-in-ci">CI</a> ·
   <a href="#%EF%B8%8F-roadmap">Roadmap</a> ·
@@ -48,6 +50,8 @@ You built your app with Lovable, Bolt, v0, Replit, Cursor, Windsurf or Claude Co
 
 - [Quick start](#-quick-start)
 - [The TEA Workbench](#%EF%B8%8F-the-tea-workbench)
+- [How to use it, step by step](#-how-to-use-it-step-by-step)
+- [Configuration guide](#%EF%B8%8F-configuration-guide)
 - [What you get](#-what-you-get)
 - [How it works](#-how-it-works)
 - [Works with any stack](#-works-with-any-stack)
@@ -121,23 +125,42 @@ Then open `tea-report/report.html`. The [full list of options](#%EF%B8%8F-teayam
 
 ## 🖥️ The TEA Workbench
 
-Prefer clicking to typing? `npm start` (from source) or `npx tea-qa ui` opens the **TEA Workbench**, a local web app (Next.js, on your own computer) that works like SonarQube for vibe-coded apps: projects, analyses, issues, rules and a quality gate.
+Prefer clicking to typing? `npm start` (from source) or `npx tea-qa ui` opens the **TEA Workbench**, a local web app (Next.js, on your own computer) that works like SonarQube for vibe-coded apps: projects, analyses, issues, rules and a quality gate. No setup, no account, nothing locked.
 
-```bash
-npx tea-qa ui          # opens http://127.0.0.1:4747 in your browser
-```
+<p align="center">
+  <img src="docs/assets/screenshots/04-project-overview.png" alt="TEA Workbench: a project's quality gate, TEA Score ring, issue counts and area scores" width="100%">
+</p>
 
-- **Projects.** Add your app once: choose its folder and TEA detects the apps in it, their languages and frameworks, whether each is a frontend, backend or fullstack app, and the local URL where it runs. A separate frontend and backend repo? Add both folders (up to 10).
-- **Analyses.** Press **Run analysis** and watch TEA work live. Every analysis is kept, with its full report.
-- **Issues.** Every finding, filterable by severity, area and check, with steps to see it and a fix prompt to paste into your AI coding tool.
-- **Frontend-to-API wiring.** TEA reads every `fetch`/`axios` call and form in the frontend and every route in the backend. A call nothing serves (or with a method the route doesn't handle) is an issue; an endpoint nothing calls is a suggestion.
-- **Rules.** Turn checks on or off, change their severity, tune thresholds (for example what counts as a slow page).
-- **Quality gate.** Conditions like *critical issues > 0* or *TEA Score < 60*. Each analysis is marked **Passed** or **Failed**, and `tea-qa run --project <key>` exits with an error when the gate fails, so CI can block a bad deploy.
+- **Projects.** Add your app once: choose its folder, and TEA detects:
+  - the apps in it;
+  - their languages and frameworks;
+  - whether each is a frontend, backend or fullstack app;
+  - the local URL where it runs.
+
+  A separate frontend and backend repo? Add both folders (up to 10).
+- **Analyses.** Press **Run analysis** and watch TEA brew live. Every analysis is kept, with its full report.
+- **Issues.** Every finding, filterable by severity, area and check. Each one has steps to see it and a fix prompt to paste into your AI coding tool.
+- **Frontend-to-API wiring.** TEA reads every API call and form in the frontend and every route in the backend.
+  - A call nothing serves, or with a method the route doesn't handle, is an issue.
+  - An endpoint nothing calls is a suggestion.
+- **Rules, made simple.**
+  - Pick **Relaxed**, **Balanced** or **Strict** in one click.
+  - Switch whole groups of checks on or off.
+  - Change how serious each one is, and tune thresholds.
+  - Every check is explained in plain English.
+- **Your own rules, no code.** Add one-click ideas such as *No console.log left in the code*, *Has a privacy policy page* or *No Stripe test keys in the code*, or write your own in three steps:
+  - the code must not contain some text;
+  - the code must contain some text;
+  - a file must exist;
+  - a page must exist.
+- **Quality gate.** Conditions like *critical issues > 0* or *TEA Score < 60*, with Relaxed, Balanced and Strict presets.
+  - Each analysis is marked **Passed** or **Failed**.
+  - `tea-qa run --project <key>` exits with an error when the gate fails, so CI can block a bad deploy.
 
 ```mermaid
 flowchart LR
     B[Your browser] -- "one-time token,<br/>then a same-site cookie" --> W[TEA Workbench<br/>Next.js, 127.0.0.1 only]
-    W -- "reads and rewrites" --> C[(tea.config.yaml<br/>projects, rules, gate)]
+    W -- "reads and rewrites" --> C[(tea.config.yaml<br/>projects, rules, your rules, gate)]
     W -- "same engine<br/>as the CLI" --> E[TEA engine]
     E -- "reads" --> F1[frontend folder]
     E -- "reads" --> F2[backend folder]
@@ -146,40 +169,192 @@ flowchart LR
     W -- "live progress<br/>(server-sent events)" --> B
 ```
 
-### One config file
+**Safe by design.**
+- **Only your computer.** The Workbench only listens on your own computer and needs the one-time link TEA prints.
+- **Other sites are refused.** It rejects requests addressed to other host names (DNS rebinding) and writes coming from other websites, so a page you have open elsewhere can't start an analysis or read your results.
+- **Your app is left alone.** It never installs packages or starts your app. Give it the URL where your app already runs to test it live; without a URL it reads the code only.
+- **Where analyses go.** They're stored in `.tea/runs/` next to the config file. Add `.tea/` to your `.gitignore`.
 
-Everything you set in the Workbench lives in one file, `tea.config.yaml`, next to where you ran `tea-qa ui` (or `--workspace <file>`). Edit it in the Workbench (on the page or as text) or in your editor, and commit it with your code. Saving from the Workbench validates it first and keeps your comments.
+## 🧭 How to use it, step by step
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**1. Start TEA.** Run `npm start`. The Workbench opens in your browser with an empty project list.
+
+<img src="docs/assets/screenshots/01-projects-empty.png" alt="The empty projects page with an Add your first project button" width="100%">
+
+</td>
+<td width="50%" valign="top">
+
+**2. Add your app.** Click **Add project → Choose folder and detect** and pick your app's folder. TEA shows what it found in each part (the chips) and suggests the local URL. To test the running app, start it as usual and click its address.
+
+<img src="docs/assets/screenshots/02-add-project-detect.png" alt="Add project: the detected folder, its role and stack chips, and a suggested local URL" width="100%">
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+**3. Run an analysis.** Press **Run analysis** on the project page. You get:
+- the quality gate (Passed or Failed);
+- the TEA Score;
+- the issue counts and area scores;
+- the full report, ready to share.
+
+<img src="docs/assets/screenshots/04-project-overview.png" alt="Project overview after an analysis" width="100%">
+
+</td>
+<td valign="top">
+
+**4. Fix the issues.** Filter by severity, area or check. Open **Details** to see how to reproduce it, then **Copy fix prompt** and paste it into Cursor, Claude, Lovable or Bolt. Run the analysis again to confirm the fix.
+
+<img src="docs/assets/screenshots/05-issues.png" alt="Issues list with an expanded fix prompt" width="100%">
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+**5. Tune the rules.** On **Rules**:
+- pick **Relaxed**, **Balanced** or **Strict**;
+- switch checks off that don't apply to you;
+- change how serious they are.
+
+Then press **Save rules**. *Coming soon* checks are listed so you can see what's next.
+
+<img src="docs/assets/screenshots/06-rules.png" alt="Rules page with your own rules, ideas and quick setup presets" width="100%">
+
+</td>
+<td valign="top">
+
+**6. Add your own rules.** Click an idea to add it, or **Write a rule**:
+1. choose what to check;
+2. fill in the details;
+3. name it.
+
+Your rules run in every analysis and show up as issues like any other check.
+
+<img src="docs/assets/screenshots/07-rule-builder.png" alt="The rule builder: choose a type, fill in the details, name it" width="100%">
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+**7. Set the quality gate.** Pick a preset, or add conditions such as "high issues greater than 0". Every analysis is marked Passed or Failed against it, in the Workbench and in CI.
+
+<img src="docs/assets/screenshots/08-quality-gate.png" alt="Quality gate page with presets and conditions" width="100%">
+
+</td>
+<td valign="top">
+
+**8. Keep or share your settings.** Everything is in one file. On **Config file** you can:
+- **download** it, or **import** one on another computer;
+- commit it with your code;
+- **reset** to the defaults.
+
+<img src="docs/assets/screenshots/09-config-file.png" alt="Config file page with download, import and reset" width="100%">
+
+</td>
+</tr>
+</table>
+
+<sub>Screenshots are generated from the bundled example app by `node scripts/screenshots.mjs`.</sub>
+
+## ⚙️ Configuration guide
+
+You never have to edit a file: every setting has a page in the Workbench. If you like files, everything lives in one, **`tea.config.yaml`**. It sits next to where you ran `npm start` or `tea-qa ui`, or wherever `--workspace <file>` points. Edit it in your editor or on the **Config file** page, and commit it with your code. Every save is checked first, and your comments are kept.
 
 ```yaml
 version: 1
+
 projects:
-  - key: shop
+  - key: shop                         # short id, used in URLs and `tea-qa run --project shop`
     name: My shop
-    url: http://localhost:3000        # optional: where the app runs
-    sources:
+    url: http://localhost:3000        # optional: where the app runs, to test it live
+    maxPages: 50                      # optional: most pages to visit
+    skip: [/admin/**, /logout]        # optional: paths never to visit
+    sources:                          # up to 10 code folders, relative to this file
       - { name: web, path: ../shop-web, role: frontend }
-      - { name: api, path: ../shop-api }   # role: auto (default) lets TEA decide
-rules:
-  crawl.slow: { params: { thresholdMs: 2000 } }
+      - { name: api, path: ../shop-api }   # role: auto (the default) lets TEA decide
+
+rules:                                # only what differs from the defaults
+  crawl.slow: { severity: high, params: { thresholdMs: 2000 } }
   wiring.unused-endpoint: { enabled: false }
-gate:
+
+customRules:                          # your own rules, no code
+  - { id: no-console-log, title: No console.log in the code, type: forbid-text, text: "console.log(", files: "src/**/*.ts", severity: low }
+  - { id: privacy-page, title: Has a privacy page, type: require-route, path: /privacy, severity: medium }
+  - { id: env-example, title: Has a .env.example, type: require-file, files: "**/.env.example", severity: low }
+
+gate:                                 # the gate fails when ANY condition is met
   conditions:
     - { metric: critical, op: gt, value: 0 }
     - { metric: high, op: gt, value: 3 }
     - { metric: score, op: lt, value: 60 }
 ```
 
-Run the same project from the command line or CI, with its rules and gate:
+<details>
+<summary><b>Every setting, explained</b></summary>
+
+**Projects**
+
+| Field | What it does |
+|---|---|
+| `key` | Short id: lowercase letters, numbers and dashes. |
+| `name` | What the Workbench shows. |
+| `url` | Optional. Where the app runs, so TEA can open it in a browser (read-only). Without it, TEA reads the code only. |
+| `sources` | The code folders. `path` is relative to the config file. `role` is `auto` (default), `frontend`, `backend` or `fullstack`. |
+| `maxPages`, `skip` | Optional limits for the live crawl. |
+| `gate` | Optional. A gate for this project only, replacing the shared one. |
+
+**Rules** (`rules:`): one entry per check id, listing only what you change.
+
+| Field | What it does |
+|---|---|
+| `enabled: false` | Turns the check off. |
+| `severity` | `critical`, `high`, `medium`, `low` or `info` (a tip, never an issue). |
+| `params` | Check settings, e.g. `crawl.slow: { params: { thresholdMs: 2000 } }`. |
+
+**Your own rules** (`customRules:`)
+
+| `type` | Fields | Flags |
+|---|---|---|
+| `forbid-text` | `text`, optional `regex: true`, optional `files` glob | Every file that contains the text |
+| `require-text` | `text`, optional `regex: true`, optional `files` glob | The project, when the text appears nowhere |
+| `require-file` | `files`: a file name or glob, e.g. `README*` | The project, when no file matches |
+| `require-route` | `path`: e.g. `/privacy`, globs allowed | The project, when no page or endpoint matches |
+
+Every custom rule also has an `id`, a `title`, a `severity`, an optional `description` (shown in the issue) and `enabled`.
+
+**Quality gate** (`gate.conditions`): each condition is `metric`, `op` (`gt` greater than, `lt` less than) and `value`.
+
+| `metric` | Means |
+|---|---|
+| `score` | The TEA Score, 0 to 100 |
+| `issues` | All issues (tips not counted) |
+| `critical`, `high`, `medium`, `low` | Issues of that severity |
+| `functional`, `api`, `security`, `performance`, `accessibility`, `load`, `code` | That area's score, 0 to 100. Areas that didn't run never fail the gate |
+
+**Environment variables**
+
+| Variable | What it does |
+|---|---|
+| `TEA_WORKSPACE` | The config file `npm run ui:dev` uses. |
+| `TEA_CHECKS` | Extra folders of check entries (community packs), separated like `PATH`. |
+
+`tea.config.yaml` holds your projects and how they're judged. The optional per-repo [`tea.yaml`](#%EF%B8%8F-teayaml-optional) holds crawl settings for the command line (URLs, allowlist, test accounts).
+
+</details>
+
+Run the same project from the command line or CI, with its rules, your rules and its gate:
 
 ```bash
-npx tea-qa run --project shop                 # uses ./tea.config.yaml
+npx tea-qa run --project shop                    # uses ./tea.config.yaml
 npx tea-qa run --source ../web --source ../api   # no config file; roles auto-detected
 ```
-
-**Safe by design.** The Workbench only listens on your own computer, needs the one-time link TEA prints, refuses requests addressed to other host names (DNS rebinding) and writes from other websites, so a page you have open elsewhere can't start an analysis or read your results. It never installs packages or starts your app: give it the URL where your app already runs to test it live; without a URL it reads the code only. Analyses are stored in `.tea/runs/` next to the config file; add `.tea/` to your `.gitignore`.
-
-<!-- Demo GIF placeholder: a 20-second recording of `npx tea-qa run` and the report opening. -->
-<!-- <p align="center"><img src="docs/assets/demo.gif" alt="TEA demo" width="100%"></p> -->
 
 ## ☕ What you get
 
@@ -373,30 +548,28 @@ Every check is a catalog entry, not hard-coded logic, so checks can be added, ra
 # checks/functional/crawl.server-error.yaml
 id: crawl.server-error
 title: Page crashes with a server error (5xx)
+description: "A page shows a server error (500) instead of its content."   # plain English, shown on the Rules page
 category: functional
 severity: high
 detect: crawl
 rule: scanner:crawl.server-error
 fix_prompt: prompts/crawl/server-error.md   # template with {file}, {route}, {evidence}
 suggest_only: false
-pack: free
 version: 1
 ```
 
 ```mermaid
 flowchart LR
-    subgraph OSS["This repo · MIT"]
-      E[TEA engine] --- FC[Free checks<br/>rules + fix prompts]
-      E --- PS[Pro stubs<br/>id + title only]
+    subgraph OSS["Everything is open source · MIT"]
+      E[TEA engine] --- FC[Built-in checks<br/>rules + fix prompts]
+      E --- PL[Planned checks<br/>listed as coming soon]
+      E --- CR[Your own rules<br/>tea.config.yaml]
+      E --- CP[Community check packs<br/>TEA_CHECKS folders]
     end
-    subgraph PRO["TEA Pro · licensed pack"]
-      PP[Deep checks<br/>rules + ranked prompts]
-    end
-    PP -->|TEA_LICENSE_KEY<br/>+ TEA_PRO_PACK| E
     E --> R[Your report]
 ```
 
-All **free** checks live here with their rules and prompts, and anyone can contribute new ones ([how](CONTRIBUTING.md#adding-a-check)). **TEA Pro** adds deeper checks (multi-role IDOR probes, race conditions, Supabase RLS correctness, Stripe edge cases, database-at-scale proofs, AI cost and abuse). In this repo they exist only as stubs with an id and a title, so a free report can tell you what a deeper check would cover. The loader refuses any pro rule written into the public catalog.
+**Nothing is locked.** Every check ships in this repo, free and open source, and anyone can contribute new ones ([how](CONTRIBUTING.md#adding-a-check)). Checks whose detector isn't built yet are listed on the Rules page as *Coming soon*: multi-role IDOR probes, race conditions, Supabase RLS correctness, Stripe edge cases, database-at-scale proofs, and AI cost and abuse. They need the sandbox tester from [step 10](#%EF%B8%8F-roadmap). Point `TEA_CHECKS` at extra folders (separated like `PATH`) to load community check packs in the same format.
 
 ## 🌍 Works with any stack
 

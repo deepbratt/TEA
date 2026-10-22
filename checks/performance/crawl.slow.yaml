@@ -1,12 +1,12 @@
 id: crawl.slow
 title: Page takes longer than 3 seconds to load
+description: "Pages that take longer than the limit you set to load. Slow pages lose visitors."
 category: performance
 severity: medium
 detect: crawl
 rule: scanner:crawl.slow
 fix_prompt: prompts/crawl/slow.md
 suggest_only: false
-pack: free
 version: 1
 params:
   thresholdMs:

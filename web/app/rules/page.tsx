@@ -1,3 +1,4 @@
+import { CustomRulesEditor } from '@/components/CustomRulesEditor';
 import { RulesEditor } from '@/components/RulesEditor';
 import { tea } from '@/lib/tea';
 
@@ -14,11 +15,15 @@ export default async function RulesPage() {
         <div>
           <h1>Rules</h1>
           <p className="help">
-            Every check TEA runs, for all projects. Turn checks off, change how serious they are, or tune thresholds. Saved in the <code>rules</code> section of the config file.
+            What TEA checks in every project. Pick a quick setup, switch checks on or off, or add rules of your own. Everything is free and open source,
+            and it&apos;s all saved in the config file.
           </p>
         </div>
       </div>
-      <RulesEditor rows={rows} />
+      <div className="stack-l">
+        <CustomRulesEditor initial={data.customRules} templates={engine.CUSTOM_RULE_TEMPLATES} />
+        <RulesEditor rows={rows} />
+      </div>
     </>
   );
 }

@@ -33,6 +33,11 @@ export async function handle(fn: () => Promise<Response>): Promise<Response> {
     if (err instanceof HttpError) return json({ error: err.message, problems: err.problems }, err.status);
     if (engine && err instanceof engine.WorkspaceError) return json({ error: engine.mask(err.message), problems: err.problems.map(engine.mask) }, 400);
     if (engine && err instanceof engine.RunBusyError) return json({ error: err.message }, 409);
+    // Schema validation (rules, gate, custom rules): say what's wrong in plain words.
+    if (err instanceof Error && err.name === 'ZodError' && Array.isArray((err as { issues?: unknown }).issues)) {
+      const issues = (err as unknown as { issues: { path: (string | number)[]; message: string }[] }).issues;
+      return json({ error: 'Some settings are not valid.', problems: issues.map((i) => `${i.path.join('.') || 'value'}: ${i.message}`) }, 400);
+    }
     const detail = err instanceof Error ? (err.stack ?? err.message) : String(err);
     process.stderr.write(`[tea] API error: ${engine ? engine.mask(detail) : detail}
 `);

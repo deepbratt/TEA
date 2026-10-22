@@ -5,8 +5,8 @@ export const dynamic = 'force-dynamic';
 
 export function GET() {
   return handle(async () => {
-    const { workspace } = (await tea()).services;
-    return json({ file: workspace.file, text: await workspace.text() });
+    const { engine, services } = await tea();
+    return json({ file: services.workspace.file, text: await services.workspace.text(), defaultText: engine.defaultWorkspaceText() });
   });
 }
 

@@ -16,7 +16,7 @@ import {
   log,
   masker,
   overallScore,
-  packsFromEnv,
+  catalogFromEnv,
   resolveInside,
   ruleNumber,
   scoreAreas,
@@ -32,6 +32,7 @@ import {
   type TeaPlugin,
 } from '../core/index.js';
 import { scanSources, sourceFromPath, type ScanSourcesResult, type SourceFolder } from '../repo-map/index.js';
+import { customFindings, type CustomRule } from '../custom/index.js';
 import { wiringFindings } from '../wiring/index.js';
 import { crawl, crawlFindings } from '../scanner/index.js';
 import { AREA_LABEL, plainSummary, topFindings, writeReport } from '../report/index.js';
@@ -60,6 +61,8 @@ export interface RunOptions {
   rules?: Rules;
   /** When given, the gate decides the exit code instead of --fail-on. */
   gate?: Gate;
+  /** Your own rules from the workspace config (forbid/require text, files, routes). */
+  customRules?: CustomRule[];
 }
 
 export class UsageError extends Error {}
@@ -179,7 +182,7 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
 
   const notes: string[] = [...preNotes];
 
-  const catalog = await loadCatalog(packsFromEnv());
+  const catalog = await loadCatalog(catalogFromEnv());
   const rules = opts.rules ?? {};
 
   // 1. Discover from code.
@@ -269,6 +272,13 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
   if (scan?.wiring.comparable) {
     findings.push(...wiringFindings(scan.wiring, catalog));
     ran.add('api');
+  }
+
+  // Your own rules.
+  if (opts.customRules?.length) {
+    const custom = await customFindings(opts.customRules, { sources, routes: scan?.routes ?? [], pages });
+    findings.push(...custom.findings);
+    custom.ran.forEach((a) => ran.add(a));
   }
 
   // 3. Apply the rules, score and report.
