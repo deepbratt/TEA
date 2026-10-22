@@ -27,13 +27,13 @@ node scripts/verify-example.mjs tea-report
 
 TEA is one npm package (`tea-qa`) with one folder per part. The example app in `examples/` and the Workbench in `web/` are npm workspaces: the example because it is a test target, the Workbench because it is a Next.js app with its own build.
 
-Working on the Workbench: `npm run ui:dev` (hot reload on 127.0.0.1:4747, no token in dev), and `node scripts/workbench-e2e.mjs` drives it in a real browser, including axe in light and dark mode.
+Run everything with `npm start` (installs, builds what changed, opens the Workbench). Working on the Workbench: `npm run ui:dev` (hot reload on 127.0.0.1:4747, no token in dev), and `node scripts/workbench-e2e.mjs` drives it in a real browser, including axe in light and dark mode.
 
 | Package | What it does |
 |---|---|
 | `src/core` | Types, `tea.yaml` loading, secret masking, scope guard, scoring, route matching, plugin API, check catalog loader, logging |
 | `checks/` | The check catalog: one YAML entry per check, a JSON Schema, and fix-prompt templates |
-| `src/repo-map` | Repo discovery: generic heuristics, stack detection table, built-in stack plugins |
+| `src/repo-map` | Repo discovery: manifests for every ecosystem, generic heuristics and API-call extraction, the stack table, built-in stack plugins (`plugins/polyglot.ts` for non-JS backends), project and role auto-detection |
 | `src/scanner` | Read-only URL scan: Playwright crawl and passive checks |
 | `src/report` | `results.json`, `report.md`, `report.html`, feature map, plain-English summary |
 | `src/cli` | The `tea-qa` / `tea` command and pipeline orchestration (`run()`) |
