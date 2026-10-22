@@ -52,6 +52,7 @@ const appMap = buildAppMap({
       { path: '/admin', kind: 'page', dynamic: false, source: 'code', file: 'app/admin/page.tsx' },
       { path: '/api/plans', kind: 'api', methods: ['GET'], dynamic: false, source: 'code', file: 'app/api/plans/route.ts' },
     ],
+    apiCalls: [],
     forms: [],
     auth: [],
     envVars: [{ name: 'NEXT_PUBLIC_KEY', clientExposed: true, files: ['a.ts'] }],

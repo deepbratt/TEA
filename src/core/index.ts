@@ -10,3 +10,5 @@ export * from './appmap.js';
 export * from './catalog.js';
 export * from './untrusted.js';
 export * from './paths.js';
+export * from './rules.js';
+export * from './gate.js';
