@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint';
 import globals from 'globals';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/.next/**', 'examples/**', 'tea-report/**', '**/*.d.ts', 'web/next-env.d.ts', '_site/**'] },
+  { ignores: ['**/dist/**', '**/node_modules/**', '**/.next/**', 'examples/**', 'tea-report/**', '**/*.d.ts', 'web/next-env.d.ts', '_site/**', '**/demo-out/**', '.demo/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

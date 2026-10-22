@@ -40,4 +40,21 @@ const config: NextConfig = {
   },
 };
 
-export default config;
+/**
+ * The website demo (NEXT_PUBLIC_TEA_DEMO=1): a static export under a base path, built into its own
+ * folder so the local app's build is untouched. Only .tsx files route, which leaves out the API
+ * (route.ts) and the request guard (proxy.ts): the demo has no server, and nothing to protect.
+ */
+const demo: NextConfig = {
+  turbopack: config.turbopack,
+  outputFileTracingRoot: config.outputFileTracingRoot,
+  poweredByHeader: false,
+  output: 'export',
+  distDir: 'demo-out',
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || undefined,
+  trailingSlash: true,
+  pageExtensions: ['tsx'],
+  images: { unoptimized: true },
+};
+
+export default process.env.NEXT_PUBLIC_TEA_DEMO === '1' ? demo : config;

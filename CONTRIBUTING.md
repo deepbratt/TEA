@@ -29,6 +29,8 @@ TEA is one npm package (`tea-qa`) with one folder per part. The example app in `
 
 Run everything with `npm start` (installs, builds what changed, opens the Workbench). Working on the Workbench: `npm run ui:dev` (hot reload on 127.0.0.1:4747, no token in dev), and `node scripts/workbench-e2e.mjs` drives it in a real browser, including axe in light and dark mode.
 
+The website demo is the same Workbench, built as a static export (`NEXT_PUBLIC_TEA_DEMO=1`) from a real recorded analysis: `node scripts/build-demo.mjs` records and builds it, `node scripts/demo-e2e.mjs` clicks through it. In demo builds, pages render once at build time (`web/lib/live.ts`), browser API calls are answered from recorded data (`web/lib/demo.ts`), and links and images go through `web/lib/mode.ts` so they work under `/TEA/demo/`. When you add an API call to a page, give it a demo answer in `demoApi`.
+
 | Package | What it does |
 |---|---|
 | `src/core` | Types, `tea.yaml` loading, secret masking, scope guard, scoring, route matching, plugin API, check catalog loader, logging |

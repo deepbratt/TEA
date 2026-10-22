@@ -1,4 +1,7 @@
 // Browser-side calls to the Workbench API, with the server's error message (and problems) kept.
+// In the website demo there is no server: calls are answered from recorded data.
+import { demoApi } from './demo';
+import { DEMO } from './mode';
 
 export class ApiError extends Error {
   constructor(message: string, readonly problems: string[] = []) {
@@ -7,6 +10,7 @@ export class ApiError extends Error {
 }
 
 export async function api<T = unknown>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
+  if (DEMO) return (await demoApi(path, init.method ?? 'GET')) as T;
   const res = await fetch(path, {
     method: init.method ?? 'GET',
     headers: init.body === undefined ? undefined : { 'content-type': 'application/json' },

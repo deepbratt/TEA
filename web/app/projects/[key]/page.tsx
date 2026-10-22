@@ -1,17 +1,18 @@
+import { live } from '@/lib/live';
 import Link from 'next/link';
 import { EmptyArt, ScoreRing } from '@/components/Art';
 import { GateBadge, ScoreBadge, SeverityCounts } from '@/components/Badges';
 import { RunPanel } from '@/components/RunPanel';
 import { duration, plural, when } from '@/lib/format';
+import { runFile } from '@/lib/mode';
 import { loadProject } from '@/lib/project';
 
-export const dynamic = 'force-dynamic';
-
 export default async function ProjectOverview({ params }: { params: Promise<{ key: string }> }) {
+  await live();
   const { key } = await params;
   const { engine, project, runs, last, results, gate, running } = await loadProject(key);
   const base = `/projects/${key}`;
-  const files = (id: string, file: string) => `/api/projects/${key}/runs/${id}/files/${file}`;
+  const files = (id: string, file: string) => runFile(key, id, file);
   const conditions = last?.gate?.conditions ?? gate.conditions.map((c) => ({ ...c, actual: null, failed: false }));
   const issues = results?.findings.filter((f) => f.severity !== 'info').length ?? 0;
   const suggestions = results ? results.findings.length - issues : 0;
