@@ -1,11 +1,12 @@
+import { live } from '@/lib/live';
 import { CustomRulesEditor } from '@/components/CustomRulesEditor';
 import { RulesEditor } from '@/components/RulesEditor';
 import { tea } from '@/lib/tea';
 
-export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Rules' };
 
 export default async function RulesPage() {
+  await live();
   const { engine, services } = await tea();
   const { data } = await services.workspace.read();
   const rows = engine.rulesView(services.catalog, data.rules);

@@ -376,3 +376,6 @@ input.switch:checked::after { transform: translateX(18px); background: var(--acc
 .template-plus { font-size: 18px; color: var(--accent); font-weight: 700; }
 .gate-title { margin-top: 22px; }
 .config-toolbar { margin-bottom: 12px; }
+
+/* Website demo banner. */
+.demo-banner { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; padding: 10px 16px; background: var(--accent-soft); border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); font-size: 14px; text-align: center; }

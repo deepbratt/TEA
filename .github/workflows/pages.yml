@@ -1,6 +1,7 @@
 name: Pages
 
-# Publishes the project site (site/) to GitHub Pages, with a live sample report from the example app.
+# Publishes the project site (site/) to GitHub Pages, with a live sample report and a clickable
+# demo of the Workbench, both from a real analysis of the bundled example app.
 on:
   push:
     branches: [main]
@@ -28,7 +29,11 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Sample report (TEA against the bundled example app)
         run: npm run demo
+      - name: Clickable Workbench demo (static, recorded from a real analysis)
+        run: node scripts/build-demo.mjs /TEA/demo
       - run: node scripts/build-site.mjs
+      - name: Click through the demo as Pages serves it
+        run: node scripts/demo-e2e.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
