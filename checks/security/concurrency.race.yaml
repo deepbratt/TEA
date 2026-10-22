@@ -1,0 +1,8 @@
+# Planned check: its detector (sandbox tests, build step 10) is not built yet, so TEA lists it but cannot run it.
+id: concurrency.race
+title: Parallel requests double-charge, double-book or create duplicates
+description: "Clicking twice (or two people at once) charges, books or creates something twice. Coming soon: needs sandbox tests."
+category: security
+severity: high
+detect: sandbox-test
+version: 1

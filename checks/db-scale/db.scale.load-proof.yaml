@@ -1,0 +1,8 @@
+# Planned check: its detector (sandbox tests, build step 10) is not built yet, so TEA lists it but cannot run it.
+id: db.scale.load-proof
+title: Queries that pass 500 ms as data grows (seeded 10k to 1M rows)
+description: "Database queries that get too slow as your data grows. Coming soon: needs sandbox tests."
+category: db-scale
+severity: medium
+detect: sandbox-test
+version: 1

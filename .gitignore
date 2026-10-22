@@ -2,9 +2,13 @@ node_modules/
 dist/
 *.tsbuildinfo
 .next/
-tea-report/
+tea-report*/
 coverage/
 .env
 .env.local
 !examples/**/.env*
 test-results/
+.tea/
+tea.config.yaml
+web/next-env.d.ts
+.claude/

@@ -1,0 +1,10 @@
+id: crawl.console-errors
+title: Errors in the browser console
+description: "Errors your app prints in the browser. Often the first sign that something on the page is broken."
+category: functional
+severity: low
+detect: crawl
+rule: scanner:crawl.console-errors
+fix_prompt: prompts/crawl/console-errors.md
+suggest_only: false
+version: 1

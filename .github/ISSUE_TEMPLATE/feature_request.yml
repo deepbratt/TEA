@@ -1,0 +1,22 @@
+name: Feature request
+description: Suggest something TEA should do.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would it solve?
+      description: The bug or risk in your app that TEA misses today, or the step that's harder than it should be.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What should TEA do?
+    validations:
+      required: true
+  - type: textarea
+    id: else
+    attributes:
+      label: Anything else
+      description: Alternatives you considered, links, screenshots.

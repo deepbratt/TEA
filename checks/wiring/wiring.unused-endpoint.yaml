@@ -1,0 +1,10 @@
+id: wiring.unused-endpoint
+title: A backend route that nothing in the frontend calls
+description: "A backend endpoint nothing in your frontend uses. Maybe left-over code, and one more door for attackers."
+category: wiring
+severity: info
+detect: static-rule
+rule: wiring:wiring.unused-endpoint
+fix_prompt: prompts/wiring/unused-endpoint.md
+suggest_only: true
+version: 1
