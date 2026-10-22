@@ -1,12 +1,12 @@
 import { definePlugin, isDynamicPath, normalisePath, type RepoContext, type Route } from '../../core/index.js';
 import { isSource, lineOf } from '../context.js';
 
-function apiRoute(path: string, method: string, file: string, line: number, plugin: string): Route {
+export function apiRoute(path: string, method: string, file: string, line: number, plugin: string): Route {
   const p = normalisePath(path);
   return { path: p, kind: 'api', methods: [method.toUpperCase()], file, line, dynamic: isDynamicPath(p), source: 'code', plugin };
 }
 
-async function scan(
+export async function scan(
   ctx: RepoContext,
   fileRe: RegExp,
   fn: (text: string, file: string) => Route[],
@@ -21,11 +21,11 @@ async function scan(
 /** Express, Fastify, Hono, Koa-router style: app.get('/path', ...). */
 export const nodeServers = definePlugin({
   name: 'node-servers',
-  activatesOn: ['express', 'fastify', 'hono'],
+  activatesOn: ['express', 'fastify', 'hono', 'koa', 'elysia'],
   discover: (ctx) =>
     scan(ctx, /\.(m?[jt]s|cjs)$/, (text, file) => {
       const out: Route[] = [];
-      const re = /\b(?:app|router|server|api|fastify|routes|r)\s*\.\s*(get|post|put|patch|delete|all)\s*\(\s*["'`](\/[^"'`]*)["'`]/g;
+      const re = /\b(?:app|router|server|api|fastify|routes|r|v1|v2|admin|elysia)\s*\.\s*(get|post|put|patch|delete|all)\s*\(\s*["'`](\/[^"'`]*)["'`]/g;
       for (const m of text.matchAll(re)) {
         out.push(apiRoute(m[2]!, m[1] === 'all' ? 'ANY' : m[1]!, file, lineOf(text, m.index!), 'node-servers'));
       }
@@ -51,7 +51,7 @@ export const nestjs = definePlugin({
 /** FastAPI and Flask decorators. */
 export const pythonWeb = definePlugin({
   name: 'python-web',
-  activatesOn: ['fastapi', 'flask'],
+  activatesOn: ['fastapi', 'flask', 'python-asgi'],
   discover: (ctx) =>
     scan(ctx, /\.py$/, (text, file) => {
       const out: Route[] = [];

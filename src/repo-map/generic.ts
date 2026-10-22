@@ -79,18 +79,52 @@ async function openapi(ctx: RepoContext): Promise<string[]> {
   return ctx.find((f) => /(^|\/)(openapi|swagger)[\w.-]*\.(json|ya?ml)$/i.test(f));
 }
 
-/**
- * Call sites: fetch('/api/x'), axios.post('/api/x'), api.get(`${BASE}/orders/${id}`), $fetch, ky...
- * Group 1: the callee; group 2: the method in `x.get(`; group 3: the URL up to its quote.
+/*
+ * HTTP calls, in any language. A call is a client method or function followed by a URL argument:
+ *   JS/TS   fetch('/api/x'), axios.post(`${BASE}/x/${id}`), this.http.get('/x'), useSWR('/api/x')
+ *   Python  requests.get(f"{BASE}/api/x"), httpx.post(BASE + "/x")
+ *   Go      http.Get(baseURL + "/api/x"), http.NewRequest("POST", fmt.Sprintf("%s/x", base), b)
+ *   Rust    client.get(format!("{}/api/x", base))
+ *   JVM     restTemplate.getForObject("/x"), client.get("/x"), Retrofit @GET("users/{id}")
+ *   C#      _http.GetFromJsonAsync<T>($"{base}/api/x"), new HttpRequestMessage(HttpMethod.Post, "/x")
+ *   PHP     Http::get($base . '/api/x'), $client->post('/x')
+ *   Ruby    HTTParty.get("#{BASE}/x"), conn.get('/x')
+ *   Dart    http.get(Uri.parse('$baseUrl/api/x')), dio.post('/x')
+ *   Swift   URL(string: "\(base)/api/x")
+ * Only paths count: a full URL to another host is a third-party API, not this app's backend.
  */
-const CALL_SITE =
-  /\b((?:axios|ky|api|apiClient|client|http|request|instance|\$fetch|ofetch)\.(get|post|put|patch|delete)|fetch|\$fetch|ofetch|useFetch|axios|ky)\(\s*["'`]((?:\$\{[^}]*\})?\/[^"'`?#\s]*)/g;
-const FETCH_METHOD = /method\s*:\s*["'`](GET|POST|PUT|PATCH|DELETE)["'`]/i;
+
+/** Receivers that are HTTP clients (the last part of `this.api`, `_httpClient`, `$client`...). */
+const CLIENT_RECEIVER = /(?:api|client|http|https|httpx|axios|ky|requests?|session|dio|faraday|httparty|rest\w*|fetch\w*|instance|conn)$/i;
+/**
+ * `.get(`, `->post(`, `::put(`: the verb is matched first and the receiver read backwards from a
+ * short window, so long member chains in untrusted code can't make the scan backtrack.
+ */
+const VERB_CALL = /(?:\.|->|::|\?\.)\s*(?<verb>get|post|put|patch|delete)(?:Async|FromJsonAsync|AsJsonAsync|ForObject|ForEntity|Json|!)?\s*(?:<[^<>()]{0,200}>)?\(/gi;
+const RECEIVER_BEFORE = /(@?)([A-Za-z_$][\w$]{0,80})\s*$/;
+const BARE_CALL = /(?<![\w$.])(?<bare>fetch|\$fetch|ofetch|useFetch|useSWR|useSWRMutation|axios|ky|URL)\s*\(/g;
+/** `http.NewRequest("POST", url)`, `new HttpRequestMessage(HttpMethod.Post, url)`. */
+const METHOD_FIRST = /(?:\bNewRequest(?:WithContext)?\(\s*(?:ctx\s*,\s*)?"(?<m1>GET|POST|PUT|PATCH|DELETE)"|HttpRequestMessage\(\s*HttpMethod\.(?<m2>Get|Post|Put|Patch|Delete))\s*,/g;
+/** Retrofit interfaces: @GET("users/{id}"). JAX-RS writes @GET without arguments, so it never matches. */
+const RETROFIT = /@(?<verb>GET|POST|PUT|PATCH|DELETE)\(\s*"(?<url>[^"]*)"\s*\)/g;
+
+/** The URL argument at a position: optional wrappers (Uri.parse, format!, ...), an optional `base +`, then a literal. */
+const URL_ARG =
+  /\s*(?:(?:Uri\.parse|Uri\.https?|URI\.create|URI|new\s+URL|URL|format!|fmt\.Sprintf|String\.format|sprintf)\s*\(\s*|string:\s*)*(?:(?<concat>[\w$]+(?:\.[\w$]+)*)\s*(?:\+|\.(?=\s*["']))\s*)?[fr$@]{0,2}(?<q>["'`])(?<url>(?:https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(?::\d+)?|\$\{[^}]*\}|\{[^}]*\}|\$\w+|\\\([^)]*\)|#\{[^}]*\}|%[sv])?\/[^"'`?#\s]*)/y;
+
+/** Base URL variables that point at a third-party API rather than the app's own backend. */
+const EXTERNAL_BASE = /stripe|openai|anthropic|github|google|slack|twilio|sendgrid|resend|mailgun|supabase|firebase|discord|paypal|shopify|notion|airtable|external|third_?party/i;
+
+const FETCH_METHOD = /method\s*:\s*["'`](GET|POST|PUT|PATCH|DELETE)["'`]|httpMethod\s*=\s*"(GET|POST|PUT|PATCH|DELETE)"|HttpMethod\.(Get|Post|Put|Patch|Delete)/i;
 const ASSET_PATH = /\.(png|jpe?g|svg|ico|css|js|mjs|webp|gif|pdf|xml|txt|json|woff2?)$/i;
 
-/** Turn a URL literal into a route-like path: drop a `${BASE}` prefix, template parts become :param. */
+/** Template parts in any language: ${x}, {x}, $x, \(x), #{x}, %s. */
+const TEMPLATE_PART = /\$\{[^}]*\}|\{[^}]*\}|\$\w+|\\\([^)]*\)|#\{[^}]*\}|%[sdv]/g;
+const LEADING_BASE = /^(?:https?:\/\/[^/]+|\$\{[^}]*\}|\{[^}]*\}|\$\w+|\\\([^)]*\)|#\{[^}]*\}|%[sv])/;
+
+/** Turn a URL literal into a route-like path: drop the base URL, template parts become :param. */
 export function callPath(raw: string): string {
-  return normalisePath(raw.replace(/^\$\{[^}]*\}/, '').replace(/\$\{[^}]*\}/g, ':param'));
+  return normalisePath(raw.replace(LEADING_BASE, '').replace(TEMPLATE_PART, ':param'));
 }
 
 /** The text of a call's argument list, from its opening paren to the matching close (bounded). */
@@ -106,17 +140,47 @@ function callArgs(text: string, open: number): string {
 }
 
 /** API calls the code makes, plus form actions. Feeds the frontend-to-API wiring checks. */
+/** The URL argument of a call whose argument list starts at `from`, if it is a path on this app. */
+function urlArg(text: string, from: number): string | undefined {
+  URL_ARG.lastIndex = from;
+  const m = URL_ARG.exec(text);
+  if (!m?.groups) return undefined;
+  const base = m.groups.concat ?? /^(?:\$\{|\{|\$|\\\(|#\{)(\w+)/.exec(m.groups.url!)?.[1] ?? '';
+  if (EXTERNAL_BASE.test(base)) return undefined;
+  // "/api/items/" + id: what's concatenated after a trailing slash is a path parameter.
+  const appended = m.groups.url!.endsWith('/') && /^["'`]\s*(?:\+|\.)\s*[\w$(]/.test(text.slice(URL_ARG.lastIndex));
+  const path = callPath(appended ? `${m.groups.url}:param` : m.groups.url!);
+  return ASSET_PATH.test(path) ? undefined : path;
+}
+
+const methodIn = (args: string) => {
+  const m = FETCH_METHOD.exec(args);
+  return (m?.[1] ?? m?.[2] ?? m?.[3])?.toUpperCase();
+};
+
 async function apiCalls(ctx: RepoContext): Promise<ApiCall[]> {
   const out: ApiCall[] = [];
-  for (const f of ctx.find((f) => isSource(f) && /\.(m?[jt]sx?|vue|svelte|astro)$/.test(f))) {
+  for (const f of ctx.find(isSource)) {
     const text = await ctx.read(f);
-    for (const m of text.matchAll(CALL_SITE)) {
-      const path = callPath(m[3]!);
-      if (ASSET_PATH.test(path)) continue;
-      // fetch() defaults to GET unless its own options say otherwise.
-      const open = m.index! + m[1]!.length;
-      const method = m[2]?.toUpperCase() ?? FETCH_METHOD.exec(callArgs(text, open))?.[1]?.toUpperCase() ?? 'GET';
-      out.push({ path, method, file: f, line: lineOf(text, m.index!), via: 'code' });
+    const add = (path: string | undefined, method: string, at: number) => {
+      if (path) out.push({ path, method, file: f, line: lineOf(text, at), via: 'code' });
+    };
+    for (const m of text.matchAll(VERB_CALL)) {
+      // The receiver's last part (`http` in `this.http.get(`); decorators like @app.get are routes, not calls.
+      const recv = RECEIVER_BEFORE.exec(text.slice(Math.max(0, m.index! - 100), m.index!));
+      if (!recv || recv[1] || !CLIENT_RECEIVER.test(recv[2]!)) continue;
+      add(urlArg(text, m.index! + m[0].length), m.groups!.verb!.toUpperCase(), m.index! - recv[0].length);
+    }
+    for (const m of text.matchAll(BARE_CALL)) {
+      if (m.groups!.bare === 'URL' && !f.endsWith('.swift')) continue;
+      const open = m.index! + m[0].length - 1;
+      // fetch() and URLRequest default to GET unless their own options (or the next lines in Swift) say otherwise.
+      const args = f.endsWith('.swift') ? text.slice(open, open + 400) : callArgs(text, open);
+      add(urlArg(text, open + 1), methodIn(args) ?? 'GET', m.index!);
+    }
+    for (const m of text.matchAll(METHOD_FIRST)) add(urlArg(text, m.index! + m[0].length), (m.groups!.m1 ?? m.groups!.m2)!.toUpperCase(), m.index!);
+    if (/\.(kt|java)$/.test(f) && /retrofit2?\./.test(text)) {
+      for (const m of text.matchAll(RETROFIT)) add(callPath(m.groups!.url!), m.groups!.verb!, m.index!);
     }
   }
   return out;

@@ -45,7 +45,25 @@ export function FolderPicker({ start, onPick, onClose }: { start?: string; onPic
             </select>
           )}
         </div>
-        <p className="mono path">{listing?.path ?? 'Loading…'}</p>
+        {/* Not a <form>: the picker opens inside the project form. */}
+        <div className="field-row">
+          <input
+            key={listing?.path}
+            type="text"
+            className="mono"
+            aria-label="Folder path"
+            defaultValue={listing?.path ?? ''}
+            placeholder="Loading…"
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter') return;
+              e.preventDefault();
+              void open(e.currentTarget.value);
+            }}
+          />
+          <button type="button" className="btn" onClick={(e) => void open((e.currentTarget.previousElementSibling as HTMLInputElement).value)}>
+            Go
+          </button>
+        </div>
         {error && (
           <p className="error" role="alert">
             {error}

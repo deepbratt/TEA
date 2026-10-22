@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { APP_MARKERS } from '../repo-map/index.js';
 
 /**
  * Folder browser for the local UI's "Choose folder" dialog. Browsers can't give a web page a
@@ -17,7 +18,6 @@ export interface FolderListing {
 }
 
 const HIDDEN = new Set(['node_modules', '$RECYCLE.BIN', 'System Volume Information']);
-const APP_MARKERS = ['package.json', 'requirements.txt', 'pyproject.toml', 'Gemfile', 'go.mod', 'pubspec.yaml', 'composer.json'];
 
 function roots(): string[] {
   if (process.platform !== 'win32') return ['/'];

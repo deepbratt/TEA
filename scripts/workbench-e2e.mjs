@@ -42,12 +42,19 @@ try {
   check(!page.url().includes('token='), 'drops the token from the address bar');
   await page.getByRole('heading', { name: 'No projects yet' }).waitFor();
 
-  // Add a project: the example app as a "frontend" folder and its API folder as a "backend".
+  // Add a project by detecting it from the example app's folder.
   await page.getByRole('link', { name: 'Add your first project' }).click();
+  await page.getByRole('button', { name: 'Choose folder and detect' }).click();
+  await page.getByLabel('Folder path').fill(example);
+  await page.getByLabel('Folder path').press('Enter');
+  await page.locator('.pick-list .name', { hasText: /^components$/ }).waitFor(); // the example's own subfolders are listed
+  await page.getByRole('button', { name: 'Use this folder' }).click();
+  await page.locator('.stack-chips li', { hasText: 'Next.js' }).waitFor();
+  check((await page.getByLabel('Folder 1 path').inputValue()) === example, 'detects the project from its folder');
+  check(/fullstack/.test(await page.getByLabel('Folder 1 role').locator('option:checked').innerText()), 'auto-detects the folder role (fullstack)');
+  check((await page.locator('.suggest .chip').count()) > 0, 'suggests a local URL to test');
   await page.getByLabel('Project name').fill('Leaf and Kettle');
-  await page.getByLabel('Folder 1 path').fill(example);
   await page.getByLabel('Folder 1 name').fill('web');
-  await page.getByLabel('Folder 1 role').selectOption('fullstack');
   await page.getByRole('button', { name: 'Add another folder' }).click();
   await page.getByLabel('Folder 2 path').fill('does-not-exist');
   await page.getByRole('button', { name: 'Create project' }).click();

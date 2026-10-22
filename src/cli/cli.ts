@@ -26,10 +26,10 @@ const int = (v: string) => {
 };
 const collect = (v: string, prev: string[] = []) => [...prev, v];
 
-/** --source frontend=../web, backend=../api, or just a path (fullstack). Named after the folder. */
+/** --source frontend=../web, backend=../api, or just a path (role auto-detected). Named after the folder. */
 function source(v: string, prev: SourceFolder[] = []): SourceFolder[] {
-  const m = /^(frontend|backend|fullstack)=(.+)$/.exec(v);
-  const role: SourceRole = (m?.[1] as SourceRole) ?? 'fullstack';
+  const m = /^(auto|frontend|backend|fullstack)=(.+)$/.exec(v);
+  const role: SourceRole = (m?.[1] as SourceRole) ?? 'auto';
   const path = resolve(m?.[2] ?? v);
   let name = basename(path).replace(/[^A-Za-z0-9._-]/g, '-') || 'app';
   while (prev.some((s) => s.name === name)) name = `${name}-${prev.length + 1}`;
@@ -64,7 +64,7 @@ function buildProgram(): Command {
     .argument('[target]', 'a URL (https://...) or a repo folder (./app)')
     .option('--url <url>', 'URL of the running app to test')
     .option('--repo <path>', 'folder with the app source code')
-    .option('--source <role=path>', `a code folder, repeatable for a separate frontend and backend (role: ${SOURCE_ROLES.join(', ')})`, source)
+    .option('--source <[role=]path>', `a code folder, repeatable for a separate frontend and backend (role: ${SOURCE_ROLES.join(', ')}; default auto)`, source)
     .option('--project <key>', 'run a project from the workspace config file, with its rules and quality gate')
     .option('-w, --workspace <file>', 'workspace config file for --project', 'tea.config.yaml')
     .option('-o, --out <dir>', 'where to write the report', 'tea-report')
