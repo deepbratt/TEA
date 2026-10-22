@@ -1,0 +1,9 @@
+# Known false positives, ignored by exact fingerprint (commit:file:rule:line). Anything else still fails CI.
+#
+# Commit 1b808f9 (Milestone 1, 2026-10-20) is in history through PR #1. Its masking tests used
+# obviously fake literals: a made-up "sk_live_abcdefghijklmnop..." key, the public sample JWT
+# from jwt.io, and "abcdef123456". That file no longer exists; current tests build fake keys at
+# runtime so scanners never see a literal.
+1b808f9cb41e8040a815ffc5406af4e2bd495491:packages/core/src/core.test.ts:stripe-access-token:32
+1b808f9cb41e8040a815ffc5406af4e2bd495491:packages/core/src/core.test.ts:jwt:32
+1b808f9cb41e8040a815ffc5406af4e2bd495491:packages/core/src/core.test.ts:generic-api-key:45
