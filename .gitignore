@@ -12,3 +12,4 @@ test-results/
 tea.config.yaml
 web/next-env.d.ts
 .claude/
+_site/

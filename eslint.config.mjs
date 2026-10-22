@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint';
 import globals from 'globals';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/.next/**', 'examples/**', 'tea-report/**', '**/*.d.ts', 'web/next-env.d.ts'] },
+  { ignores: ['**/dist/**', '**/node_modules/**', '**/.next/**', 'examples/**', 'tea-report/**', '**/*.d.ts', 'web/next-env.d.ts', '_site/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -21,7 +21,7 @@ export default tseslint.config(
   },
   {
     // The Workbench (Next.js): server code runs in Node, components in the browser.
-    files: ['web/**/*.{ts,tsx}'],
+    files: ['web/**/*.{ts,tsx}', 'site/**/*.js'],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
   {

@@ -15,6 +15,7 @@
 Point it at your app's folder and URL. Get one plain-English report, a quality gate, and fix prompts your AI coding agent can use. Fix, retest, ship.</p>
 
 <p align="center">
+  <a href="https://deepbratt.github.io/TEA/"><b>Website</b></a> ·
   <a href="#-quick-start">Quick start</a> ·
   <a href="#%EF%B8%8F-the-tea-workbench">Workbench</a> ·
   <a href="#-how-to-use-it-step-by-step">How to use</a> ·
@@ -763,6 +764,7 @@ npm run lint && npm run typecheck && npm run knip
 npm run ui:dev                 # Workbench with hot reload on 127.0.0.1:4747
 npm run demo                   # end to end against the example app
 node scripts/workbench-e2e.mjs # Workbench in a real browser, with axe in light and dark mode
+node scripts/build-site.mjs    # the GitHub Pages site into _site/ (after npm run demo, with a sample report)
 ```
 
 The layout, the rules for new checks and plugins, and the PR checklist are in [CONTRIBUTING.md](CONTRIBUTING.md).
