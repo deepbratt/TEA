@@ -8,3 +8,6 @@ coverage/
 .env.local
 !examples/**/.env*
 test-results/
+.tea/
+tea.config.yaml
+web/next-env.d.ts

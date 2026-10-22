@@ -33,7 +33,14 @@ describe('scanRepo', () => {
     const checkout = r.routes.find((x) => x.path === '/api/checkout')!;
     expect(checkout.methods).toEqual(['GET', 'POST']);
     expect(r.routes.find((x) => x.path === '/api/legacy')!.methods).toEqual(['DELETE']);
-    expect(paths(r, 'api')).toContain('/api/profile');
+    // Calls the code makes are API calls (for the wiring checks), not routes of this app.
+    expect(paths(r, 'api')).not.toContain('/api/profile');
+    expect(r.apiCalls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: '/api/profile', method: 'PATCH', file: 'app/settings/page.tsx', via: 'code' }),
+        expect.objectContaining({ path: '/api/signup', method: 'POST', via: 'form' }),
+      ]),
+    );
     expect(r.routes.find((x) => x.path === '/blog/[slug]')!.dynamic).toBe(true);
 
     const env = Object.fromEntries(r.envVars.map((e) => [e.name, e.clientExposed]));

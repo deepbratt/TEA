@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Checks a TEA run against examples/buggy-next-app using its seeded-bug manifest:
 // - every bug with `caughtBy` must have all of those findings (or app-map facts);
-// - TEA must report nothing that isn't a seeded bug (no false positives);
+// - TEA must report no issue that isn't a seeded bug (no false positives; info suggestions aside);
 // - pro bugs must name pro checks that exist as stubs in the public catalog.
 // Usage: node scripts/verify-example.mjs [tea-report-dir]
 import { readFileSync } from 'node:fs';
@@ -44,9 +44,10 @@ for (const bug of bugs) {
   }
 }
 
-// Anything TEA reports must be one of the seeded bugs.
+// Anything TEA reports as an issue must be one of the seeded bugs. Info items are suggestions
+// (e.g. an endpoint nothing calls), not issues.
 const expected = new Set(bugs.flatMap((b) => b.caughtBy ?? []));
-const extra = results.findings.filter((f) => !expected.has(f.id));
+const extra = results.findings.filter((f) => f.severity !== 'info' && !expected.has(f.id));
 for (const f of extra) failures.push(`unexpected finding (false positive or an unlisted bug): [${f.severity}] ${f.id}`);
 
 if (appMap.stack.every((s) => s.id !== 'nextjs')) failures.push('stack should include Next.js');
