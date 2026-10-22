@@ -6,17 +6,12 @@ TEA is created and maintained by [DeepBratt](https://github.com/deepbratt).
 
 ## [Unreleased]
 
-### Added
-- **Project website on GitHub Pages** (`site/`, published by `.github/workflows/pages.yml` on every push to `main`). It has a landing page, a step-by-step walkthrough with screenshots, the supported stacks, a quick start, and a live sample report from the example app.
-- **Screenshots without local paths:** the screenshot script swaps them for neutral `~/code/...` ones.
-
-### Fixed
-- **Secret scan:** the 3 known fake fixtures in Milestone 1's history are ignored by exact fingerprint (`.gitleaksignore`).
-
 ### Changed
 - **Everything is open source; nothing is locked.** The licence-key gating and the "pro pack" loader are gone. The checks that were pro stubs are now ordinary catalog entries, shown as *Coming soon* until their sandbox detectors exist. `TEA_CHECKS` loads community check packs.
 
 ### Added
+- **Project website on GitHub Pages** (`site/`, published by `.github/workflows/pages.yml` on every push to `main`). It has a landing page, a step-by-step walkthrough with screenshots, the supported stacks, a quick start, and a live sample report from the example app.
+- **Screenshots without local paths:** the screenshot script swaps them for neutral `~/code/...` ones.
 - **Your own rules, no code.** `customRules` in `tea.config.yaml`, with four types: `forbid-text`, `require-text`, `require-file` and `require-route`.
   - In the Workbench, add one-click ideas (no console.log, no test keys, has a privacy page…) or use the three-step rule builder.
   - They run in every analysis, the CLI included.
@@ -36,6 +31,7 @@ TEA is created and maintained by [DeepBratt](https://github.com/deepbratt).
 - **Folder picker path box.** The folder picker has a path box you can type into.
 
 ### Fixed
+- **Secret scan:** the 3 known fake fixtures in Milestone 1's history are ignored by exact fingerprint (`.gitleaksignore`).
 - **Folder picker race.** A slow first listing could overwrite a path you had already typed (seen on Linux CI).
 
 ## [0.1.0] - 2026-10-22
