@@ -118,6 +118,15 @@ describe('backends in every language', () => {
 });
 
 describe('API calls in every client language', () => {
+  it('scans hostile input in linear time (no regex backtracking blow-up)', async () => {
+    const chain = `${'a.'.repeat(200_000)}x`;
+    const routes = `${'.route("/x", '.repeat(50_000)}`;
+    const root = await repo({ 'package.json': JSON.stringify({ dependencies: { axum: '1' } }), 'src/a.ts': chain, 'src/main.rs': routes });
+    const started = Date.now();
+    await scanRepo(root);
+    expect(Date.now() - started).toBeLessThan(3000);
+  });
+
   it('finds calls and their methods, ignoring third-party APIs', async () => {
     const r = await scanRepo(
       await repo({
