@@ -1,6 +1,6 @@
 # Contributing to TEA
 
-Thanks for helping spill the TEA. TEA is for founders who can't write tests, so every change should make the report clearer, the checks sharper, or the setup simpler.
+Thanks for helping spill the TEA. TEA is created and maintained by [DeepBratt](https://github.com/deepbratt). TEA is for founders who can't write tests, so every change should make the report clearer, the checks sharper, or the setup simpler.
 
 ## Setup
 

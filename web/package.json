@@ -13,5 +13,9 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.1.0",
     "typescript": "^5.6.3"
+  },
+  "author": {
+    "name": "DeepBratt",
+    "url": "https://github.com/deepbratt"
   }
 }

@@ -3,14 +3,25 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/deepbratt/TEA/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/deepbratt/TEA/actions/workflows/ci.yml/badge.svg?branch=main"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-b5651d"></a>
-  <img alt="Node 20+" src="https://img.shields.io/badge/node-20%2B-3fae68">
-  <img alt="Status: early build" src="https://img.shields.io/badge/status-early%20build-e8a33d">
+  <img alt="Node 20.9+" src="https://img.shields.io/badge/node-20.9%2B-3fae68">
+  <img alt="Languages: JS, Python, Go, Rust, Java, Kotlin, C#, PHP, Ruby, Elixir, Dart, Swift" src="https://img.shields.io/badge/stacks-12%20languages-1f4fa3">
+  <img alt="Status: beta" src="https://img.shields.io/badge/status-beta-e8a33d">
   <a href="CONTRIBUTING.md"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-2b1d12"></a>
 </p>
 
 <p align="center"><b>The free, open-source QA tester for vibe-coded apps.</b><br>
-Point it at your URL and/or repo. Get one plain-English report, with fix prompts your AI coding agent can use. Fix, retest, ship.</p>
+Point it at your app's folder and URL. Get one plain-English report, a quality gate, and fix prompts your AI coding agent can use. Fix, retest, ship.</p>
+
+<p align="center">
+  <a href="#-quick-start">Quick start</a> ·
+  <a href="#%EF%B8%8F-the-tea-workbench">Workbench</a> ·
+  <a href="#-works-with-any-stack">Any stack</a> ·
+  <a href="#-use-it-in-ci">CI</a> ·
+  <a href="#%EF%B8%8F-roadmap">Roadmap</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
 
 ---
 
@@ -23,25 +34,69 @@ You built your app with Lovable, Bolt, v0, Replit, Cursor, Windsurf or Claude Co
 </p>
 
 > [!NOTE]
-> **TEA is in early build: step 1 of 14** ([progress](BUILD-PROGRESS.md)). Working today: zero-config discovery of your stack, routes and API endpoints; a read-only crawl of your live app; the HTML/Markdown/JSON report with a TEA Score; and the check catalog. Everything marked *planned* below is on the [roadmap](#-roadmap).
-
-## Contents
-
-- [Quick start](#-quick-start-2-minutes) · [The TEA Workbench](#%EF%B8%8F-the-tea-workbench) · [What you get](#-what-you-get) · [How it works](#-how-it-works) · [features.md](#-featuresmd-claimed-vs-reality) · [Fix modes](#-fix-modes) · [Checks are data](#-checks-are-data) · [Any stack](#-works-with-any-stack) · [tea.yaml](#-teayaml-optional) · [Responsible use](#-responsible-use) · [Roadmap](#-roadmap) · [Plugins](#-writing-a-plugin) · [Contributing](#-contributing)
-
-## ⚡ Quick start (2 minutes)
-
-You need Node.js 20 or newer.
-
-> [!IMPORTANT]
-> TEA is not on npm yet. Until the first release, run it from source:
+> **Status: beta.** Working today:
+> - **Discovery with zero config:** your stack, pages, API endpoints and API calls, in [12 languages](#-works-with-any-stack).
+> - **Live testing:** a read-only crawl of your running app.
+> - **Wiring checks:** every frontend call is matched to a backend endpoint.
+> - **The TEA Workbench:** projects, issues, rules and a quality gate.
+> - **Reports:** HTML, Markdown and JSON, with a TEA Score and a fix prompt for every issue.
 >
-> ```bash
-> git clone https://github.com/deepbratt/TEA.git && cd TEA
-> npm start      # one command: installs, builds and opens the TEA Workbench in your browser
-> ```
->
-> Then do everything in the UI: **Add project → Choose folder and detect → Run analysis.** The first `npm start` takes a few minutes (it installs dependencies and a headless Chromium); later starts take seconds. `npm run demo` tests the bundled example app end to end, and `node dist/cli/bin.js run <url-or-folder>` is the command line.
+> Features marked *planned* are on the [roadmap](#%EF%B8%8F-roadmap). Live status: [BUILD-PROGRESS.md](BUILD-PROGRESS.md).
+
+<details>
+<summary><b>Contents</b></summary>
+
+- [Quick start](#-quick-start)
+- [The TEA Workbench](#%EF%B8%8F-the-tea-workbench)
+- [What you get](#-what-you-get)
+- [How it works](#-how-it-works)
+- [Works with any stack](#-works-with-any-stack)
+- [Use it in CI](#-use-it-in-ci)
+- [features.md: claimed vs reality](#-featuresmd-claimed-vs-reality)
+- [Fix modes](#%EF%B8%8F-fix-modes)
+- [Checks are data](#-checks-are-data)
+- [tea.yaml](#%EF%B8%8F-teayaml-optional)
+- [Responsible use](#%EF%B8%8F-responsible-use)
+- [Roadmap](#%EF%B8%8F-roadmap)
+- [Writing a plugin](#-writing-a-plugin)
+- [Development](#-development)
+- [Contributing](#-contributing)
+- [Author](#-author)
+- [License](#-license)
+
+</details>
+
+## ⚡ Quick start
+
+**Requirements:** Node.js 20.9 or newer, and git. Windows, macOS and Linux all work.
+
+```bash
+git clone https://github.com/deepbratt/TEA.git
+cd TEA
+npm start
+```
+
+`npm start` does everything:
+1. It installs dependencies, with install scripts disabled for supply-chain safety.
+2. It builds TEA and the Workbench, and rebuilds only what changed on later runs.
+3. It downloads a headless Chromium the first time.
+4. It opens the **TEA Workbench** in your browser.
+
+The first start takes a few minutes; later starts take seconds.
+
+Then, in the Workbench:
+
+1. **Add project → Choose folder and detect.** Pick your app's folder. TEA finds the apps in it, their languages and frameworks, and whether each is a frontend, backend or fullstack app.
+2. **Start your app** the way you normally do, and pick its address from TEA's suggestions (it shows which one is running).
+3. **Run analysis.** Watch it live, then go through the issues, copy a fix prompt into your AI coding tool, fix, and run again.
+
+> [!TIP]
+> Want to see it first? `npm run demo` runs TEA against a bundled example app full of planted bugs and opens the report. `npm start -- --port 5000 --workspace ../my-app/tea.config.yaml` changes the port or config file.
+
+<details>
+<summary><b>Prefer the command line?</b></summary>
+
+TEA isn't published to npm yet. From a clone, use `node dist/cli/bin.js` (after `npm start` or `npm run build`) wherever you see `npx tea-qa` below.
 
 ```bash
 # 1. Test a live app (read-only)
@@ -50,14 +105,19 @@ npx tea-qa run https://your-app.com
 # 2. Better: give TEA the code too, so every issue points to a file and line
 npx tea-qa run https://your-app.com --repo ./your-app
 
-# 3. Code only: TEA asks before starting your app with its own dev script
+# 3. A separate frontend and backend (roles auto-detected)
+npx tea-qa run http://localhost:3000 --source ../web --source ../api
+
+# 4. Code only: TEA asks before starting your app with its own dev script
 npx tea-qa run ./your-app
 
 # See the plan and estimated cost first. Nothing is opened or changed.
 npx tea-qa run https://your-app.com --repo ./your-app --dry-run
 ```
 
-Then open `tea-report/report.html`. The first run downloads a headless Chromium; if it doesn't, run `npx playwright install chromium`.
+Then open `tea-report/report.html`. The [full list of options](#%EF%B8%8F-teayaml-optional) is below.
+
+</details>
 
 ## 🖥️ The TEA Workbench
 
@@ -212,7 +272,7 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    UI[ui<br/>local web app] --> CLI
+    UI[web + workspace<br/>TEA Workbench, Next.js] --> CLI
     CLI[cli<br/>tea-qa commands] --> CORE[core<br/>config, safety, scoring,<br/>check catalog, results schema]
     MCP[mcp<br/>MCP server · planned] --> CORE
     CORE --> MAP[repo-map<br/>stack, routes, endpoints]
@@ -497,12 +557,55 @@ export default definePlugin({
 
 List it under `plugins:` in a `tea.yaml` you pass with `--config`.
 
+## 🚦 Use it in CI
+
+Commit `tea.config.yaml`, then fail the build when the quality gate fails:
+
+```yaml
+# .github/workflows/tea.yml
+name: TEA
+on: [pull_request]
+jobs:
+  tea:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: git clone --depth 1 https://github.com/deepbratt/TEA.git ../tea && cd ../tea && npm ci && npm run build && npx playwright install --with-deps chromium
+      - run: node ../tea/dist/cli/bin.js run --project my-app   # exits 1 when the gate fails
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: tea-report, path: tea-report }
+```
+
+A ready-made GitHub Action that comments "☕ TEA Report" on pull requests is planned (step 12).
+
+## 🧑‍💻 Development
+
+```bash
+npm install && npm run build   # engine
+npm test                       # unit tests (Node 22+)
+npm run lint && npm run typecheck && npm run knip
+npm run ui:dev                 # Workbench with hot reload on 127.0.0.1:4747
+npm run demo                   # end to end against the example app
+node scripts/workbench-e2e.mjs # Workbench in a real browser, with axe in light and dark mode
+```
+
+The layout, the rules for new checks and plugins, and the PR checklist are in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## 🤝 Contributing
 
 New checks, stack plugins and better fix prompts are the most useful contributions. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md). Found a security problem? Please report it privately; see [SECURITY.md](SECURITY.md).
 
+## 👤 Author
+
+**DeepBratt**: creator and maintainer · [github.com/deepbratt](https://github.com/deepbratt)
+
+If TEA helped you ship, a ⭐ on the repo helps others find it.
+
 ## 📄 License
 
-[MIT](LICENSE). The engine and all free checks are free forever.
+[MIT](LICENSE) © 2026 DeepBratt and TEA contributors. The engine and all free checks are free forever.
 
 <p align="center"><sub>☕ Made for everyone who shipped something with AI and wants to know if it really works.</sub></p>
