@@ -8,4 +8,4 @@ Most TEA users are founders who are new to testing and security. Explain things 
 
 ## Reporting
 
-If someone's behaviour worries you, report it privately to the maintainers through GitHub (the **Security** tab → **Report a vulnerability** works for private reports of any kind). Reports are handled confidentially. Maintainers may remove content, or warn, suspend or ban anyone who breaks this code, as described in the Contributor Covenant's enforcement guidelines.
+If someone's behaviour worries you, report it privately to the maintainer, [DeepBratt](https://github.com/deepbratt), through GitHub (the **Security** tab → **Report a vulnerability** works for private reports of any kind). Reports are handled confidentially. Maintainers may remove content, or warn, suspend or ban anyone who breaks this code, as described in the Contributor Covenant's enforcement guidelines.
