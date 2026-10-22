@@ -20,6 +20,7 @@
     <nav aria-label="Site">
       <a href="#how">How it works</a>
       <a href="#stacks">Any stack</a>
+      <a href="#config">Configuration</a>
       <a href="#start">Get started</a>
       <a href="report/report.html">Sample report</a>
       <a class="btn btn-primary" href="https://github.com/deepbratt/TEA">GitHub</a>
@@ -88,6 +89,47 @@
         <li>Laravel</li><li>Symfony</li><li>Rails</li><li>Phoenix</li><li>Vapor</li><li>Flutter</li><li>React Native / Expo</li>
         <li>Supabase</li><li>Firebase</li><li>Prisma</li><li>Stripe</li>
       </ul>
+    </section>
+
+    <section id="config" class="config" aria-labelledby="config-title">
+      <h2 id="config-title">One file holds every setting</h2>
+      <p class="sub">You never have to touch it: every setting has a page in the Workbench. But it's all in one readable file, <code>tea.config.yaml</code>, that you can commit with your code or copy to another computer.</p>
+      <div class="config-grid">
+        <div class="code-card reveal">
+<pre tabindex="0" aria-label="Example tea.config.yaml"><code><span class="c"># Your app: its folders and where it runs</span>
+projects:
+  - key: shop
+    name: My shop
+    url: http://localhost:3000
+    sources:
+      - { name: web, path: ../shop-web }   <span class="c"># role: auto</span>
+      - { name: api, path: ../shop-api }
+
+<span class="c"># Change any built-in check</span>
+rules:
+  crawl.slow: { params: { thresholdMs: 2000 } }
+
+<span class="c"># Your own rules, no code</span>
+customRules:
+  - { id: no-console, title: No console.log,
+      type: forbid-text, text: "console.log(" }
+  - { id: privacy, title: Has a privacy page,
+      type: require-route, path: /privacy }
+
+<span class="c"># Fail when ANY condition is met</span>
+gate:
+  conditions:
+    - { metric: critical, op: gt, value: 0 }
+    - { metric: score, op: lt, value: 60 }</code></pre>
+        </div>
+        <dl class="config-list reveal">
+          <dt>projects</dt><dd>Each app: a name, its code folders (frontend, backend or fullstack, or <code>auto</code>), and an optional URL to test it live.</dd>
+          <dt>rules</dt><dd>Turn any built-in check off, change how serious it is, or tune it (like what counts as a slow page). Only what you change is written.</dd>
+          <dt>customRules</dt><dd>Four kinds, no code: the code must <b>not contain</b> some text, must <b>contain</b> some text, a <b>file</b> must exist, a <b>page</b> must exist.</dd>
+          <dt>gate</dt><dd>Conditions on the score, issue counts or an area's score. Every analysis is marked Passed or Failed; in CI, a failed gate fails the build.</dd>
+        </dl>
+      </div>
+      <p class="cta"><a class="btn" href="https://github.com/deepbratt/TEA#%EF%B8%8F-configuration-guide">Every setting, explained</a></p>
     </section>
 
     <section id="start" class="start" aria-labelledby="start-title">
