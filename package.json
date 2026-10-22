@@ -41,13 +41,13 @@
     "examples/*"
   ],
   "scripts": {
-    "build": "node api.js && tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "start": "node api.js && npm run build --silent && node dist/cli/bin.js run",
+    "start": "npm run build --silent && node dist/cli/bin.js run",
     "ui": "npm run build --silent && node dist/cli/bin.js ui",
     "tea": "node dist/cli/bin.js",
     "browsers": "playwright install chromium",
