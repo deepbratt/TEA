@@ -1,4 +1,4 @@
-import { isDynamicPath, normalisePath, type Discovery, type EnvVar, type FormInfo, type RepoContext, type Route } from '../core/index.js';
+import { normalisePath, type ApiCall, type Discovery, type EnvVar, type FormInfo, type RepoContext, type Route } from '../core/index.js';
 import { isSource, isTestPath, lineOf } from './context.js';
 
 /** Prefixes that frameworks inline into the browser bundle. */
@@ -79,17 +79,55 @@ async function openapi(ctx: RepoContext): Promise<string[]> {
   return ctx.find((f) => /(^|\/)(openapi|swagger)[\w.-]*\.(json|ya?ml)$/i.test(f));
 }
 
-/** API endpoints the front end calls: fetch('/api/x'), axios.post('/api/x'). Feeds API tests (M3). */
-async function clientCalls(ctx: RepoContext): Promise<Route[]> {
-  const out: Route[] = [];
-  const re = /\b(?:fetch|axios(?:\.(get|post|put|patch|delete))?|ky(?:\.(get|post|put|patch|delete))?|\$fetch|useFetch)\(\s*["'`](\/(?:api|v\d|graphql|trpc|rest|functions)[^"'`$?]*)/g;
-  for (const f of ctx.find((f) => isSource(f) && /\.(m?[jt]sx?|vue|svelte)$/.test(f))) {
+/**
+ * Call sites: fetch('/api/x'), axios.post('/api/x'), api.get(`${BASE}/orders/${id}`), $fetch, ky...
+ * Group 1: the callee; group 2: the method in `x.get(`; group 3: the URL up to its quote.
+ */
+const CALL_SITE =
+  /\b((?:axios|ky|api|apiClient|client|http|request|instance|\$fetch|ofetch)\.(get|post|put|patch|delete)|fetch|\$fetch|ofetch|useFetch|axios|ky)\(\s*["'`]((?:\$\{[^}]*\})?\/[^"'`?#\s]*)/g;
+const FETCH_METHOD = /method\s*:\s*["'`](GET|POST|PUT|PATCH|DELETE)["'`]/i;
+const ASSET_PATH = /\.(png|jpe?g|svg|ico|css|js|mjs|webp|gif|pdf|xml|txt|json|woff2?)$/i;
+
+/** Turn a URL literal into a route-like path: drop a `${BASE}` prefix, template parts become :param. */
+export function callPath(raw: string): string {
+  return normalisePath(raw.replace(/^\$\{[^}]*\}/, '').replace(/\$\{[^}]*\}/g, ':param'));
+}
+
+/** The text of a call's argument list, from its opening paren to the matching close (bounded). */
+function callArgs(text: string, open: number): string {
+  let depth = 0;
+  const end = Math.min(text.length, open + 600);
+  for (let i = open; i < end; i++) {
+    const c = text[i];
+    if (c === '(' || c === '{' || c === '[') depth++;
+    else if ((c === ')' || c === '}' || c === ']') && --depth === 0) return text.slice(open, i + 1);
+  }
+  return text.slice(open, end);
+}
+
+/** API calls the code makes, plus form actions. Feeds the frontend-to-API wiring checks. */
+async function apiCalls(ctx: RepoContext): Promise<ApiCall[]> {
+  const out: ApiCall[] = [];
+  for (const f of ctx.find((f) => isSource(f) && /\.(m?[jt]sx?|vue|svelte|astro)$/.test(f))) {
     const text = await ctx.read(f);
-    for (const m of text.matchAll(re)) {
-      const p = normalisePath(m[3]!);
-      const method = (m[1] ?? m[2])?.toUpperCase();
-      out.push({ path: p, kind: 'api', file: f, line: lineOf(text, m.index!), dynamic: isDynamicPath(p), source: 'code', plugin: 'client-calls', ...(method ? { methods: [method] } : {}) });
+    for (const m of text.matchAll(CALL_SITE)) {
+      const path = callPath(m[3]!);
+      if (ASSET_PATH.test(path)) continue;
+      // fetch() defaults to GET unless its own options say otherwise.
+      const open = m.index! + m[1]!.length;
+      const method = m[2]?.toUpperCase() ?? FETCH_METHOD.exec(callArgs(text, open))?.[1]?.toUpperCase() ?? 'GET';
+      out.push({ path, method, file: f, line: lineOf(text, m.index!), via: 'code' });
     }
+  }
+  return out;
+}
+
+function formCalls(list: FormInfo[]): ApiCall[] {
+  const out: ApiCall[] = [];
+  for (const form of list) {
+    if (!form.action?.startsWith('/')) continue;
+    const [file, line] = form.location.split(/:(?=\d+$)/);
+    out.push({ path: callPath(form.action), method: form.method ?? 'GET', file: file!, line: Number(line) || 1, via: 'form' });
   }
   return out;
 }
@@ -110,9 +148,9 @@ async function linkLiterals(ctx: RepoContext): Promise<Route[]> {
 }
 
 export async function genericDiscovery(ctx: RepoContext): Promise<Partial<Discovery> & { linkHints: Route[] }> {
-  const [env, formList, specs, calls, links] = await Promise.all([envVars(ctx), forms(ctx), openapi(ctx), clientCalls(ctx), linkLiterals(ctx)]);
+  const [env, formList, specs, calls, links] = await Promise.all([envVars(ctx), forms(ctx), openapi(ctx), apiCalls(ctx), linkLiterals(ctx)]);
   const notes: string[] = [];
   const realEnvFiles = env.envFiles.filter((f) => !ENV_TEMPLATE.test(f));
   if (realEnvFiles.length) notes.push(`Env files on disk: ${realEnvFiles.join(', ')} (values never read; whether they are committed is checked in the code scan).`);
-  return { ...env, forms: formList, openapi: specs, routes: calls, notes, linkHints: links };
+  return { ...env, forms: formList, openapi: specs, apiCalls: [...calls, ...formCalls(formList)], notes, linkHints: links };
 }

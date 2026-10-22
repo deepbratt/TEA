@@ -1,5 +1,5 @@
 {
-  "$comment": "Every bug planted in Leaf & Kettle. `check` is the TEA check that should catch it and `step` the build step that adds it. `caughtBy` lists the finding ids (or `appmap:orphan:<path>`) that prove TEA caught it; scripts/verify-example.mjs fails if any listed finding is missing, or if TEA reports anything that isn't a seeded bug. Bugs without `caughtBy` are waiting for their step. Pro bugs must show as locked 'TEA Pro' checks in the free report (from step 7) and be caught by the private pack's tests.",
+  "$comment": "Every bug planted in Leaf & Kettle. `check` is the TEA check that should catch it and `step` the build step that adds it. `caughtBy` lists the finding ids (or `appmap:orphan:<path>`) that prove TEA caught it; scripts/verify-example.mjs fails if any listed finding is missing, or if TEA reports anything that isn't a seeded bug (info-level suggestions aside). Bugs without `caughtBy` are waiting for their step. Pro bugs must show as locked 'TEA Pro' checks in the free report (from step 7) and be caught by the private pack's tests.",
   "bugs": [
     { "id": "paywall-no-plans", "title": "Tea Club page shows no plans because /api/plans returns 500", "where": "app/pricing/page.tsx, app/api/plans/route.ts", "check": "crawl.api-failure", "step": 3, "pack": "free", "caughtBy": ["crawl.api-failure:/pricing:/api/plans"] },
     { "id": "account-500", "title": "Account page crashes for signed-out visitors", "where": "app/account/page.tsx", "check": "crawl.server-error", "step": 3, "pack": "free", "caughtBy": ["crawl.server-error:/account"] },
@@ -23,7 +23,8 @@
     { "id": "duplicate-requests", "title": "Dashboard fetches /api/stats three times", "where": "app/dashboard/widgets.tsx", "check": "perf.duplicate-requests", "step": 3, "pack": "free" },
     { "id": "dead-export-button", "title": "Export button does nothing (console.log only)", "where": "app/dashboard/widgets.tsx", "check": "wiring.dead-click", "step": 3, "pack": "free" },
     { "id": "hard-coded-stats", "title": "Dashboard numbers are hard-coded", "where": "app/dashboard/page.tsx", "check": "wiring.static-section", "step": 3, "pack": "free" },
-    { "id": "orphan-api-call", "title": "UI calls /api/wishlist, which doesn't exist", "where": "app/dashboard/widgets.tsx", "check": "wiring.orphan-call", "step": 3, "pack": "free" },
+    { "id": "orphan-api-call", "title": "UI calls /api/wishlist, which doesn't exist", "where": "app/dashboard/widgets.tsx", "check": "wiring.orphan-call", "step": 3, "pack": "free", "caughtBy": ["wiring.orphan-call:GET /api/wishlist"] },
+    { "id": "signup-no-endpoint", "title": "Sign-up form posts to /api/signup, which doesn't exist", "where": "app/signup/page.tsx", "check": "wiring.orphan-call", "step": 3, "pack": "free", "caughtBy": ["wiring.orphan-call:POST /api/signup"] },
     { "id": "200-on-error", "title": "Newsletter route returns 200 on failure and logs nothing", "where": "app/api/newsletter/route.ts", "check": "wiring.error-handling", "step": 3, "pack": "free" },
     { "id": "no-empty-state", "title": "Orders list has no empty state", "where": "app/orders/page.tsx", "check": "wiring.empty-state", "step": 3, "pack": "free" },
     { "id": "blank-without-js", "title": "About page is blank without JavaScript", "where": "app/about/page.tsx", "check": "seo.blank-without-js", "step": 3, "pack": "free" },

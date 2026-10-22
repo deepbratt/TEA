@@ -8,3 +8,9 @@ fix_prompt: prompts/crawl/slow.md
 suggest_only: false
 pack: free
 version: 1
+params:
+  thresholdMs:
+    default: 3000
+    description: Pages slower than this many milliseconds are reported
+    min: 500
+    max: 60000

@@ -59,42 +59,64 @@ npx tea-qa run https://your-app.com --repo ./your-app --dry-run
 
 Then open `tea-report/report.html`. The first run downloads a headless Chromium; if it doesn't, run `npx playwright install chromium`.
 
-## 🖥️ The TEA UI
+## 🖥️ The TEA Workbench
 
-Prefer clicking to typing? `npx tea-qa ui` opens a local web app that does everything the CLI does:
+Prefer clicking to typing? `npx tea-qa ui` opens the **TEA Workbench**, a local web app (Next.js, on your own computer) that works like SonarQube for vibe-coded apps: projects, analyses, issues, rules and a quality gate.
 
 ```bash
 npx tea-qa ui          # opens http://127.0.0.1:4747 in your browser
 ```
 
-- Enter your app's live URL and pick where the code is:
-  - **📁 Folder on this computer:** type a path or click **Browse…** to choose it.
-  - **🐙 GitHub repo:** connect GitHub, search your repos, pick a branch. TEA makes a shallow, read-only copy (it never writes to GitHub) and suggests live URLs from the repo's homepage and recent deployments (for example Vercel previews).
-- Press **☕ Spill the TEA**.
-- Watch TEA work live: every page it visits and every step it takes.
-- Get the score, the counts by severity and the full report (with copy-paste fix prompts) right in the page.
-- Every run is kept under `tea-report/runs/`, so you can reopen past runs and compare before and after a fix.
+- **Projects.** Add your app once: its code folders and, optionally, the URL where it runs. A separate frontend and backend? Add both folders (up to 10), each marked *frontend*, *backend* or *fullstack*.
+- **Analyses.** Press **Run analysis** and watch TEA work live. Every analysis is kept, with its full report.
+- **Issues.** Every finding, filterable by severity, area and check, with steps to see it and a fix prompt to paste into your AI coding tool.
+- **Frontend-to-API wiring.** TEA reads every `fetch`/`axios` call and form in the frontend and every route in the backend. A call nothing serves (or with a method the route doesn't handle) is an issue; an endpoint nothing calls is a suggestion.
+- **Rules.** Turn checks on or off, change their severity, tune thresholds (for example what counts as a slow page).
+- **Quality gate.** Conditions like *critical issues > 0* or *TEA Score < 60*. Each analysis is marked **Passed** or **Failed**, and `tea-qa run --project <key>` exits with an error when the gate fails, so CI can block a bad deploy.
 
 ```mermaid
 flowchart LR
-    B[Your browser] -- "one-time token,<br/>then a same-site cookie" --> U[TEA UI<br/>127.0.0.1 only]
-    U -- "same engine<br/>as the CLI" --> E[TEA engine]
-    E -- "read-only crawl" --> A[Your app]
-    E --> R[(tea-report/runs)]
-    U -- "live progress<br/>(server-sent events)" --> B
+    B[Your browser] -- "one-time token,<br/>then a same-site cookie" --> W[TEA Workbench<br/>Next.js, 127.0.0.1 only]
+    W -- "reads and rewrites" --> C[(tea.config.yaml<br/>projects, rules, gate)]
+    W -- "same engine<br/>as the CLI" --> E[TEA engine]
+    E -- "reads" --> F1[frontend folder]
+    E -- "reads" --> F2[backend folder]
+    E -- "read-only crawl" --> A[Your running app]
+    E --> R[(.tea/runs)]
+    W -- "live progress<br/>(server-sent events)" --> B
 ```
 
-The UI only listens on your own computer, needs the one-time link TEA prints, and refuses requests from other websites, so a page you have open elsewhere can't start a run or read your results. Starting your app from its dev script is a checkbox that's off by default.
+### One config file
 
-**Connecting GitHub.** Three ways, all kept in memory only (never saved to disk) and masked everywhere:
+Everything you set in the Workbench lives in one file, `tea.config.yaml`, next to where you ran `tea-qa ui` (or `--workspace <file>`). Edit it in the Workbench (on the page or as text) or in your editor, and commit it with your code. Saving from the Workbench validates it first and keeps your comments.
 
-| Option | What you need |
-|---|---|
-| **Use my GitHub CLI login** | [`gh`](https://cli.github.com) installed and signed in (`gh auth login`). Zero setup. |
-| **Sign in with GitHub** | A GitHub OAuth App with *device flow* enabled; set its client id as `TEA_GITHUB_CLIENT_ID` before `tea-qa ui`. You enter a short code on github.com. |
-| **Paste a token** | A [fine-grained token](https://github.com/settings/personal-access-tokens/new) with read-only **Contents** and **Metadata** on the repos you want to test. |
+```yaml
+version: 1
+projects:
+  - key: shop
+    name: My shop
+    url: http://localhost:3000        # optional: where the app runs
+    sources:
+      - { name: web, path: ../shop-web, role: frontend }
+      - { name: api, path: ../shop-api, role: backend }
+rules:
+  crawl.slow: { params: { thresholdMs: 2000 } }
+  wiring.unused-endpoint: { enabled: false }
+gate:
+  conditions:
+    - { metric: critical, op: gt, value: 0 }
+    - { metric: high, op: gt, value: 3 }
+    - { metric: score, op: lt, value: 60 }
+```
 
-A repo cloned from GitHub has no installed dependencies, and TEA never installs them, so give TEA your app's live (or preview) URL to test it running; the code then points every issue at its file.
+Run the same project from the command line or CI, with its rules and gate:
+
+```bash
+npx tea-qa run --project shop                 # uses ./tea.config.yaml
+npx tea-qa run --source frontend=../web --source backend=../api   # no config file
+```
+
+**Safe by design.** The Workbench only listens on your own computer, needs the one-time link TEA prints, refuses requests addressed to other host names (DNS rebinding) and writes from other websites, so a page you have open elsewhere can't start an analysis or read your results. It never installs packages or starts your app: give it the URL where your app already runs to test it live; without a URL it reads the code only. Analyses are stored in `.tea/runs/` next to the config file; add `.tea/` to your `.gitignore`.
 
 <!-- Demo GIF placeholder: a 20-second recording of `npx tea-qa run` and the report opening. -->
 <!-- <p align="center"><img src="docs/assets/demo.gif" alt="TEA demo" width="100%"></p> -->
@@ -364,6 +386,9 @@ npx tea-qa run [url-or-folder] [options]
 
   --url <url>               URL of the running app to test
   --repo <path>             folder with the app source code
+  --source <role=path>      a code folder; repeat for a separate frontend and backend (frontend, backend, fullstack)
+  --project <key>           run a project from tea.config.yaml, with its rules and quality gate (exit 1 if the gate fails)
+  -w, --workspace <file>    the config file for --project (default: tea.config.yaml)
   -o, --out <dir>           where to write the report (default: tea-report)
   -c, --config <file>       tea.yaml to use (trusted)
   --max-pages <n>           most pages to visit (default: 50)
@@ -379,7 +404,7 @@ npx tea-qa run [url-or-folder] [options]
   -v, --verbose / -q, --quiet
 ```
 
-`tea` is a short alias for `tea-qa`. `tea-qa ui [--port 4747] [--no-open]` opens the local web UI. Planned commands: `tea-qa retest`, `tea-qa mcp`, and `tea-qa run --targets targets.yaml` for many apps at once.
+`tea` is a short alias for `tea-qa`. `tea-qa ui [--workspace tea.config.yaml] [--port 4747] [--no-open]` opens the TEA Workbench. Planned commands: `tea-qa retest`, `tea-qa mcp`, and `tea-qa run --targets targets.yaml` for many apps at once.
 
 </details>
 

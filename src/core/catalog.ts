@@ -32,10 +32,19 @@ export interface CheckEntry {
   pack: 'free' | 'pro';
   version: number;
   risk_at_scale?: string;
+  /** Settings users can change per check in their rules, with defaults. */
+  params?: Record<string, CheckParam>;
   /** Set by the loader: which catalog or pack the entry came from, and its root folder. */
   source?: { name: string; root: string };
   /** Set by the loader: the fix_prompt template's text. */
   promptTemplate?: string;
+}
+
+export interface CheckParam {
+  default: number | string | boolean;
+  description: string;
+  min?: number;
+  max?: number;
 }
 
 export interface PackSource {

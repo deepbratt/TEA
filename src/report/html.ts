@@ -3,7 +3,7 @@ import { countBySeverity, scoreVerdict, sortFindings, type AppMap, type Finding,
 import { AREA_LABEL, summaryBody, topFindings } from './summary.js';
 
 /** The same design tokens as the local UI, inlined so a report stays one self-contained file. */
-const THEME_CSS = readFileSync(new URL('../../ui/theme.css', import.meta.url), 'utf8');
+const THEME_CSS = readFileSync(new URL('../../theme/tea.css', import.meta.url), 'utf8');
 
 const esc = (s: unknown) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
