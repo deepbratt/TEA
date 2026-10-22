@@ -1,12 +1,12 @@
+import { live } from '@/lib/live';
 import { Suspense } from 'react';
 import { EmptyArt } from '@/components/Art';
 import { IssuesBrowser, type IssueView } from '@/components/IssuesBrowser';
 import { SEVERITY_ORDER } from '@/lib/format';
 import { loadProject } from '@/lib/project';
 
-export const dynamic = 'force-dynamic';
-
 export default async function IssuesPage({ params }: { params: Promise<{ key: string }> }) {
+  await live();
   const { key } = await params;
   const { engine, results } = await loadProject(key);
   if (!results) {

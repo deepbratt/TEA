@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { api, errorText } from '@/lib/api';
+import { demoData } from '@/lib/demo';
+import { DEMO } from '@/lib/mode';
 import { BrewCup } from './Art';
 
 interface LogEvent {
@@ -23,6 +25,21 @@ export function RunPanel({ projectKey, runningId, busyElsewhere }: { projectKey:
   useEffect(() => {
     if (!runId) return;
     setLog([]);
+    if (DEMO) {
+      // The website demo replays the recorded analysis; the page already shows its results.
+      let cancelled = false;
+      void demoData().then(async ({ events }) => {
+        for (const e of events) {
+          if (cancelled) return;
+          setLog((all) => [...all, e]);
+          await new Promise((r) => setTimeout(r, e.kind === 'step' ? 700 : 120));
+        }
+        if (!cancelled) setRunId(undefined);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
     const source = new EventSource(`/api/projects/${projectKey}/runs/${runId}/events`);
     source.addEventListener('log', (e) => setLog((all) => [...all, JSON.parse((e as MessageEvent<string>).data) as LogEvent]));
     source.addEventListener('done', () => {

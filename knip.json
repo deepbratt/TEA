@@ -2,14 +2,31 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["src/index.ts", "src/cli/bin.ts", "scripts/*.mjs"],
-      "project": ["src/**/*.ts", "scripts/**/*.mjs"],
-      "ignoreDependencies": ["axe-core"]
+      "entry": [
+        "src/index.ts",
+        "src/cli/bin.ts",
+        "scripts/*.mjs"
+      ],
+      "project": [
+        "src/**/*.ts",
+        "scripts/**/*.mjs"
+      ],
+      "ignoreDependencies": [
+        "axe-core"
+      ]
     },
     "web": {
-      "project": ["**/*.{ts,tsx}"]
+      "project": [
+        "**/*.{ts,tsx}"
+      ],
+      "entry": [
+        "app/**/route.ts",
+        "proxy.ts"
+      ]
     }
   },
-  "ignoreWorkspaces": ["examples/buggy-next-app"],
+  "ignoreWorkspaces": [
+    "examples/buggy-next-app"
+  ],
   "ignoreExportsUsedInFile": true
 }

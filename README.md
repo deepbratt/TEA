@@ -16,6 +16,7 @@ Point it at your app's folder and URL. Get one plain-English report, a quality g
 
 <p align="center">
   <a href="https://deepbratt.github.io/TEA/"><b>Website</b></a> ·
+  <a href="https://deepbratt.github.io/TEA/demo/"><b>Live demo</b></a> ·
   <a href="#-quick-start">Quick start</a> ·
   <a href="#%EF%B8%8F-the-tea-workbench">Workbench</a> ·
   <a href="#-how-to-use-it-step-by-step">How to use</a> ·
@@ -125,6 +126,8 @@ Then open `tea-report/report.html`. The [full list of options](#%EF%B8%8F-teayam
 </details>
 
 ## 🖥️ The TEA Workbench
+
+**[Try the live demo](https://deepbratt.github.io/TEA/demo/)**: a read-only copy of the Workbench with a real analysis of the example app, nothing to install.
 
 Prefer clicking to typing? `npm start` (from source) or `npx tea-qa ui` opens the **TEA Workbench**, a local web app (Next.js, on your own computer) that works like SonarQube for vibe-coded apps: projects, analyses, issues, rules and a quality gate. No setup, no account, nothing locked.
 
@@ -764,7 +767,9 @@ npm run lint && npm run typecheck && npm run knip
 npm run ui:dev                 # Workbench with hot reload on 127.0.0.1:4747
 npm run demo                   # end to end against the example app
 node scripts/workbench-e2e.mjs # Workbench in a real browser, with axe in light and dark mode
-node scripts/build-site.mjs    # the GitHub Pages site into _site/ (after npm run demo, with a sample report)
+node scripts/build-demo.mjs    # the static Workbench demo into web/demo-out/ (needs npm run example:build)
+node scripts/build-site.mjs    # the GitHub Pages site into _site/ (with the sample report and the demo when built)
+node scripts/demo-e2e.mjs      # click through the built demo the way GitHub Pages serves it
 ```
 
 The layout, the rules for new checks and plugins, and the PR checklist are in [CONTRIBUTING.md](CONTRIBUTING.md).

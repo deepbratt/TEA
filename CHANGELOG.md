@@ -10,6 +10,12 @@ TEA is created and maintained by [DeepBratt](https://github.com/deepbratt).
 - **Everything is open source; nothing is locked.** The licence-key gating and the "pro pack" loader are gone. The checks that were pro stubs are now ordinary catalog entries, shown as *Coming soon* until their sandbox detectors exist. `TEA_CHECKS` loads community check packs.
 
 ### Added
+- **A clickable demo of the Workbench** at `/demo/` on the website. It's the real UI, built as a static export from a recorded analysis of the example app:
+  - every page and button works on screen;
+  - "Run analysis" replays the recorded run;
+  - changes aren't saved, and a banner says so.
+
+  Built by `scripts/build-demo.mjs` and tested by `scripts/demo-e2e.mjs` in CI and before every publish.
 - **Project website on GitHub Pages** (`site/`, published by `.github/workflows/pages.yml` on every push to `main`). It has a landing page, a step-by-step walkthrough with screenshots, the supported stacks, a quick start, and a live sample report from the example app.
 - **Screenshots without local paths:** the screenshot script swaps them for neutral `~/code/...` ones.
 - **Your own rules, no code.** `customRules` in `tea.config.yaml`, with four types: `forbid-text`, `require-text`, `require-file` and `require-route`.

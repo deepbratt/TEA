@@ -13,3 +13,6 @@ tea.config.yaml
 web/next-env.d.ts
 .claude/
 _site/
+.demo/
+web/demo-out/
+web/.next-local/

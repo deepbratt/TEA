@@ -1,10 +1,11 @@
+import { live } from '@/lib/live';
 import { GateEditor } from '@/components/GateEditor';
 import { tea } from '@/lib/tea';
 
-export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Quality gate' };
 
 export default async function GatePage() {
+  await live();
   const { engine, services } = await tea();
   const { data } = await services.workspace.read();
   const label = (m: string) =>

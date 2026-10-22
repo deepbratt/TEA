@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Assembles the GitHub Pages site into _site/: the page in site/, the shared theme, the README
-// images, and (when tea-report/ exists, e.g. after `npm run demo`) a live sample report.
+// images, (when tea-report/ exists, e.g. after `npm run demo`) a live sample report, and (when
+// web/demo-out/ exists, after scripts/build-demo.mjs) the clickable Workbench demo.
 // Usage: node scripts/build-site.mjs [report-dir]
 import { cp, mkdir, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -27,5 +28,12 @@ if (existsSync(join(report, 'report.html'))) {
   console.log('Site built with a sample report.');
 } else {
   console.log(`Site built without a sample report (no ${report}/report.html; run npm run demo first).`);
+}
+const demo = join(root, 'web', 'demo-out');
+if (existsSync(join(demo, 'index.html'))) {
+  await cp(demo, join(out, 'demo'), { recursive: true });
+  console.log('Site built with the Workbench demo at /demo/.');
+} else {
+  console.log('Site built without the Workbench demo (run node scripts/build-demo.mjs first).');
 }
 console.log(`  ${out}`);
