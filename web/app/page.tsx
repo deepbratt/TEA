@@ -1,12 +1,13 @@
+import { live } from '@/lib/live';
 import Link from 'next/link';
 import { BrewCup, EmptyArt } from '@/components/Art';
 import { GateBadge, ScoreBadge, SeverityCounts } from '@/components/Badges';
 import { when } from '@/lib/format';
+import { shownPath } from '@/lib/mode';
 import { tea } from '@/lib/tea';
 
-export const dynamic = 'force-dynamic';
-
 export default async function ProjectsPage() {
+  await live();
   const { services } = await tea();
   const { data } = await services.workspace.read();
   const rows = await Promise.all(data.projects.map(async (p) => ({ project: p, last: await services.runs.latest(p.key) })));
@@ -17,7 +18,7 @@ export default async function ProjectsPage() {
       <div className="page-head">
         <div>
           <h1>Projects</h1>
-          <p className="help">Each project is an app: a live URL, its code folders, or both. Saved in {services.workspace.file}.</p>
+          <p className="help">Each project is an app: a live URL, its code folders, or both. Saved in {shownPath(services.workspace.file)}.</p>
         </div>
         <Link className="btn btn-primary" href="/projects/new">
           Add project

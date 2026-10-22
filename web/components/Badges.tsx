@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { SEVERITY_ORDER } from '@/lib/format';
 
 export function GateBadge({ status }: { status?: 'passed' | 'failed' }) {
@@ -28,7 +29,7 @@ export function SeverityCounts({ counts, hrefFor }: { counts?: Record<string, nu
         );
         return (
           <li key={s} className={`sev sev-${s}`}>
-            {hrefFor && n > 0 ? <a href={hrefFor(s)}>{body}</a> : body}
+            {hrefFor && n > 0 ? <Link href={hrefFor(s)}>{body}</Link> : body}
           </li>
         );
       })}

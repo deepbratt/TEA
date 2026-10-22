@@ -85,6 +85,12 @@ jobs:
       - run: npm run build:web
       - name: Drive the Workbench in a real browser
         run: node scripts/workbench-e2e.mjs
+      - name: Website demo (static Workbench) builds and works as Pages serves it
+        run: |
+          npm run example:build
+          node scripts/build-demo.mjs /TEA/demo
+          node scripts/build-site.mjs
+          node scripts/demo-e2e.mjs
       - name: A workspace project runs from the CLI with its gate
         run: |
           cat > tea.config.yaml <<'EOF'
