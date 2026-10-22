@@ -46,7 +46,7 @@ export const rustServers = definePlugin({
   discover: (ctx) =>
     scan(ctx, /\.rs$/, (text, file) => {
       const out: Route[] = [];
-      for (const m of text.matchAll(/\.route\(\s*"(\/[^"]*)"\s*,([^;]*?)\)\s*(?=\.route|\.nest|\.layer|\.with_state|;|\.merge|\n\s*\n)/g)) {
+      for (const m of text.matchAll(/\.route\(\s*"(\/[^"]*)"\s*,([^;]{0,400}?)\)\s*(?=\.route|\.nest|\.layer|\.with_state|;|\.merge|\n\s*\n)/g)) {
         const methods = [...new Set([...m[2]!.matchAll(/\b(get|post|put|patch|delete|any)\s*\(/g)].map((x) => METHOD(x[1]!)))];
         for (const method of methods.length ? methods : ['ANY']) out.push(apiRoute(m[1]!, method, file, lineOf(text, m.index!), 'rust-servers'));
       }

@@ -96,7 +96,12 @@ async function openapi(ctx: RepoContext): Promise<string[]> {
 
 /** Receivers that are HTTP clients (the last part of `this.api`, `_httpClient`, `$client`...). */
 const CLIENT_RECEIVER = /(?:api|client|http|https|httpx|axios|ky|requests?|session|dio|faraday|httparty|rest\w*|fetch\w*|instance|conn)$/i;
-const RECEIVER_CALL = /(?<![@\w$])(?<recv>[A-Za-z_$][\w$]*(?:(?:\.|->|::|\?\.)[A-Za-z_$][\w$]*)*)\s*(?:\.|->|::|\?\.)\s*(?<verb>get|post|put|patch|delete)(?:Async|FromJsonAsync|AsJsonAsync|ForObject|ForEntity|Json|!)?\s*(?:<[^<>()]*>)?\(/gi;
+/**
+ * `.get(`, `->post(`, `::put(`: the verb is matched first and the receiver read backwards from a
+ * short window, so long member chains in untrusted code can't make the scan backtrack.
+ */
+const VERB_CALL = /(?:\.|->|::|\?\.)\s*(?<verb>get|post|put|patch|delete)(?:Async|FromJsonAsync|AsJsonAsync|ForObject|ForEntity|Json|!)?\s*(?:<[^<>()]{0,200}>)?\(/gi;
+const RECEIVER_BEFORE = /(@?)([A-Za-z_$][\w$]{0,80})\s*$/;
 const BARE_CALL = /(?<![\w$.])(?<bare>fetch|\$fetch|ofetch|useFetch|useSWR|useSWRMutation|axios|ky|URL)\s*\(/g;
 /** `http.NewRequest("POST", url)`, `new HttpRequestMessage(HttpMethod.Post, url)`. */
 const METHOD_FIRST = /(?:\bNewRequest(?:WithContext)?\(\s*(?:ctx\s*,\s*)?"(?<m1>GET|POST|PUT|PATCH|DELETE)"|HttpRequestMessage\(\s*HttpMethod\.(?<m2>Get|Post|Put|Patch|Delete))\s*,/g;
@@ -160,10 +165,11 @@ async function apiCalls(ctx: RepoContext): Promise<ApiCall[]> {
     const add = (path: string | undefined, method: string, at: number) => {
       if (path) out.push({ path, method, file: f, line: lineOf(text, at), via: 'code' });
     };
-    for (const m of text.matchAll(RECEIVER_CALL)) {
-      const last = m.groups!.recv!.split(/\.|->|::|\?\./).pop()!;
-      if (!CLIENT_RECEIVER.test(last)) continue;
-      add(urlArg(text, m.index! + m[0].length), m.groups!.verb!.toUpperCase(), m.index!);
+    for (const m of text.matchAll(VERB_CALL)) {
+      // The receiver's last part (`http` in `this.http.get(`); decorators like @app.get are routes, not calls.
+      const recv = RECEIVER_BEFORE.exec(text.slice(Math.max(0, m.index! - 100), m.index!));
+      if (!recv || recv[1] || !CLIENT_RECEIVER.test(recv[2]!)) continue;
+      add(urlArg(text, m.index! + m[0].length), m.groups!.verb!.toUpperCase(), m.index! - recv[0].length);
     }
     for (const m of text.matchAll(BARE_CALL)) {
       if (m.groups!.bare === 'URL' && !f.endsWith('.swift')) continue;
