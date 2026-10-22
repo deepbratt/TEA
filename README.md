@@ -27,7 +27,7 @@ You built your app with Lovable, Bolt, v0, Replit, Cursor, Windsurf or Claude Co
 
 ## Contents
 
-- [Quick start](#-quick-start-2-minutes) · [The TEA UI](#%EF%B8%8F-the-tea-ui) · [What you get](#-what-you-get) · [How it works](#-how-it-works) · [features.md](#-featuresmd-claimed-vs-reality) · [Fix modes](#-fix-modes) · [Checks are data](#-checks-are-data) · [Any stack](#-works-with-any-stack) · [tea.yaml](#-teayaml-optional) · [Responsible use](#-responsible-use) · [Roadmap](#-roadmap) · [Plugins](#-writing-a-plugin) · [Contributing](#-contributing)
+- [Quick start](#-quick-start-2-minutes) · [The TEA Workbench](#%EF%B8%8F-the-tea-workbench) · [What you get](#-what-you-get) · [How it works](#-how-it-works) · [features.md](#-featuresmd-claimed-vs-reality) · [Fix modes](#-fix-modes) · [Checks are data](#-checks-are-data) · [Any stack](#-works-with-any-stack) · [tea.yaml](#-teayaml-optional) · [Responsible use](#-responsible-use) · [Roadmap](#-roadmap) · [Plugins](#-writing-a-plugin) · [Contributing](#-contributing)
 
 ## ⚡ Quick start (2 minutes)
 
@@ -38,10 +38,10 @@ You need Node.js 20 or newer.
 >
 > ```bash
 > git clone https://github.com/deepbratt/TEA.git && cd TEA
-> npm run demo                       # one command: installs, builds, tests the example app, shows the report
-> npm start -- https://your-app.com  # then test your own app (same options as `npx tea-qa run`)
-> npm run ui                         # or do it all from the local web UI
+> npm start      # one command: installs, builds and opens the TEA Workbench in your browser
 > ```
+>
+> Then do everything in the UI: **Add project → Choose folder and detect → Run analysis.** The first `npm start` takes a few minutes (it installs dependencies and a headless Chromium); later starts take seconds. `npm run demo` tests the bundled example app end to end, and `node dist/cli/bin.js run <url-or-folder>` is the command line.
 
 ```bash
 # 1. Test a live app (read-only)
@@ -61,13 +61,13 @@ Then open `tea-report/report.html`. The first run downloads a headless Chromium;
 
 ## 🖥️ The TEA Workbench
 
-Prefer clicking to typing? `npx tea-qa ui` opens the **TEA Workbench**, a local web app (Next.js, on your own computer) that works like SonarQube for vibe-coded apps: projects, analyses, issues, rules and a quality gate.
+Prefer clicking to typing? `npm start` (from source) or `npx tea-qa ui` opens the **TEA Workbench**, a local web app (Next.js, on your own computer) that works like SonarQube for vibe-coded apps: projects, analyses, issues, rules and a quality gate.
 
 ```bash
 npx tea-qa ui          # opens http://127.0.0.1:4747 in your browser
 ```
 
-- **Projects.** Add your app once: its code folders and, optionally, the URL where it runs. A separate frontend and backend? Add both folders (up to 10), each marked *frontend*, *backend* or *fullstack*.
+- **Projects.** Add your app once: choose its folder and TEA detects the apps in it, their languages and frameworks, whether each is a frontend, backend or fullstack app, and the local URL where it runs. A separate frontend and backend repo? Add both folders (up to 10).
 - **Analyses.** Press **Run analysis** and watch TEA work live. Every analysis is kept, with its full report.
 - **Issues.** Every finding, filterable by severity, area and check, with steps to see it and a fix prompt to paste into your AI coding tool.
 - **Frontend-to-API wiring.** TEA reads every `fetch`/`axios` call and form in the frontend and every route in the backend. A call nothing serves (or with a method the route doesn't handle) is an issue; an endpoint nothing calls is a suggestion.
@@ -98,7 +98,7 @@ projects:
     url: http://localhost:3000        # optional: where the app runs
     sources:
       - { name: web, path: ../shop-web, role: frontend }
-      - { name: api, path: ../shop-api, role: backend }
+      - { name: api, path: ../shop-api }   # role: auto (default) lets TEA decide
 rules:
   crawl.slow: { params: { thresholdMs: 2000 } }
   wiring.unused-endpoint: { enabled: false }
@@ -113,7 +113,7 @@ Run the same project from the command line or CI, with its rules and gate:
 
 ```bash
 npx tea-qa run --project shop                 # uses ./tea.config.yaml
-npx tea-qa run --source frontend=../web --source backend=../api   # no config file
+npx tea-qa run --source ../web --source ../api   # no config file; roles auto-detected
 ```
 
 **Safe by design.** The Workbench only listens on your own computer, needs the one-time link TEA prints, refuses requests addressed to other host names (DNS rebinding) and writes from other websites, so a page you have open elsewhere can't start an analysis or read your results. It never installs packages or starts your app: give it the URL where your app already runs to test it live; without a URL it reads the code only. Analyses are stored in `.tea/runs/` next to the config file; add `.tea/` to your `.gitignore`.
@@ -340,16 +340,29 @@ All **free** checks live here with their rules and prompts, and anyone can contr
 
 ## 🌍 Works with any stack
 
-A generic core works on any live URL and any repo. Stack knowledge lives in plugins that switch on automatically when TEA detects the stack.
+A generic core works on any live URL and any repo, in any language. TEA reads each ecosystem's manifest (`package.json`, `requirements.txt`, `pyproject.toml`, `Pipfile`, `go.mod`, `Cargo.toml`, `pom.xml`, `build.gradle`, `*.csproj`, `composer.json`, `Gemfile`, `mix.exs`, `pubspec.yaml`, `Package.swift`). Stack knowledge lives in plugins that switch on automatically when TEA detects the stack.
 
-| | Detected today |
-|---|---|
-| **Frameworks** | Next.js (app and pages router), React + Vite, Vue, Nuxt, Svelte, SvelteKit, Astro, Remix / React Router 7, Angular |
-| **Backends** | Express, NestJS, Fastify, Hono, FastAPI, Flask, Django, Rails |
-| **Data and auth** | Supabase, Firebase, Prisma, Drizzle, MongoDB, Postgres, Convex, NextAuth, Clerk, Auth0, Better Auth |
-| **Payments** | Stripe, RevenueCat, Lemon Squeezy, Paddle |
-| **Mobile** | Expo, React Native, Capacitor, Flutter (runners planned) |
-| **Built with** | Lovable, Bolt, v0, Replit, Cursor, Windsurf, Claude Code |
+| | Detected today | Routes and endpoints read from code |
+|---|---|---|
+| **JavaScript / TypeScript** | Next.js, Remix / React Router 7, Nuxt, SvelteKit, Astro, Angular, React, Vue, Svelte, Solid, Qwik, Preact, Gatsby, Ember, htmx, Vite | Express, NestJS, Fastify, Hono, Koa, Elysia, plus every meta-framework |
+| **Python** | FastAPI, Flask, Django, Starlette, Sanic, Litestar, Quart | ✓ |
+| **Go** | net/http, Gin, Echo, Fiber, chi, Gorilla mux | ✓ (route groups too) |
+| **Rust** | Axum, Actix Web, Rocket | ✓ |
+| **Java / Kotlin** | Spring Boot, JAX-RS / Quarkus, Micronaut, Ktor | ✓ |
+| **C# / .NET** | ASP.NET Core (minimal APIs and controllers), Blazor | ✓ |
+| **PHP** | Laravel, Symfony, Slim | ✓ |
+| **Ruby, Elixir, Swift** | Rails, Sinatra, Phoenix, Vapor | ✓ |
+| **Mobile and desktop** | Expo, React Native, Flutter, iOS (Swift), Android, Capacitor, Ionic, Electron, Tauri | API calls (runners planned) |
+| **Data and auth** | Supabase, Firebase, Prisma, Drizzle, SQLAlchemy, GORM, Diesel / SeaORM / SQLx, Entity Framework, JPA, Ecto, MongoDB, Postgres, MySQL, SQLite, Redis, Convex, NextAuth, Clerk, Auth0, Better Auth, Devise | |
+| **Payments** | Stripe, RevenueCat, Lemon Squeezy, Paddle | |
+| **Built with** | Lovable, Bolt, v0, Replit, Cursor, Windsurf, Claude Code | |
+
+**API calls in any client language** feed the frontend-to-API wiring checks: `fetch`/`axios`/`useSWR`/Angular `HttpClient` (JS/TS), `requests`/`httpx` (Python), `net/http` (Go), `reqwest` (Rust), Retrofit/OkHttp/Ktor client/RestTemplate (JVM), `HttpClient` (C#), Laravel `Http`/Guzzle (PHP), Faraday/HTTParty (Ruby), `http`/Dio (Dart), `URLSession` (Swift). Calls to other hosts (Stripe, OpenAI…) are left out.
+
+**Auto-detect.** Point TEA at a folder and it works out the rest:
+- **One app or many.** A monorepo (npm/pnpm workspaces, Turborepo, Nx, `go.work`, or just `frontend/` + `backend/` folders) is split into its apps.
+- **Frontend, backend or fullstack.** Each folder's role is decided from what's in it (`role: auto`, the default), so a React app and a Go API are wired together without any setup.
+- **Where it runs.** TEA suggests the local URL from the app's own config or its framework's dev port, and checks which one is running right now.
 
 Unknown stack? TEA still crawls the live site, and falls back to the links it finds in your source.
 
@@ -386,7 +399,7 @@ npx tea-qa run [url-or-folder] [options]
 
   --url <url>               URL of the running app to test
   --repo <path>             folder with the app source code
-  --source <role=path>      a code folder; repeat for a separate frontend and backend (frontend, backend, fullstack)
+  --source <[role=]path>    a code folder; repeat for a separate frontend and backend (role auto-detected, or frontend=, backend=, fullstack=)
   --project <key>           run a project from tea.config.yaml, with its rules and quality gate (exit 1 if the gate fails)
   -w, --workspace <file>    the config file for --project (default: tea.config.yaml)
   -o, --out <dir>           where to write the report (default: tea-report)

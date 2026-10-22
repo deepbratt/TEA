@@ -3,7 +3,7 @@ import { HttpError } from './http';
 export interface ProjectInput {
   name: string;
   url?: string;
-  sources: { name: string; path: string; role: 'frontend' | 'backend' | 'fullstack' }[];
+  sources: { name: string; path: string; role: 'auto' | 'frontend' | 'backend' | 'fullstack' }[];
   maxPages?: number;
   skip?: string[];
 }
@@ -18,7 +18,7 @@ export function projectInput(body: Record<string, unknown>): ProjectInput {
     name,
     sources: sources.map((s) => {
       const o = (s ?? {}) as Record<string, unknown>;
-      return { name: str(o.name), path: str(o.path), role: (str(o.role) || 'fullstack') as ProjectInput['sources'][number]['role'] };
+      return { name: str(o.name), path: str(o.path), role: (str(o.role) || 'auto') as ProjectInput['sources'][number]['role'] };
     }),
   };
   if (str(body.url)) out.url = str(body.url);
