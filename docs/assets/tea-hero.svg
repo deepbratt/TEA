@@ -3,18 +3,18 @@
   <desc id="d">A steaming cup of tea next to the words "TEA, Test Everything Automatically. Spill the TEA on your app." A score ring fills from 41 to 86.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#24170e"/>
-      <stop offset="1" stop-color="#5a3518"/>
+      <stop offset="0" stop-color="#17181a"/>
+      <stop offset="1" stop-color="#2a2d31"/>
     </linearGradient>
     <linearGradient id="tea" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#f2b04a"/>
-      <stop offset="1" stop-color="#b5651d"/>
+      <stop offset="0" stop-color="#ff8a8d"/>
+      <stop offset="1" stop-color="#b3262c"/>
     </linearGradient>
     <clipPath id="type"><rect x="300" y="200" height="40" width="0">
       <animate attributeName="width" values="0;330;330;0" keyTimes="0;0.45;0.9;1" dur="6s" repeatCount="indefinite"/>
     </rect></clipPath>
     <style>
-      .steam { fill: none; stroke: #f4ebe0; stroke-width: 6; stroke-linecap: round; opacity: 0; }
+      .steam { fill: none; stroke: #e6e6e6; stroke-width: 6; stroke-linecap: round; opacity: 0; }
       .s1 { animation: rise 3s ease-in-out infinite; }
       .s2 { animation: rise 3s ease-in-out 1s infinite; }
       .s3 { animation: rise 3s ease-in-out 2s infinite; }
@@ -31,7 +31,7 @@
 
   <rect width="960" height="300" rx="28" fill="url(#bg)"/>
   <!-- faint grid of "checks" -->
-  <g fill="#f4ebe0" opacity=".05">
+  <g fill="#e6e6e6" opacity=".05">
     <circle cx="880" cy="40" r="3"/><circle cx="910" cy="40" r="3"/><circle cx="880" cy="70" r="3"/><circle cx="910" cy="70" r="3"/>
     <circle cx="40" cy="260" r="3"/><circle cx="70" cy="260" r="3"/><circle cx="40" cy="230" r="3"/>
   </g>
@@ -43,34 +43,34 @@
     <path class="steam s3" d="M200 92 q-14 -18 0 -36 q14 -18 0 -36"/>
   </g>
   <!-- cup -->
-  <path d="M80 110 h160 v40 a80 80 0 0 1 -160 0 z" fill="#f4ebe0"/>
+  <path d="M80 110 h160 v40 a80 80 0 0 1 -160 0 z" fill="#e6e6e6"/>
   <ellipse cx="160" cy="110" rx="80" ry="14" fill="url(#tea)"/>
-  <path d="M238 128 a26 26 0 1 1 0 52" fill="none" stroke="#f4ebe0" stroke-width="12"/>
-  <ellipse cx="160" cy="236" rx="110" ry="16" fill="#f4ebe0" opacity=".9"/>
+  <path d="M238 128 a26 26 0 1 1 0 52" fill="none" stroke="#e6e6e6" stroke-width="12"/>
+  <ellipse cx="160" cy="236" rx="110" ry="16" fill="#e6e6e6" opacity=".9"/>
   <!-- tick on the cup -->
-  <path d="M138 168 l16 16 l30 -34" fill="none" stroke="#b5651d" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M138 168 l16 16 l30 -34" fill="none" stroke="#b3262c" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
     <animate attributeName="stroke-dasharray" values="0 100;100 0;100 0" keyTimes="0;0.25;1" dur="6s" repeatCount="indefinite"/>
   </path>
 
   <!-- words -->
-  <text x="300" y="132" font-size="104" font-weight="800" fill="#f4ebe0" letter-spacing="4">TEA</text>
-  <text x="304" y="180" font-size="28" font-weight="700" fill="#e8a33d">Test Everything Automatically</text>
+  <text x="300" y="132" font-size="104" font-weight="800" fill="#e6e6e6" letter-spacing="4">TEA</text>
+  <text x="304" y="180" font-size="28" font-weight="700" fill="#f05d61">Test Everything Automatically</text>
   <g clip-path="url(#type)">
-    <text x="304" y="228" font-size="26" fill="#f4ebe0">Spill the TEA on your app.</text>
+    <text x="304" y="228" font-size="26" fill="#e6e6e6">Spill the TEA on your app.</text>
   </g>
-  <rect class="cursor" x="304" y="206" width="3" height="28" fill="#e8a33d">
+  <rect class="cursor" x="304" y="206" width="3" height="28" fill="#f05d61">
     <animate attributeName="x" values="304;628;628;304" keyTimes="0;0.45;0.9;1" dur="6s" repeatCount="indefinite"/>
   </rect>
 
   <!-- score ring: before 41, after 86 -->
   <g transform="translate(830 150)">
-    <circle r="62" fill="none" stroke="#f4ebe0" stroke-opacity=".15" stroke-width="14"/>
-    <circle r="62" fill="none" stroke-width="14" stroke-linecap="round" transform="rotate(-90)" stroke-dasharray="160 390" stroke="#d64a3a">
+    <circle r="62" fill="none" stroke="#e6e6e6" stroke-opacity=".15" stroke-width="14"/>
+    <circle r="62" fill="none" stroke-width="14" stroke-linecap="round" transform="rotate(-90)" stroke-dasharray="160 390" stroke="#ff5c5c">
       <animate attributeName="stroke-dasharray" values="160 390;160 390;335 390;335 390;160 390" keyTimes="0;0.3;0.55;0.92;1" dur="6s" repeatCount="indefinite"/>
-      <animate attributeName="stroke" values="#d64a3a;#d64a3a;#3fae68;#3fae68;#d64a3a" keyTimes="0;0.3;0.55;0.92;1" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="stroke" values="#ff5c5c;#ff5c5c;#4cd08a;#4cd08a;#ff5c5c" keyTimes="0;0.3;0.55;0.92;1" dur="6s" repeatCount="indefinite"/>
     </circle>
-    <text text-anchor="middle" y="12" font-size="40" font-weight="800" fill="#f4ebe0" opacity="1">41<animate attributeName="opacity" values="1;1;0;0;1" keyTimes="0;0.4;0.45;0.95;1" dur="6s" repeatCount="indefinite"/></text>
-    <text text-anchor="middle" y="12" font-size="40" font-weight="800" fill="#f4ebe0" opacity="0">86<animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.4;0.45;0.95;1" dur="6s" repeatCount="indefinite"/></text>
-    <text text-anchor="middle" y="94" font-size="15" fill="#f4ebe0" opacity=".7">TEA Score: before → after</text>
+    <text text-anchor="middle" y="12" font-size="40" font-weight="800" fill="#e6e6e6" opacity="1">41<animate attributeName="opacity" values="1;1;0;0;1" keyTimes="0;0.4;0.45;0.95;1" dur="6s" repeatCount="indefinite"/></text>
+    <text text-anchor="middle" y="12" font-size="40" font-weight="800" fill="#e6e6e6" opacity="0">86<animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.4;0.45;0.95;1" dur="6s" repeatCount="indefinite"/></text>
+    <text text-anchor="middle" y="94" font-size="15" fill="#e6e6e6" opacity=".7">TEA Score: before → after</text>
   </g>
 </svg>

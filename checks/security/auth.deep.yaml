@@ -1,7 +1,8 @@
-# Pro check: the rule and fix prompt live in the private TEA pro pack, never in this repo.
+# Planned check: its detector (sandbox tests, build step 10) is not built yet, so TEA lists it but cannot run it.
 id: auth.deep
 title: Weak password reset, session or token handling (expiry, reuse, refresh)
+description: "Password resets, logins or sessions that stay valid too long or can be reused. Coming soon: needs sandbox tests."
 category: security
 severity: high
-pack: pro
+detect: sandbox-test
 version: 1

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { api, errorText } from '@/lib/api';
+import { BrewCup } from './Art';
 
 interface LogEvent {
   kind: string;
@@ -74,9 +75,15 @@ export function RunPanel({ projectKey, runningId, busyElsewhere }: { projectKey:
         </p>
       )}
       {runId && (
-        <p className="status running" role="status" aria-live="polite">
-          {current ?? 'Starting…'}
-        </p>
+        <>
+          <div className="brewing-row">
+            <BrewCup size={56} level={60} brewing />
+            <p className="status running" role="status" aria-live="polite">
+              {current ?? 'Starting…'}
+            </p>
+          </div>
+          <div className="progress" aria-hidden="true" />
+        </>
       )}
       {log.length > 0 && (
         <details className="log-box" open={Boolean(runId)}>

@@ -1,0 +1,29 @@
+name: New check or stack
+description: Propose a check TEA should run, or a framework or language TEA should understand.
+labels: [check]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind
+      options:
+        - A new check (a kind of bug TEA should catch)
+        - A new stack (framework, backend, language or service)
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What should TEA catch or understand?
+      description: A real example helps most, e.g. the code a vibe-coded app ships and why it breaks.
+    validations:
+      required: true
+  - type: textarea
+    id: detect
+    attributes:
+      label: How could TEA detect it?
+      description: From the code, the running app, or both. Must be read-only against live apps.
+  - type: textarea
+    id: fix
+    attributes:
+      label: What fix prompt should the founder get?

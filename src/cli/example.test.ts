@@ -6,7 +6,7 @@ import { loadCatalog } from '../core/index.js';
 
 const app = fileURLToPath(new URL('../../examples/buggy-next-app/', import.meta.url));
 const manifest = JSON.parse(readFileSync(join(app, 'tea-seeded-bugs.json'), 'utf8')) as {
-  bugs: { id: string; title: string; where: string; check: string; step: number; pack: 'free' | 'pro'; caughtBy?: string[] }[];
+  bugs: { id: string; title: string; where: string; check: string; step: number; caughtBy?: string[] }[];
 };
 
 describe('example app seeded-bug manifest', () => {
@@ -16,7 +16,6 @@ describe('example app seeded-bug manifest', () => {
     for (const b of manifest.bugs) {
       expect(b.step, b.id).toBeGreaterThanOrEqual(1);
       expect(b.step, b.id).toBeLessThanOrEqual(14);
-      expect(['free', 'pro'], b.id).toContain(b.pack);
       expect(b.title.length, b.id).toBeGreaterThan(5);
     }
   });
@@ -46,10 +45,10 @@ describe('example app seeded-bug manifest', () => {
     }
   });
 
-  it('only names pro checks that are stubs in the public catalog', async () => {
+  it('expects no catch from checks that are still planned', async () => {
     const catalog = await loadCatalog();
-    for (const b of manifest.bugs.filter((x) => x.pack === 'pro')) {
-      expect(catalog.get(b.check)?.pack, b.id).toBe('pro');
+    for (const b of manifest.bugs.filter((x) => catalog.planned.some((e) => e.id === x.check))) {
+      expect(b.caughtBy, b.id).toBeUndefined();
     }
   });
 

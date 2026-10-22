@@ -76,6 +76,7 @@ export class RunManager {
           maxPages: project.maxPages,
           skip: project.skip,
           rules: data.rules,
+          customRules: data.customRules,
           gate: project.gate ?? data.gate,
           failOn: 'none',
           // The Workbench never starts apps from their dev scripts: give it a URL to test live.

@@ -15,11 +15,14 @@ export function FolderPicker({ start, onPick, onClose }: { start?: string; onPic
   const dialog = useRef<HTMLDialogElement>(null);
   const [listing, setListing] = useState<Listing | null>(null);
   const [error, setError] = useState('');
+  const [draft, setDraft] = useState('');
 
   const open = async (path?: string) => {
     setError('');
     try {
-      setListing(await api<Listing>(`/api/folders${path ? `?path=${encodeURIComponent(path)}` : ''}`));
+      const next = await api<Listing>(`/api/folders${path ? `?path=${encodeURIComponent(path)}` : ''}`);
+      setListing(next);
+      setDraft(next.path);
     } catch (err) {
       setError(errorText(err).message);
     }
@@ -48,19 +51,19 @@ export function FolderPicker({ start, onPick, onClose }: { start?: string; onPic
         {/* Not a <form>: the picker opens inside the project form. */}
         <div className="field-row">
           <input
-            key={listing?.path}
             type="text"
             className="mono"
             aria-label="Folder path"
-            defaultValue={listing?.path ?? ''}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
             placeholder="Loading…"
             onKeyDown={(e) => {
               if (e.key !== 'Enter') return;
               e.preventDefault();
-              void open(e.currentTarget.value);
+              void open(draft);
             }}
           />
-          <button type="button" className="btn" onClick={(e) => void open((e.currentTarget.previousElementSibling as HTMLInputElement).value)}>
+          <button type="button" className="btn" onClick={() => void open(draft)}>
             Go
           </button>
         </div>

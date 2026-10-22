@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { EmptyArt } from '@/components/Art';
 import { IssuesBrowser, type IssueView } from '@/components/IssuesBrowser';
 import { SEVERITY_ORDER } from '@/lib/format';
 import { loadProject } from '@/lib/project';
@@ -11,6 +12,7 @@ export default async function IssuesPage({ params }: { params: Promise<{ key: st
   if (!results) {
     return (
       <section className="card empty small-empty">
+        <EmptyArt kind="issues" />
         <h2 className="empty-title">No issues to show yet</h2>
         <p className="help">Run an analysis from the Overview tab first.</p>
       </section>
@@ -31,6 +33,15 @@ export default async function IssuesPage({ params }: { params: Promise<{ key: st
       details: f.evidence?.details,
       fix: f.fix,
     }));
+  if (!issues.length) {
+    return (
+      <section className="card empty small-empty">
+        <EmptyArt kind="clear" />
+        <h2 className="empty-title">All clear</h2>
+        <p className="help">The last analysis found nothing to fix. Nice brew.</p>
+      </section>
+    );
+  }
   return (
     <Suspense>
       <IssuesBrowser issues={issues} areaLabels={engine.AREA_LABEL} />

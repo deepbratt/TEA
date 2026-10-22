@@ -1,10 +1,10 @@
 id: wiring.orphan-call
 title: The UI calls an API endpoint that no backend route serves
+description: "Your frontend asks your backend for something it doesn't have, so that feature can't work."
 category: wiring
 severity: high
 detect: static-rule
 rule: wiring:wiring.orphan-call
 fix_prompt: prompts/wiring/orphan-call.md
 suggest_only: false
-pack: free
 version: 1

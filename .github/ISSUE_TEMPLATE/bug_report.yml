@@ -1,0 +1,46 @@
+name: Bug report
+description: TEA did something wrong, crashed, or reported something that isn't a real problem.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping make TEA better. **Never paste secrets, tokens or private URLs**: TEA masks them in its own output, so copy from there.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what TEA did instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options:
+        - TEA Workbench (npm start / tea-qa ui)
+        - Command line (tea-qa run)
+        - HTML / Markdown report
+        - Stack or route detection
+        - Frontend-to-API wiring check
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: stack
+    attributes:
+      label: Your app's stack
+      description: For example "Next.js + Supabase" or "Flutter app + Go (Gin) API".
+  - type: textarea
+    id: logs
+    attributes:
+      label: TEA output
+      description: The terminal output with `-v`, or the relevant part of results.json.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Versions
+      description: Output of `tea-qa --version` (or the git commit), Node version and OS.
+    validations:
+      required: true
