@@ -3,12 +3,14 @@ import { createRepoContext } from './context.js';
 import { detectStack } from './detect.js';
 import { genericDiscovery } from './generic.js';
 import { firebase, payments, prisma, schemas, supabase } from './plugins/data.js';
+import { aspnet, goServers, jvmServers, phoenix, phpServers, rustServers, sinatra, vapor } from './plugins/polyglot.js';
 import { django, nestjs, nodeServers, pythonWeb, rails } from './plugins/servers.js';
 import { astro, nextjs, nuxt, remix, spaRouter, sveltekit } from './plugins/web-frameworks.js';
 
 export const BUILTIN_PLUGINS: TeaPlugin[] = [
   nextjs, sveltekit, nuxt, astro, remix, spaRouter,
   nodeServers, nestjs, pythonWeb, django, rails,
+  goServers, rustServers, jvmServers, aspnet, phpServers, phoenix, sinatra, vapor,
   prisma, supabase, firebase, schemas, payments,
 ];
 
@@ -21,7 +23,8 @@ export interface ScanResult extends Discovery {
   activePlugins: string[];
 }
 
-export { scanSources, sourceFromPath, SOURCE_ROLES, type SourceFolder, type SourceRole, type ScanSourcesResult, type WiringSides } from './sources.js';
+export { scanSources, sourceFromPath, inferRole, SOURCE_ROLES, type SourceFolder, type SourceRole, type ScanSourcesResult, type WiringSides } from './sources.js';
+export { detectProject, APP_MARKERS, type DetectedProject } from './project.js';
 
 const META_FRAMEWORKS = ['nextjs', 'remix', 'nuxt', 'sveltekit', 'astro'];
 

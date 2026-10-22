@@ -18,7 +18,8 @@ export const SourceSchema = z
   .object({
     name: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$/, 'Use letters, numbers, dots, dashes or underscores'),
     path: z.string().min(1),
-    role: z.enum(SOURCE_ROLES),
+    /** frontend, backend, fullstack, or auto (decided from the code). */
+    role: z.enum(SOURCE_ROLES).default('auto'),
   })
   .strict();
 
@@ -71,7 +72,7 @@ version: 1
 #     url: http://localhost:3000
 #     sources:
 #       - { name: web, path: ../shop-web, role: frontend }
-#       - { name: api, path: ../shop-api, role: backend }
+#       - { name: api, path: ../shop-api }      # role: auto (the default) lets TEA decide
 projects: []
 
 # Per-check settings (the quality profile). Checks not listed use their defaults.
