@@ -77,8 +77,8 @@ h2{margin:36px 0 12px;font-size:20px}.areas{display:grid;grid-template-columns:r
 .issue{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--info);border-radius:12px;padding:14px 16px;margin:10px 0}
 .issue.sev-critical{border-left-color:var(--crit)}.issue.sev-high{border-left-color:var(--high)}.issue.sev-medium{border-left-color:var(--med)}.issue.sev-low{border-left-color:var(--low)}
 .issue header{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.issue h3{flex-basis:100%;margin:4px 0 0;font-size:16px}
-.badge{font-size:11.5px;font-weight:700;color:#fff;padding:2px 8px;border-radius:6px;background:var(--info)}
-.badge.sev-critical{background:var(--crit)}.badge.sev-high{background:var(--high)}.badge.sev-medium{background:var(--med);color:#2b1d12}.badge.sev-low{background:var(--low)}
+.badge{font-size:11.5px;font-weight:700;color:var(--accent-ink);padding:2px 8px;border-radius:6px;background:var(--info)}
+.badge.sev-critical{background:var(--crit)}.badge.sev-high{background:var(--high)}.badge.sev-medium{background:var(--med)}.badge.sev-low{background:var(--low)}
 .area{font-size:12px;color:var(--muted)}.issue-body{display:grid;grid-template-columns:1fr 220px;gap:16px}.issue-body p{margin:8px 0}.meta{font-size:13px;color:var(--muted)}
 .shot img{width:100%;max-height:200px;object-fit:cover;object-position:top;border:1px solid var(--line);border-radius:8px}
 .fix{margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden}.fix-head{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--tint);font-size:13px}
@@ -139,7 +139,7 @@ ${appMap.pages.some((p) => p.screenshot) ? `<h2>Pages TEA visited (${appMap.page
     .map((p) => `<figure><a href="${safeHref(p.screenshot)}"><img loading="lazy" src="${safeHref(p.screenshot)}" alt="Screenshot of ${esc(p.path)}"></a><figcaption><code>${esc(p.path)}</code> ${p.status && p.status >= 400 ? `<span class="bad">${p.status}</span>` : `<span class="muted">${p.status ?? ''}${p.loadMs ? ` · ${(p.loadMs / 1000).toFixed(1)}s` : ''}</span>`}</figcaption></figure>`)
     .join('')}</div>` : ''}
 
-<footer>Made with TEA ${esc(results.tool.version)}, the open-source QA tester: <a href="https://github.com/deepbratt/TEA">github.com/deepbratt/TEA</a></footer>
+<footer>Made with TEA ${esc(results.tool.version)}, the open-source QA tester by <a href="https://github.com/deepbratt">DeepBratt</a>: <a href="https://github.com/deepbratt/TEA">github.com/deepbratt/TEA</a></footer>
 </main>
 <script>
 document.querySelectorAll('.copy').forEach(function(b){b.addEventListener('click',function(){var t=b.closest('.fix').querySelector('pre').textContent;

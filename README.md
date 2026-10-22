@@ -4,11 +4,11 @@
 
 <p align="center">
   <a href="https://github.com/deepbratt/TEA/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/deepbratt/TEA/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-b5651d"></a>
-  <img alt="Node 20.9+" src="https://img.shields.io/badge/node-20.9%2B-3fae68">
-  <img alt="Languages: JS, Python, Go, Rust, Java, Kotlin, C#, PHP, Ruby, Elixir, Dart, Swift" src="https://img.shields.io/badge/stacks-12%20languages-1f4fa3">
-  <img alt="Status: beta" src="https://img.shields.io/badge/status-beta-e8a33d">
-  <a href="CONTRIBUTING.md"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-2b1d12"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-b3262c"></a>
+  <img alt="Node 20.9+" src="https://img.shields.io/badge/node-20.9%2B-5c5f66">
+  <img alt="Languages: JS, Python, Go, Rust, Java, Kotlin, C#, PHP, Ruby, Elixir, Dart, Swift" src="https://img.shields.io/badge/stacks-12%20languages-5c5f66">
+  <img alt="Status: beta" src="https://img.shields.io/badge/status-beta-f05d61">
+  <a href="CONTRIBUTING.md"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-34373b"></a>
 </p>
 
 <p align="center"><b>The free, open-source QA tester for vibe-coded apps.</b><br>
@@ -516,11 +516,11 @@ flowchart LR
     S1[1 Skeleton<br/>and hygiene]:::doing --> S2[2 Buggy<br/>example app]:::part --> S3[3 URL scan]:::part --> S4[4 Docs reader<br/>features.md] --> S5[5 Code health]
     S5 --> S6[6 Prod<br/>readiness] --> S7[7 Report<br/>and score]:::part --> S8[8 Fix prompts] --> S9[9 Retest] --> S10[10 AI functional<br/>tester]
     S10 --> S11[11 MCP server] --> S12[12 GitHub Action<br/>GitLab CI] --> S13[13 Mobile and<br/>desktop runners] --> S14[14 AI design<br/>review]
-    classDef doing fill:#e8a33d,stroke:#b5651d,color:#2b1d12
-    classDef part fill:#f6dfb5,stroke:#b5651d,color:#2b1d12
+    classDef doing fill:#f05d61,stroke:#b3262c,color:#141517
+    classDef part fill:#c9ccd1,stroke:#5c5f66,color:#141517
 ```
 
-<sub>🟧 in progress · 🟨 partly built · ⬜ planned. Live status: [BUILD-PROGRESS.md](BUILD-PROGRESS.md).</sub>
+<sub>Red: in progress · grey: partly built · outlined: planned. Live status: [BUILD-PROGRESS.md](BUILD-PROGRESS.md).</sub>
 
 | Step | What it adds |
 |---|---|
@@ -596,7 +596,7 @@ The layout, the rules for new checks and plugins, and the PR checklist are in [C
 
 ## 🤝 Contributing
 
-New checks, stack plugins and better fix prompts are the most useful contributions. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md). Found a security problem? Please report it privately; see [SECURITY.md](SECURITY.md).
+New checks, stack plugins and better fix prompts are the most useful contributions. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md); open an issue with one of the [templates](https://github.com/deepbratt/TEA/issues/new/choose). What changed in each release is in [CHANGELOG.md](CHANGELOG.md). Found a security problem? Please report it privately; see [SECURITY.md](SECURITY.md).
 
 ## 👤 Author
 
@@ -608,4 +608,4 @@ If TEA helped you ship, a ⭐ on the repo helps others find it.
 
 [MIT](LICENSE) © 2026 DeepBratt and TEA contributors. The engine and all free checks are free forever.
 
-<p align="center"><sub>☕ Made for everyone who shipped something with AI and wants to know if it really works.</sub></p>
+<p align="center"><sub>☕ Made by <a href="https://github.com/deepbratt">DeepBratt</a> for everyone who shipped something with AI and wants to know if it really works.</sub></p>

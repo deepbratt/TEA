@@ -1,5 +1,7 @@
 # TEA v1 design (Test Everything Automatically)
 
+Author and maintainer: [DeepBratt](https://github.com/deepbratt).
+
 Tagline: "Spill the TEA on your app."
 
 > The build now follows the 14-step order in [BUILD-PROGRESS.md](../BUILD-PROGRESS.md).

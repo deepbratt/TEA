@@ -45,6 +45,7 @@ try {
   // Add a project by detecting it from the example app's folder.
   await page.getByRole('link', { name: 'Add your first project' }).click();
   await page.getByRole('button', { name: 'Choose folder and detect' }).click();
+  await page.locator('.pick-list li').first().waitFor(); // the first listing (home folder) has loaded
   await page.getByLabel('Folder path').fill(example);
   await page.getByLabel('Folder path').press('Enter');
   await page.locator('.pick-list .name', { hasText: /^components$/ }).waitFor(); // the example's own subfolders are listed

@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Please don't open a public issue for security problems. Report them privately through GitHub: go to the **Security** tab of this repository and choose **Report a vulnerability**.
+Please don't open a public issue for security problems. Report them privately through GitHub: go to the **Security** tab of this repository and choose **Report a vulnerability** ([direct link](https://github.com/deepbratt/TEA/security/advisories/new)). Reports go to the maintainer, [DeepBratt](https://github.com/deepbratt).
 
 Include what you found, how to reproduce it, and the TEA version (`tea-qa --version`). You'll get a reply within 5 working days. Once a fix ships, we'll credit you in the release notes unless you'd rather stay anonymous.
 
