@@ -2,7 +2,7 @@
 // Checks a TEA run against examples/buggy-next-app using its seeded-bug manifest:
 // - every bug with `caughtBy` must have all of those findings (or app-map facts);
 // - TEA must report no issue that isn't a seeded bug (no false positives; info suggestions aside);
-// - pro bugs must name pro checks that exist as stubs in the public catalog.
+// - bugs whose check is still planned can't list caughtBy yet.
 // Usage: node scripts/verify-example.mjs [tea-report-dir]
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -31,9 +31,8 @@ function proves(evidence) {
 const caught = [];
 const waiting = new Map();
 for (const bug of bugs) {
-  if (bug.pack === 'pro') {
-    const entry = catalog.get(bug.check);
-    if (!entry || entry.pack !== 'pro') failures.push(`${bug.id}: pro check "${bug.check}" is not a pro stub in the catalog`);
+  if (catalog.planned.some((e) => e.id === bug.check) && bug.caughtBy?.length) {
+    failures.push(`${bug.id}: "${bug.check}" is still a planned check, so nothing can catch it yet`);
   }
   if (bug.caughtBy?.length) {
     const missing = bug.caughtBy.filter((e) => !proves(e));
@@ -57,8 +56,7 @@ if (typeof results.score !== 'number' || results.score < 20 || results.score > 8
 
 console.log(`TEA score: ${results.score}/100. Seeded bugs caught: ${caught.length} of ${bugs.length}.`);
 for (const [step, list] of [...waiting.entries()].sort((a, b) => a[0] - b[0])) {
-  const pro = list.filter((b) => b.pack === 'pro').length;
-  console.log(`  waiting for step ${step}: ${list.length} bug(s)${pro ? ` (${pro} pro)` : ''}`);
+  console.log(`  waiting for step ${step}: ${list.length} bug(s)`);
 }
 if (failures.length) {
   console.error(`\n${failures.length} check(s) failed:`);

@@ -6,8 +6,8 @@ Tagline: "Spill the TEA on your app."
 
 > The build now follows the 14-step order in [BUILD-PROGRESS.md](../BUILD-PROGRESS.md).
 > This doc keeps the original intent and the calls made in the first milestone. Where they
-> differ, BUILD-PROGRESS.md wins. This repo is the open-source (MIT) engine; paid "pro" check
-> rules and ranked fix prompts live in a separate private repo and never land here.
+> differ, BUILD-PROGRESS.md wins. Everything is open source (MIT) and lives in this repo: there
+> are no locked or licensed checks (decided 2026-10-23).
 
 ## Who it's for
 

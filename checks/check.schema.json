@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/deepbratt/TEA/checks/check.schema.json",
   "title": "TEA check catalog entry",
-  "description": "One check. Free entries carry their rule and fix prompt. Pro entries in the public catalog are stubs: id, title, category, severity and pack only.",
+  "description": "One check. Every check is open source. A check whose detector is not built yet (no rule) is listed as planned.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -10,7 +10,6 @@
     "title",
     "category",
     "severity",
-    "pack",
     "version"
   ],
   "properties": {
@@ -22,6 +21,11 @@
     "title": {
       "type": "string",
       "minLength": 5
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "One plain-English sentence for non-technical users: what this check catches."
     },
     "category": {
       "enum": [
@@ -89,12 +93,6 @@
       "type": "boolean",
       "description": "Never auto-fixed. Always true for auth, payments, secrets and migrations"
     },
-    "pack": {
-      "enum": [
-        "free",
-        "pro"
-      ]
-    },
     "version": {
       "type": "integer",
       "minimum": 1
@@ -134,22 +132,14 @@
       }
     }
   },
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "pack": {
-            "const": "free"
-          }
-        }
-      },
-      "then": {
-        "required": [
-          "detect",
-          "rule",
-          "fix_prompt"
-        ]
-      }
-    }
-  ]
+  "if": {
+    "required": [
+      "rule"
+    ]
+  },
+  "then": {
+    "required": [
+      "fix_prompt"
+    ]
+  }
 }

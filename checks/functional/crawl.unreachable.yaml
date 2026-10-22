@@ -1,10 +1,10 @@
 id: crawl.unreachable
 title: Page does not load at all
+description: "TEA couldn't open the page at all."
 category: functional
 severity: high
 detect: crawl
 rule: scanner:crawl.unreachable
 fix_prompt: prompts/crawl/unreachable.md
 suggest_only: false
-pack: free
 version: 1

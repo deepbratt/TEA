@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BrewCup, EmptyArt } from '@/components/Art';
 import { GateBadge, ScoreBadge, SeverityCounts } from '@/components/Badges';
 import { when } from '@/lib/format';
 import { tea } from '@/lib/tea';
@@ -25,7 +26,7 @@ export default async function ProjectsPage() {
 
       {rows.length === 0 ? (
         <section className="card empty">
-          <img src="/cup.svg" alt="" width={96} height={96} />
+          <EmptyArt kind="projects" />
           <h2 className="empty-title">No projects yet</h2>
           <p className="help">Add your app's frontend and backend folders, a URL where it runs, or both. TEA checks every page, every API call and the wiring between them.</p>
           <Link className="btn btn-primary" href="/projects/new">
@@ -36,6 +37,7 @@ export default async function ProjectsPage() {
         <ul className="project-list">
           {rows.map(({ project, last }) => (
             <li key={project.key} className="card project-row">
+              <BrewCup size={52} level={last?.score ?? 0} tone={last?.verdict?.tone} brewing={running?.project === project.key} />
               <div className="project-main">
                 <h2>
                   <Link href={`/projects/${project.key}`}>{project.name}</Link>

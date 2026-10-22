@@ -1,3 +1,4 @@
+import { basename } from 'node:path';
 import { ConfigEditor } from '@/components/ConfigEditor';
 import { tea } from '@/lib/tea';
 
@@ -19,8 +20,9 @@ export default async function ConfigPage() {
         <div>
           <h1>Config file</h1>
           <p className="help">
-            Everything on the other pages lives in <code>{workspace.file}</code>. Edit it here or in your editor and commit it with your code; the
-            Workbench keeps your comments when it saves.
+            Everything on the other pages lives in <code>{workspace.file}</code>: projects, rules, your own rules and the quality gate. You rarely
+            need this page: the other pages edit it for you. Use it to copy settings to another computer (Download / Import), to commit them with
+            your code, or to start over. Comments you write are kept.
           </p>
         </div>
       </div>
@@ -34,7 +36,7 @@ export default async function ConfigPage() {
           </ul>
         </div>
       )}
-      <ConfigEditor initial={text} />
+      <ConfigEditor initial={text} defaultText={engine.defaultWorkspaceText()} fileName={basename(workspace.file)} />
     </>
   );
 }

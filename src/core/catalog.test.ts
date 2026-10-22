@@ -1,33 +1,33 @@
+import { delimiter, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { useTempDirs } from '../__tests__/temp.js';
-import { CatalogError, checkIdOf, loadCatalog, packsFromEnv, renderFixPrompt } from './index.js';
+import { CatalogError, catalogFromEnv, checkIdOf, loadCatalog, renderFixPrompt } from './index.js';
 
 const folder = useTempDirs('catalog');
 
-const proEntry = `id: auth.idor.deep
-title: Real pro IDOR probe
+const communityCheck = `id: community.leak
+title: A check from a community pack
+description: Something a community pack catches.
 category: security
-severity: critical
-detect: sandbox-test
-rule: pro:auth.idor.deep
-fix_prompt: prompts/idor.md
-suggest_only: true
-pack: pro
+severity: high
+detect: static-rule
+rule: community:leak
+fix_prompt: prompts/leak.md
 version: 3
 `;
 
 describe('built-in catalog', () => {
-  it('loads, validates and keeps pro checks as locked stubs', async () => {
+  it('is all open source: runnable checks plus planned ones, nothing locked', async () => {
     const c = await loadCatalog();
-    expect(c.get('crawl.server-error')).toMatchObject({ pack: 'free', detect: 'crawl', severity: 'high' });
-    expect(c.runnable.every((e) => e.pack === 'free')).toBe(true);
-    expect(c.lockedPro.map((e) => e.id)).toEqual(expect.arrayContaining(['auth.idor.deep', 'supabase.rls.correctness', 'stripe.edge-cases']));
-    for (const e of c.lockedPro) {
-      expect(e.rule).toBeUndefined();
-      expect(e.fix_prompt).toBeUndefined();
-    }
+    expect(c.get('crawl.server-error')).toMatchObject({ detect: 'crawl', severity: 'high' });
+    expect(c.runnable.every((e) => e.rule)).toBe(true);
+    expect(c.planned.map((e) => e.id)).toEqual(expect.arrayContaining(['auth.idor.deep', 'supabase.rls.correctness', 'stripe.edge-cases']));
+    expect(c.runnable.length + c.planned.length).toBe(c.entries.length);
+  });
+
+  it('describes every check in plain English', async () => {
+    for (const e of (await loadCatalog()).entries) expect(e.description, e.id).toMatch(/\w+ \w+/);
   });
 
   it('renders fix prompts from templates', async () => {
@@ -43,24 +43,34 @@ describe('built-in catalog', () => {
   });
 });
 
-describe('guard rails', () => {
-  it('refuses a pro rule written into a public catalog', async () => {
-    const dir = await folder({ 'security/x.yaml': proEntry.replace('auth.idor.deep', 'community.leak'), 'prompts/idor.md': 'x' });
-    await expect(loadCatalog({ dirs: [dir] })).rejects.toThrow(/must be a stub here/);
+describe('community check packs', () => {
+  it('load from extra folders, with their prompts', async () => {
+    const dir = await folder({ 'security/leak.yaml': communityCheck, 'prompts/leak.md': 'Fix {route}' });
+    const c = await loadCatalog({ dirs: [dir] });
+    expect(c.get('community.leak')).toMatchObject({ rule: 'community:leak', version: 3 });
+    expect(renderFixPrompt(c.get('community.leak'), { route: '/api/orders/1' })).toBe('Fix /api/orders/1');
   });
 
-  it('refuses free entries without a rule or prompt, and unknown fields', async () => {
-    const bad = await folder({ 'a.yaml': 'id: a.b\ntitle: Something wrong\ncategory: security\nseverity: low\npack: free\nversion: 1\n' });
+  it('are configured from TEA_CHECKS', () => {
+    expect(catalogFromEnv({})).toEqual({});
+    expect(catalogFromEnv({ TEA_CHECKS: ['a', 'b'].join(delimiter) }).dirs).toEqual([resolve('a'), resolve('b')]);
+  });
+});
+
+describe('guard rails', () => {
+  it('refuses invalid entries and unknown fields', async () => {
+    const bad = await folder({ 'a.yaml': 'id: a.b\ntitle: Something wrong\ncategory: nope\nseverity: low\nversion: 1\n' });
     await expect(loadCatalog({ dirs: [bad] })).rejects.toThrow(CatalogError);
-    const extra = await folder({ 'a.yaml': 'id: a.b\ntitle: Something wrong\ncategory: security\nseverity: low\npack: pro\nversion: 1\nsurprise: 1\n' });
+    const extra = await folder({ 'a.yaml': 'id: a.b\ntitle: Something wrong\ncategory: security\nseverity: low\nversion: 1\nsurprise: 1\n' });
     await expect(loadCatalog({ dirs: [extra] })).rejects.toThrow(/additional properties/);
   });
 
-  it('refuses duplicate ids and prompts outside the catalog', async () => {
-    const dup = await folder({ 'a.yaml': 'id: crawl.slow\ntitle: Duplicate entry\ncategory: performance\nseverity: low\npack: pro\nversion: 1\n' });
+  it('refuses duplicate ids, missing folders and prompts outside the catalog', async () => {
+    const dup = await folder({ 'a.yaml': 'id: crawl.slow\ntitle: Duplicate entry\ncategory: performance\nseverity: low\nversion: 1\n' });
     await expect(loadCatalog({ dirs: [dup] })).rejects.toThrow(/Duplicate/);
+    await expect(loadCatalog({ dirs: [join(tmpdir(), 'tea-no-such-folder')] })).rejects.toThrow(/not found/);
     const escape = await folder({
-      'a.yaml': 'id: a.b\ntitle: Escaping prompt\ncategory: security\nseverity: low\ndetect: crawl\nrule: x:y\nfix_prompt: ../../etc/passwd\npack: free\nversion: 1\n',
+      'a.yaml': 'id: a.b\ntitle: Escaping prompt\ncategory: security\nseverity: low\ndetect: crawl\nrule: x:y\nfix_prompt: ../../etc/passwd\nversion: 1\n',
     });
     await expect(loadCatalog({ dirs: [escape] })).rejects.toThrow(/escapes/);
     const absolute = await folder({
@@ -71,40 +81,9 @@ severity: low
 detect: crawl
 rule: x:y
 fix_prompt: ${JSON.stringify(join(tmpdir(), 'x.md'))}
-pack: free
 version: 1
 `,
     });
     await expect(loadCatalog({ dirs: [absolute] })).rejects.toThrow(/escapes/);
-  });
-});
-
-describe('pro packs', () => {
-  it('stay locked without a licence key', async () => {
-    const pack = await folder({ 'security/idor.yaml': proEntry, 'prompts/idor.md': 'Fix {route}' });
-    const c = await loadCatalog({ packs: [{ name: 'tea-pro', dir: pack }] });
-    expect(c.packs).toEqual([{ name: 'tea-pro', loaded: false, reason: 'no TEA_LICENSE_KEY set' }]);
-    expect(c.get('auth.idor.deep')!.rule).toBeUndefined();
-  });
-
-  it('replace their stubs when licensed', async () => {
-    const pack = await folder({ 'security/idor.yaml': proEntry, 'prompts/idor.md': 'Fix {route}' });
-    const c = await loadCatalog({ packs: [{ name: 'tea-pro', dir: pack }], licenseKey: 'test-key' });
-    expect(c.packs[0]!.loaded).toBe(true);
-    expect(c.get('auth.idor.deep')).toMatchObject({ rule: 'pro:auth.idor.deep', version: 3 });
-    expect(c.lockedPro.map((e) => e.id)).not.toContain('auth.idor.deep');
-    expect(renderFixPrompt(c.get('auth.idor.deep'), { route: '/api/orders/1' })).toBe('Fix /api/orders/1');
-  });
-
-  it('only accept full pro entries', async () => {
-    const pack = await folder({ 'a.yaml': 'id: a.b\ntitle: Stub in a pack\ncategory: security\nseverity: low\npack: pro\nversion: 1\n' });
-    await expect(loadCatalog({ packs: [{ name: 'p', dir: pack }], licenseKey: 'k' })).rejects.toThrow(/pack entries must be pro/);
-  });
-
-  it('are configured from the environment', () => {
-    expect(packsFromEnv({})).toEqual({ packs: [], licenseKey: undefined });
-    const p = packsFromEnv({ TEA_PRO_PACK: 'x', TEA_LICENSE_KEY: 'k' });
-    expect(p.licenseKey).toBe('k');
-    expect(p.packs![0]!.name).toBe('tea-pro');
   });
 });

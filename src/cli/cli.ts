@@ -48,6 +48,7 @@ async function projectOptions(file: string, key: string) {
     maxPages: project.maxPages,
     skip: project.skip,
     rules: data.rules,
+    customRules: data.customRules,
     gate: project.gate ?? data.gate,
   };
 }
@@ -98,6 +99,7 @@ function buildProgram(): Command {
         repo: o.repo,
         sources: o.source ?? project?.sources,
         rules: project?.rules,
+        customRules: project?.customRules,
         gate: project?.gate,
         out: o.out,
         config: o.config,

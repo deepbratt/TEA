@@ -60,4 +60,6 @@ Keep PRs focused, describe what a founder would notice, and make sure `npm run b
 2. Implement the detector the entry's `rule` points to, and emit findings whose id starts with the check id (`<check id>:<location>`).
 3. Plant the bug in the example app and assert TEA catches it.
 
-Pro checks are never written into this repo. A pro entry here is a stub: id, title, category, severity and `pack: pro` only. The loader refuses anything more.
+Every check is open source and lives here; there are no locked or licensed checks. Give each entry a one-sentence `description` a non-technical founder understands: it is what the Rules page shows. A check whose detector isn't built yet has no `rule` and shows as *Coming soon*; add the `rule`, the `fix_prompt` and the detector together when you build it.
+
+Don't need a detector at all? Many checks people want are custom rules (forbid or require text, require a file or a route). Add a template to `CUSTOM_RULE_TEMPLATES` in `src/custom/index.ts` and it appears as a one-click idea on the Rules page.

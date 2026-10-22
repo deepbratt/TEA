@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { EmptyArt, ScoreRing } from '@/components/Art';
 import { GateBadge, ScoreBadge, SeverityCounts } from '@/components/Badges';
 import { RunPanel } from '@/components/RunPanel';
 import { duration, plural, when } from '@/lib/format';
@@ -56,7 +57,7 @@ export default async function ProjectOverview({ params }: { params: Promise<{ ke
           </div>
           <div className="measure-top">
             <div className="measure">
-              <ScoreBadge score={results.score} tone={last.verdict?.tone} />
+              <ScoreRing score={results.score} tone={last.verdict?.tone} label={last.verdict?.label} />
               <span>
                 TEA Score
                 <br />
@@ -110,6 +111,7 @@ export default async function ProjectOverview({ params }: { params: Promise<{ ke
 
       {!last && !running && (
         <section className="card empty small-empty">
+          <EmptyArt kind="issues" />
           <h2 className="empty-title">Not analysed yet</h2>
           <p className="help">Run an analysis to see the TEA Score, issues and the quality gate for {project.name}.</p>
         </section>

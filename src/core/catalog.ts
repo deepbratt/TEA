@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
-import { join, relative, resolve, sep } from 'node:path';
+import { delimiter, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import { parse } from 'yaml';
@@ -8,10 +8,10 @@ import { resolveInside } from './paths.js';
 import type { Severity } from './types.js';
 
 /**
- * The check catalog: every check TEA knows is a YAML entry, not hard-coded logic, so packs can
- * be ranked, updated and extended without a TEA upgrade. Free entries ship here with their rule
- * and fix prompt. Pro entries ship here only as stubs; their rules and prompts come from a
- * licensed pro pack loaded at runtime.
+ * The check catalog: every check TEA knows is a YAML entry, not hard-coded logic, so checks can
+ * be ranked, updated and extended without a TEA upgrade. Everything is open source: there are no
+ * locked or licensed checks. A check whose detector isn't built yet has no `rule` and is listed
+ * as planned. Extra catalog folders (community packs) load the same way as the built-in one.
  */
 
 export type CheckCategory =
@@ -21,6 +21,8 @@ export type CheckCategory =
 export interface CheckEntry {
   id: string;
   title: string;
+  /** One plain-English sentence: what the check catches. */
+  description?: string;
   category: CheckCategory;
   severity: Severity;
   stacks?: string[];
@@ -29,12 +31,11 @@ export interface CheckEntry {
   criteria?: { pass?: string; warn?: string; fail?: string };
   fix_prompt?: string;
   suggest_only?: boolean;
-  pack: 'free' | 'pro';
   version: number;
   risk_at_scale?: string;
   /** Settings users can change per check in their rules, with defaults. */
   params?: Record<string, CheckParam>;
-  /** Set by the loader: which catalog or pack the entry came from, and its root folder. */
+  /** Set by the loader: which catalog the entry came from, and its root folder. */
   source?: { name: string; root: string };
   /** Set by the loader: the fix_prompt template's text. */
   promptTemplate?: string;
@@ -47,23 +48,17 @@ export interface CheckParam {
   max?: number;
 }
 
-export interface PackSource {
-  /** e.g. "tea-pro" */
-  name: string;
-  /** Folder holding the pack's <category>/<id>.yaml entries and prompts/. */
-  dir: string;
-}
-
 export interface Catalog {
   entries: CheckEntry[];
   get(id: string): CheckEntry | undefined;
-  /** Free checks plus pro checks whose real rules were loaded from a licensed pack. */
+  /** Checks TEA can run today. */
   runnable: CheckEntry[];
-  /** Pro checks known only as stubs (no licence or no pack): shown by id and title only. */
-  lockedPro: CheckEntry[];
-  /** Packs that were loaded, and packs that were skipped with the reason. */
-  packs: { name: string; loaded: boolean; reason?: string }[];
+  /** Checks whose detector isn't built yet: listed so users see what's coming. */
+  planned: CheckEntry[];
 }
+
+/** A check is planned until it has a detector rule. */
+export const isPlanned = (e: Pick<CheckEntry, 'rule'>): boolean => !e.rule;
 
 export class CatalogError extends Error {}
 
@@ -86,7 +81,7 @@ async function yamlFiles(dir: string): Promise<string[]> {
   return out.sort();
 }
 
-async function readEntries(root: string, name: string, mode: 'public' | 'pack'): Promise<CheckEntry[]> {
+async function readEntries(root: string, name: string): Promise<CheckEntry[]> {
   const entries: CheckEntry[] = [];
   for (const file of await yamlFiles(root)) {
     const rel = relative(root, file).split(sep).join('/');
@@ -96,13 +91,6 @@ async function readEntries(root: string, name: string, mode: 'public' | 'pack'):
       throw new CatalogError(`${name}/${rel}: invalid check entry: ${why}`);
     }
     const entry = raw as CheckEntry;
-    if (mode === 'public' && entry.pack === 'pro' && (entry.rule || entry.fix_prompt || entry.criteria)) {
-      // Guard rail: pro rules and prompts must never be written into the public catalog.
-      throw new CatalogError(`${name}/${rel}: pro check "${entry.id}" must be a stub here (no rule, criteria or fix_prompt).`);
-    }
-    if (mode === 'pack' && (entry.pack !== 'pro' || !entry.rule || !entry.fix_prompt)) {
-      throw new CatalogError(`${name}/${rel}: pack entries must be pro checks with a rule and a fix_prompt.`);
-    }
     let promptTemplate: string | undefined;
     if (entry.fix_prompt) {
       const file = resolveInside(root, entry.fix_prompt);
@@ -116,51 +104,32 @@ async function readEntries(root: string, name: string, mode: 'public' | 'pack'):
 }
 
 export interface LoadCatalogOptions {
-  /** Extra public catalog folders (community rule packs). Same rules as the built-in catalog. */
+  /** Extra catalog folders (community check packs). Same format as the built-in catalog. */
   dirs?: string[];
-  /** Licensed pro packs. Loaded only with a licence key. */
-  packs?: PackSource[];
-  licenseKey?: string;
 }
 
-/** Pro packs and the licence key come from TEA_PRO_PACK (a folder) and TEA_LICENSE_KEY. */
-export function packsFromEnv(env: NodeJS.ProcessEnv = process.env): Pick<LoadCatalogOptions, 'packs' | 'licenseKey'> {
-  const packs = env.TEA_PRO_PACK ? [{ name: 'tea-pro', dir: resolve(env.TEA_PRO_PACK) }] : [];
-  return { packs, licenseKey: env.TEA_LICENSE_KEY || undefined };
+/** Extra catalog folders from TEA_CHECKS (separated like PATH). */
+export function catalogFromEnv(env: NodeJS.ProcessEnv = process.env): LoadCatalogOptions {
+  const dirs = (env.TEA_CHECKS ?? '').split(delimiter).map((d) => d.trim()).filter(Boolean).map((d) => resolve(d));
+  return dirs.length ? { dirs } : {};
 }
 
 export async function loadCatalog(opts: LoadCatalogOptions = {}): Promise<Catalog> {
   const byId = new Map<string, CheckEntry>();
   for (const [name, dir] of [['tea', BUILTIN_CATALOG_DIR] as const, ...(opts.dirs ?? []).map((d) => [d, d] as const)]) {
-    for (const e of await readEntries(dir, name, 'public')) {
+    if (!existsSync(dir)) throw new CatalogError(`Check folder not found: ${dir}`);
+    for (const e of await readEntries(dir, name)) {
       if (byId.has(e.id)) throw new CatalogError(`Duplicate check id "${e.id}" in ${name}.`);
       byId.set(e.id, e);
     }
   }
 
-  const packs: Catalog['packs'] = [];
-  for (const pack of opts.packs ?? []) {
-    if (!opts.licenseKey) {
-      packs.push({ name: pack.name, loaded: false, reason: 'no TEA_LICENSE_KEY set' });
-      continue;
-    }
-    if (!existsSync(pack.dir)) {
-      packs.push({ name: pack.name, loaded: false, reason: `folder not found: ${pack.dir}` });
-      continue;
-    }
-    // Licence keys are verified by the pack itself and TEA Cloud; the engine only gates loading.
-    for (const e of await readEntries(pack.dir, pack.name, 'pack')) byId.set(e.id, e);
-    packs.push({ name: pack.name, loaded: true });
-  }
-
   const entries = [...byId.values()].sort((a, b) => a.id.localeCompare(b.id));
-  const isLocked = (e: CheckEntry) => e.pack === 'pro' && !e.rule;
   return {
     entries,
     get: (id) => byId.get(id),
-    runnable: entries.filter((e) => !isLocked(e)),
-    lockedPro: entries.filter(isLocked),
-    packs,
+    runnable: entries.filter((e) => !isPlanned(e)),
+    planned: entries.filter(isPlanned),
   };
 }
 

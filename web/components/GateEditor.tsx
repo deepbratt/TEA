@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api, errorText } from '@/lib/api';
+import { GATE_PRESETS } from '@/lib/presets';
 
 interface Condition {
   metric: string;
@@ -35,9 +36,23 @@ export function GateEditor({ initial, metrics }: { initial: Condition[]; metrics
     }
   };
 
+  const activePreset = GATE_PRESETS.find((p) => JSON.stringify(p.value) === JSON.stringify(conditions))?.id;
+
   return (
     <section className="card" aria-labelledby="cond-title">
-      <h2 id="cond-title" className="section-title">
+      <h2 className="section-title">Quick setup</h2>
+      <div className="preset-grid" role="radiogroup" aria-label="Gate presets">
+        {GATE_PRESETS.map((p) => (
+          <button key={p.id} type="button" role="radio" aria-checked={activePreset === p.id} className="preset" onClick={() => setConditions(p.value.map((c) => ({ ...c })))}>
+            <span className="preset-emoji" aria-hidden="true">
+              {p.emoji}
+            </span>
+            <span className="preset-name">{p.name}</span>
+            <span className="preset-desc">{p.description}</span>
+          </button>
+        ))}
+      </div>
+      <h2 id="cond-title" className="section-title gate-title">
         Fail the gate when…
       </h2>
       {conditions.length === 0 && <p className="help">No conditions: the gate always passes.</p>}
