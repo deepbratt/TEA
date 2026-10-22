@@ -21,6 +21,8 @@ export interface ScanResult extends Discovery {
   activePlugins: string[];
 }
 
+export { scanSources, sourceFromPath, SOURCE_ROLES, type SourceFolder, type SourceRole, type ScanSourcesResult, type WiringSides } from './sources.js';
+
 const META_FRAMEWORKS = ['nextjs', 'remix', 'nuxt', 'sveltekit', 'astro'];
 
 async function isActive(plugin: TeaPlugin, ctx: RepoContext, stack: StackDetection[]): Promise<StackDetection[] | null> {
@@ -81,9 +83,9 @@ function merge(into: Discovery, part: Partial<Discovery>): void {
 
 const unique = (xs: string[]) => [...new Set(xs)];
 
-/** Same kind + path → one route; framework plugins win over link/fetch hints. */
+/** Same kind + path → one route; framework plugins win over link hints. */
 function dedupeRoutes(routes: Route[]): Route[] {
-  const rank = (r: Route) => (r.plugin === 'client-calls' || r.plugin === 'links' ? 1 : 0);
+  const rank = (r: Route) => (r.plugin === 'links' ? 1 : 0);
   const byKey = new Map<string, Route>();
   for (const r of routes) {
     const key = `${r.kind} ${r.path.toLowerCase()}`;
