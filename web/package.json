@@ -1,0 +1,17 @@
+{
+  "name": "tea-workbench",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TEA Workbench: the local web UI for TEA (projects, analyses, issues, rules, quality gate).",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev -H 127.0.0.1 -p 4747",
+    "build": "next build",
+    "start": "next start -H 127.0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.1.0",
+    "typescript": "^5.6.3"
+  }
+}

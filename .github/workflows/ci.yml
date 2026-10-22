@@ -69,3 +69,34 @@ jobs:
         with:
           name: tea-report-node-${{ matrix.node }}
           path: tea-report
+
+  workbench:
+    name: TEA Workbench (build, browser end to end, axe)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run build:web
+      - name: Drive the Workbench in a real browser
+        run: node scripts/workbench-e2e.mjs
+      - name: A workspace project runs from the CLI with its gate
+        run: |
+          cat > tea.config.yaml <<'EOF'
+          version: 1
+          projects:
+            - key: example
+              name: Example
+              sources:
+                - { name: web, path: examples/buggy-next-app, role: fullstack }
+          gate:
+            conditions:
+              - { metric: high, op: gt, value: 0 }
+          EOF
+          if node dist/cli/bin.js run --project example --out tea-report-project; then echo "the gate should have failed"; exit 1; fi
+          grep -q '"status": "failed"' tea-report-project/results.json

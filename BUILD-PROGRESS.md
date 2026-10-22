@@ -4,7 +4,7 @@ The build follows 14 steps, one at a time. A step is ticked only when its tests 
 
 **Repo split.** This repo (`deepbratt/TEA`) is the public, MIT-licensed engine: CLI, scanners, the check catalog with all **free** checks, the report, retest, MCP and the GitHub Action. Paid **pro** checks appear here only as stub catalog entries (`pack: pro`, id and title, no rule, no prompt). Their real rules, the ranked fix prompts and TEA Cloud live in the private `deepbratt/Tea-paid` repo.
 
-**Code map.** One npm package (`tea-qa`), one folder per part of the plan's package map: `src/cli`, `src/core`, `src/scanner` (URL scan), `src/repo-map` (repo discovery: stack, routes, endpoints, forms, env var names; added because every later step needs it), `src/report`, `src/ui` (local web UI, added on request), plus `src/docs-reader`, `src/spec`, `src/codehealth`, `src/prodready`, `src/fix`, `src/mcp` and `src/runners/{web,mobile,desktop}`, each created in its step. The check catalog lives in `checks/`.
+**Code map.** One npm package (`tea-qa`), one folder per part of the plan's package map: `src/cli`, `src/core`, `src/scanner` (URL scan), `src/repo-map` (repo discovery: stack, routes, endpoints, forms, env var names; added because every later step needs it), `src/report`, `src/wiring` (frontend-to-API wiring checks), `src/workspace` (Workbench backend), `web/` (the Next.js Workbench, added on request), plus `src/docs-reader`, `src/spec`, `src/codehealth`, `src/prodready`, `src/fix`, `src/mcp` and `src/runners/{web,mobile,desktop}`, each created in its step. The check catalog lives in `checks/`.
 
 ## Steps
 
@@ -29,9 +29,11 @@ The build follows 14 steps, one at a time. A step is ticked only when its tests 
 
 ## Notes
 
-- `tea-qa ui` (`npm run ui` from source) runs the same engine from a local web page on 127.0.0.1 with a one-time token; runs are kept in `tea-report/runs/`. Source code comes from a folder (with a folder picker) or a GitHub repo (connect via `gh` login, device flow with `TEA_GITHUB_CLIENT_ID`, or a read-only token; shallow read-only clone in `~/.tea-qa/repos`).
+- `tea-qa ui` (`npm run ui` from source) starts the TEA Workbench, a Next.js app on 127.0.0.1 with a one-time token: SonarQube-style projects (several source folders each, e.g. a separate frontend and backend), analyses, issues, rules and a quality gate, all stored in one editable `tea.config.yaml` that the Workbench rewrites keeping comments. Analyses are kept in `.tea/runs/`. GitHub connect was removed: point a project at local folders. Spec: `docs/WORKBENCH-PROMPT.md`.
+- Frontend-to-API wiring (`wiring.orphan-call`, `wiring.unused-endpoint`) runs whenever the code has both a calling and a serving side; the example's orphan `/api/wishlist` and `/api/signup` calls are caught.
+- `tea-qa run --project <key>` runs a workspace project with its rules and gate; the gate decides the exit code.
 
-- One package; `examples/*` is the only npm workspace. `.npmrc` sets `ignore-scripts=true` so dependency install scripts never run. `npm run demo` is the one-command end-to-end run.
+- One package; `examples/*` and `web` are the npm workspaces. `.npmrc` sets `ignore-scripts=true` so dependency install scripts never run. `npm run demo` is the one-command end-to-end run.
 - Repo development needs Node 22+ (Vitest 5). The CLI targets Node 20+: CI runs the end-to-end demo on Node 20 and 22.
 - Code-only mode starts the target app only with consent (`--start` or a yes at the prompt), and never runs installs.
 - Plugins listed in a repo's own `tea.yaml` are not loaded unless the user passes `--config` or `--trust-repo-config`.

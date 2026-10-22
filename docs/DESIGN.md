@@ -51,7 +51,7 @@ before/after score card. That share is how TEA spreads.
 
 ## Architecture
 
-One npm package (`tea-qa`) with one folder per part under `src/`, TypeScript, Node 20+. (Originally a multi-package monorepo; merged into one codebase on 2026-10-21, with a local web UI added.)
+One npm package (`tea-qa`) with one folder per part under `src/`, TypeScript, Node 20+. (Originally a multi-package monorepo; merged into one codebase on 2026-10-21, with a local web UI added. On 2026-10-22 the UI became the TEA Workbench: a Next.js app in `web/` over `src/workspace`, with projects of several source folders, frontend-to-API wiring checks, rules and a quality gate in one `tea.config.yaml`; see `docs/WORKBENCH-PROMPT.md`.)
 
 | Package | Role |
 |---|---|
@@ -60,6 +60,8 @@ One npm package (`tea-qa`) with one folder per part under `src/`, TypeScript, No
 | `@tea-qa/scanner` | read-only Playwright URL scan and passive checks |
 | `@tea-qa/report` | results.json, report.md, report.html, feature map, (score card M5) |
 | `tea-qa` (cli) | `tea-qa` / `tea` binaries, orchestration |
+| `src/wiring` | frontend-to-API wiring: calls nothing serves, endpoints nothing calls |
+| `src/workspace` + `web/` | the Workbench: config file, analyses, Next.js UI on 127.0.0.1 |
 | later: `docs-reader`, `spec`, `codehealth`, `prodready`, `fix`, `mcp`, `runners/*` | see BUILD-PROGRESS.md |
 
 Plugin API (core): `{ name, detect(ctx) => Detection | null, discover?(ctx) => Partial<AppMap>,
