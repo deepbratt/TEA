@@ -9,7 +9,7 @@
     "node": ">=22.13"
   },
   "scripts": {
-    "build": "node api.js && tsc -b",
+    "build": "tsc -b",
     "typecheck": "tsc -b --pretty",
     "test": "vitest run",
     "test:watch": "vitest",
