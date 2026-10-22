@@ -1,61 +1,43 @@
 /*
- * TEA design tokens: blue-and-white porcelain. Shared by the local UI (served as a file) and the
- * HTML report (inlined, so reports stay one self-contained file). Change colours here only.
+ * TEA design tokens: ash and ember. Charcoal and ash greys with a red accent, always dark. Shared by
+ * the Workbench and the HTML report (inlined, so reports stay one self-contained file).
+ * Change colours here only. Every text colour keeps WCAG AA contrast on --bg and --surface.
+ * Theme by DeepBratt.
  */
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
-  --bg: #f4f7fb;        /* porcelain */
-  --surface: #ffffff;   /* glaze */
-  --ink: #13213a;
-  --muted: #5a6a82;     /* slate */
-  --line: #d8e1ee;
-  --tint: #eaf0f8;      /* quiet fills: code, chips, hover */
-  --accent: #1f4fa3;    /* cobalt: actions, links, focus */
-  --accent-ink: #ffffff;
-  --accent-soft: #dce6f7;
+  --bg: #17181a;        /* charcoal */
+  --surface: #202225;   /* ash */
+  --ink: #e6e6e6;
+  --muted: #a3a6ab;     /* grey */
+  --line: #34373b;
+  --tint: #2a2d31;      /* quiet fills: code, chips, hover */
+  --accent: #f05d61;    /* ember red: actions, links, focus */
+  --accent-ink: #141517;
+  --accent-soft: #3a2426;
 
-  --crit: #b42318;
-  --high: #c2410c;
-  --med: #a16207;
-  --low: #2563a8;
-  --info: #64748b;
-  --ok: #217a4b;
+  --crit: #ff5c5c;
+  --high: #ff9f43;
+  --med: #f5c84c;
+  --low: #7cb7ff;
+  --info: #a3a6ab;
+  --ok: #4cd08a;
 
-  /* Tea colours for the score cup, by verdict. */
-  --tea-great: #4d8a3f;
-  --tea-good: #b8862b;
-  --tea-meh: #c26a1f;
-  --tea-bad: #8c2f1b;
+  /* Score tones, by verdict. */
+  --tea-great: #4cd08a;
+  --tea-good: #c9d35a;
+  --tea-meh: #ff9f43;
+  --tea-bad: #ff5c5c;
 
   --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --font-display: var(--font-ui);
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
 
   --radius-s: 6px;
-  --radius-m: 10px;
-  --radius-l: 16px;
-  --focus: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0e1626;
-    --surface: #152036;
-    --ink: #e8eef8;
-    --muted: #9fb0c8;
-    --line: #26344f;
-    --tint: #1b2944;
-    --accent: #7aa2f0;
-    --accent-ink: #0b1220;
-    --accent-soft: #22345a;
-    --crit: #f87171;
-    --high: #fb923c;
-    --med: #fbbf24;
-    --low: #60a5fa;
-    --info: #94a3b8;
-    --ok: #4ade80;
-  }
+  --radius-m: 8px;
+  --radius-l: 12px;
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -68,9 +50,10 @@ html, body {
   font: 15px/1.55 var(--font-ui);
   -webkit-font-smoothing: antialiased;
 }
+::selection { background: var(--accent); color: var(--accent-ink); }
 
-a { color: var(--accent); text-underline-offset: 2px; }
-code, pre, kbd { font-family: var(--font-mono); font-size: 0.87em; }
+a { color: var(--accent); text-underline-offset: 3px; }
+code, pre, kbd { font-family: var(--font-mono); font-size: 0.92em; }
 :focus-visible { outline: none; box-shadow: var(--focus); border-radius: var(--radius-s); }
 
 @media (prefers-reduced-motion: reduce) {

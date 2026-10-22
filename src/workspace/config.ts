@@ -4,6 +4,7 @@ import { dirname, isAbsolute, resolve } from 'node:path';
 import { isMap, parseDocument, type Document } from 'yaml';
 import { z } from 'zod';
 import { DEFAULT_GATE, GateSchema, RulesSchema, validateRules, type Catalog } from '../core/index.js';
+import { CustomRuleSchema } from '../custom/index.js';
 import { SOURCE_ROLES, type SourceFolder } from '../repo-map/index.js';
 
 /**
@@ -47,18 +48,25 @@ export const WorkspaceSchema = z
     version: z.literal(1).default(1),
     projects: z.array(ProjectSchema).default([]),
     rules: RulesSchema.default({}),
+    /** Your own rules: forbid or require text, require files or routes. */
+    customRules: z.array(CustomRuleSchema).max(200).default([]),
     gate: GateSchema.default(DEFAULT_GATE),
   })
   .strict()
   .superRefine((w, ctx) => {
     const keys = w.projects.map((p) => p.key);
     if (new Set(keys).size !== keys.length) ctx.addIssue({ code: 'custom', path: ['projects'], message: 'Each project needs a different key.' });
+    const ids = w.customRules.map((r) => r.id);
+    if (new Set(ids).size !== ids.length) ctx.addIssue({ code: 'custom', path: ['customRules'], message: 'Each custom rule needs a different id.' });
   });
 
 export type Project = z.infer<typeof ProjectSchema>;
 export type WorkspaceData = z.infer<typeof WorkspaceSchema>;
 
 export const WORKSPACE_FILE = 'tea.config.yaml';
+
+/** The text of a fresh config file (what "Reset to defaults" writes). */
+export const defaultWorkspaceText = (): string => DEFAULT_TEXT;
 
 const DEFAULT_TEXT = `# TEA workspace: your projects, the rules TEA checks and the quality gate.
 # The TEA UI rewrites this file when you save; you can also edit it by hand.
@@ -78,6 +86,11 @@ projects: []
 # Per-check settings (the quality profile). Checks not listed use their defaults.
 #   crawl.slow: { enabled: true, severity: medium, params: { thresholdMs: 3000 } }
 rules: {}
+
+# Your own rules, no code needed. Types: forbid-text, require-text, require-file, require-route.
+#   - { id: no-console-log, title: No console.log in the code, type: forbid-text, text: "console.log(", severity: low }
+#   - { id: privacy-page, title: Has a privacy page, type: require-route, path: /privacy, severity: medium }
+customRules: []
 
 # The gate fails when any condition is met. Metrics: score, issues, critical, high,
 # medium, low, or an area (functional, api, performance, ...). op: lt or gt.
@@ -139,7 +152,7 @@ export class Workspace {
         if (problems.length) throw new WorkspaceError('Some rules are not valid.', problems);
       }
       const doc = parseDocument(text);
-      for (const key of ['version', 'projects', 'rules', 'gate'] as const) {
+      for (const key of ['version', 'projects', 'rules', 'customRules', 'gate'] as const) {
         if (JSON.stringify(data[key]) !== JSON.stringify(parsed.data[key])) setSection(doc, key, parsed.data[key]);
       }
       await this.write(doc.toString({ lineWidth: 0 }));

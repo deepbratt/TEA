@@ -1,10 +1,10 @@
 id: crawl.server-error
 title: Page crashes with a server error (5xx)
+description: "A page shows a server error (500) instead of its content."
 category: functional
 severity: high
 detect: crawl
 rule: scanner:crawl.server-error
 fix_prompt: prompts/crawl/server-error.md
 suggest_only: false
-pack: free
 version: 1

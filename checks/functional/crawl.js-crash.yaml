@@ -1,10 +1,10 @@
 id: crawl.js-crash
 title: Uncaught JavaScript error while the page loads
+description: "The page crashes in the browser, which can freeze buttons or leave parts of it blank."
 category: functional
 severity: medium
 detect: crawl
 rule: scanner:crawl.js-crash
 fix_prompt: prompts/crawl/js-crash.md
 suggest_only: false
-pack: free
 version: 1
