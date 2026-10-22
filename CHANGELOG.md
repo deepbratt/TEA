@@ -7,6 +7,7 @@ TEA is created and maintained by [DeepBratt](https://github.com/deepbratt).
 ## [Unreleased]
 
 ### Changed
+- **A shorter README, written for people.** It covers what TEA is, how to try it without installing (website, live demo, sample report), the quick start, what it checks, screenshots, and links to more. The detail moved, unchanged, to `docs/GUIDE.md` (using TEA) and `docs/HOW-IT-WORKS.md` (how it works). The developer commands moved to CONTRIBUTING.
 - **Everything is open source; nothing is locked.** The licence-key gating and the "pro pack" loader are gone. The checks that were pro stubs are now ordinary catalog entries, shown as *Coming soon* until their sandbox detectors exist. `TEA_CHECKS` loads community check packs.
 
 ### Added

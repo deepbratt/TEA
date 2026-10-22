@@ -13,6 +13,22 @@ npm run browsers     # headless Chromium for the crawler
 npm test
 ```
 
+## Everyday commands
+
+```bash
+npm start                      # install, build what changed, open the Workbench
+npm test                       # unit tests (Node 22+)
+npm run lint && npm run typecheck && npm run knip
+npm run ui:dev                 # the Workbench with hot reload on 127.0.0.1:4747
+node scripts/workbench-e2e.mjs # the Workbench in a real browser, with axe
+node scripts/build-demo.mjs    # the static website demo into web/demo-out/ (needs npm run example:build)
+node scripts/build-site.mjs    # the GitHub Pages site into _site/ (with the sample report and demo when built)
+node scripts/demo-e2e.mjs      # click through the built demo the way GitHub Pages serves it
+node scripts/screenshots.mjs   # regenerate the screenshots in docs/assets/screenshots
+```
+
+The README is for people deciding whether to use TEA: keep it short and plain. Details belong in [docs/GUIDE.md](docs/GUIDE.md) (using TEA) and [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) (how it works).
+
 ## Try it against the example app
 
 ```bash
