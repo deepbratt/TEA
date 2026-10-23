@@ -9,7 +9,7 @@ export default async function GatePage() {
   const { engine, services } = await tea();
   const { data } = await services.workspace.read();
   const label = (m: string) =>
-    m === 'score' ? 'TEA Score' : m === 'issues' ? 'Issues (all)' : m in engine.AREA_LABEL ? `${engine.AREA_LABEL[m as keyof typeof engine.AREA_LABEL]} score` : `${m[0]!.toUpperCase()}${m.slice(1)} issues`;
+    m === 'score' ? 'TEA Score' : m === 'issues' ? 'Issues (all)' : m === 'broken-features' ? 'Broken features' : m === 'feature-coverage' ? 'Feature coverage (%)' : m in engine.AREA_LABEL ? `${engine.AREA_LABEL[m as keyof typeof engine.AREA_LABEL]} score` : `${m[0]!.toUpperCase()}${m.slice(1)} issues`;
   const metrics = engine.GATE_METRICS.map((id) => ({ id, label: label(id) }));
   return (
     <div className="narrow">

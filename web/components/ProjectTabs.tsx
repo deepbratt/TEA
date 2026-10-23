@@ -8,6 +8,7 @@ export function ProjectTabs({ projectKey }: { projectKey: string }) {
   const base = `/projects/${projectKey}`;
   const tabs = [
     { href: base, label: 'Overview' },
+    { href: `${base}/features`, label: 'Features' },
     { href: `${base}/issues`, label: 'Issues' },
     { href: `${base}/settings`, label: 'Settings' },
   ];

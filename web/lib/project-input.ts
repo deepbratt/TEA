@@ -6,6 +6,7 @@ export interface ProjectInput {
   sources: { name: string; path: string; role: 'auto' | 'frontend' | 'backend' | 'fullstack' }[];
   maxPages?: number;
   skip?: string[];
+  sandbox?: boolean;
 }
 
 /** Pick the editable fields of a project from a request body. The workspace schema validates them. */
@@ -23,6 +24,7 @@ export function projectInput(body: Record<string, unknown>): ProjectInput {
   };
   if (str(body.url)) out.url = str(body.url);
   if (body.maxPages !== undefined && body.maxPages !== '') out.maxPages = Number(body.maxPages);
+  if (body.sandbox === true) out.sandbox = true;
   if (Array.isArray(body.skip)) {
     const skip = body.skip.map(str).filter(Boolean);
     if (skip.length) out.skip = skip;

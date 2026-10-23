@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // One command to see TEA work: `npm run demo`.
 // Installs dependencies if needed, builds TEA, builds and starts the example app on a free port,
-// runs TEA against it, checks every seeded bug that today's checks cover, then stops the app.
+// runs TEA against it (once read-only, once with sandbox tests), checks every seeded bug that
+// today's checks cover, then stops the app.
 // Flags: --skip-build (reuse the last builds), --keep (leave the example app running).
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -59,6 +60,9 @@ try {
   await run('node', ['dist/cli/bin.js', 'run', url, '--repo', 'examples/buggy-next-app', '--out', 'tea-report', '--fail-on', 'none']);
   say('Checking TEA caught every seeded bug it should');
   await run('node', ['scripts/verify-example.mjs', 'tea-report']);
+  say('Again with sandbox tests: submitting forms with test data and calling the API signed out');
+  await run('node', ['dist/cli/bin.js', 'run', url, '--repo', 'examples/buggy-next-app', '--out', 'tea-report-sandbox', '--fail-on', 'none', '--sandbox', '--quiet']);
+  await run('node', ['scripts/verify-example.mjs', 'tea-report-sandbox', '--sandbox']);
   say(`Done. Open ${join(root, 'tea-report', 'report.html')}`);
   if (args.has('--keep')) {
     say(`The example app is still running at ${url}. Press Ctrl+C to stop it.`);

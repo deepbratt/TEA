@@ -1,0 +1,8 @@
+# Planned check: the optional AI explorer (an LLM that walks complex flows from your acceptance criteria) is not built yet.
+id: features.ai-explorer
+title: Complex flows walked end to end by an AI explorer (optional)
+description: "An optional AI agent that walks multi-step flows (onboarding, checkout, invites) from your written requirements, with a cost limit. Coming soon."
+category: features
+severity: high
+detect: ai-review
+version: 1

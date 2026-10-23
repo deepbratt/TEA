@@ -1,0 +1,9 @@
+id: features.api-open
+title: A private-looking API answers with data to people who aren't signed in
+description: "An API route named like private data (orders, users, admin, account...) hands out data without a sign-in. Sandbox tests only, on your local app."
+category: features
+severity: high
+detect: sandbox-test
+rule: features:api-open
+fix_prompt: prompts/features/api-open.md
+version: 1

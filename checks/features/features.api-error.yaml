@@ -1,0 +1,9 @@
+id: features.api-error
+title: An API route answers with a server error
+description: "TEA called one of your API routes directly and it crashed (a 5xx error). Sandbox tests only, on your local app."
+category: features
+severity: high
+detect: sandbox-test
+rule: features:api-error
+fix_prompt: prompts/features/api-error.md
+version: 1

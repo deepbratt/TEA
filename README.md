@@ -29,9 +29,10 @@ TEA tests it for you:
 
 - 🔎 **Finds what's broken.** It opens every page in a real browser and spots crashes, broken links, failing requests and slow pages.
 - 🔌 **Checks the connections.** Every button and form in your frontend should reach a working endpoint in your backend. TEA checks that it does.
+- 📋 **Tests every feature, one by one.** TEA lists every feature in your code and in the docs your AI agent wrote (CLAUDE.md, AGENTS.md, TODO…), tests each one, and tells you which work, which are broken, and which the docs claim but were never built.
 - ✍️ **Tells you how to fix it.** You get a score, a pass/fail quality gate, and a ready-to-paste fix prompt for your AI coding tool.
 
-TEA is free and open source, runs on your own computer, and never changes your app.
+TEA is free and open source, runs on your own computer, and never changes your app (unless you turn on sandbox tests for a copy running on your computer).
 
 <p align="center">
   <img src="docs/assets/screenshots/04-project-overview.png" alt="The TEA Workbench showing a project's quality gate, score and issues" width="100%">
@@ -70,11 +71,13 @@ Then, in TEA:
 | | |
 |---|---|
 | 🧭 **Pages and features** | Crashes, server errors, missing pages, broken links and images, JavaScript errors, failing API calls |
+| 📋 **Feature by feature** | Every feature with its own test plan and a verdict: works, broken, partly works, claimed but missing, or not built yet |
+| 🧪 **Sandbox tests** (optional) | On an app running on your computer: submits every form with test data, tries bad input, and checks private APIs refuse strangers |
 | ⚡ **Speed** | Pages that take too long to load |
 | 🔌 **Frontend ↔ backend** | Calls your backend doesn't answer, and endpoints nothing uses |
 | 🧩 **Your own rules** | Anything you add without code, like "no console.log left in the code" or "has a privacy page" |
 | 🚦 **Quality gate** | A clear Passed or Failed, which can block a bad deploy |
-| 🔜 **Coming soon** | Deeper security checks (other users' data, payments, race conditions), all free |
+| 🔜 **Coming soon** | Deeper security checks (other users' data, payments, race conditions) and an optional AI explorer for complex flows, all free |
 
 Every check is free and open source. Nothing is locked.
 
@@ -98,8 +101,12 @@ A separate frontend and backend? Add both folders, and TEA connects them.
 <td width="50%"><img src="docs/assets/screenshots/05-issues.png" alt="Issues with a fix prompt"><br><sub><b>Fix the issues</b>: every one has a fix prompt</sub></td>
 </tr>
 <tr>
+<td><img src="docs/assets/screenshots/10-features.png" alt="Features: every feature with its test plan and verdict"><br><sub><b>Feature by feature</b>: a test plan and a verdict for each</sub></td>
 <td><img src="docs/assets/screenshots/06-rules.png" alt="Rules with presets and your own rules"><br><sub><b>Make it yours</b>: presets, switches and your own rules</sub></td>
+</tr>
+<tr>
 <td><img src="docs/assets/screenshots/08-quality-gate.png" alt="The quality gate with presets"><br><sub><b>Set the gate</b>: Passed or Failed after every run</sub></td>
+<td></td>
 </tr>
 </table>
 
@@ -136,7 +143,7 @@ node dist/cli/bin.js run --project shop
 
 ## Safe by design
 
-- **It only reads.** TEA opens your live app like a visitor and never submits forms or changes data.
+- **It only reads.** TEA opens your live app like a visitor and never submits forms or changes data. Sandbox tests, which do submit forms with test data, are off by default and only run on an app on your own computer.
 - **It never runs your app's install scripts**, which is how supply-chain malware gets in.
 - **It masks secrets everywhere:** in the terminal, the report and every file.
 - **Only you can reach it.** The TEA app only answers on your own computer, behind a one-time link.

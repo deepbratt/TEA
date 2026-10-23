@@ -20,6 +20,7 @@ export interface ProjectValues {
   sources: Source[];
   maxPages?: number;
   skip?: string[];
+  sandbox?: boolean;
 }
 interface Detected {
   name: string;
@@ -46,6 +47,7 @@ export function ProjectForm({ initial }: { initial?: ProjectValues }) {
   const [sources, setSources] = useState<Source[]>(initial?.sources ?? []);
   const [maxPages, setMaxPages] = useState(initial?.maxPages ? String(initial.maxPages) : '');
   const [skip, setSkip] = useState((initial?.skip ?? []).join('\n'));
+  const [sandbox, setSandbox] = useState(Boolean(initial?.sandbox));
   const [picking, setPicking] = useState<number | 'project' | null>(null);
   const [urls, setUrls] = useState<Detected['urls']>([]);
   const [detecting, setDetecting] = useState(false);
@@ -94,6 +96,7 @@ export function ProjectForm({ initial }: { initial?: ProjectValues }) {
       sources: sources.filter((s) => s.path.trim()).map((s) => ({ name: s.name.trim() || folderName(s.path), path: s.path, role: s.role })),
       maxPages,
       skip: skip.split('\n'),
+      sandbox,
     };
     try {
       const { key } = editing
@@ -214,6 +217,16 @@ export function ProjectForm({ initial }: { initial?: ProjectValues }) {
         <input id="p-max" type="number" min={1} max={500} value={maxPages} onChange={(e) => setMaxPages(e.target.value)} placeholder="50" />
         <label htmlFor="p-skip">Paths to never visit (one per line)</label>
         <textarea id="p-skip" rows={3} value={skip} onChange={(e) => setSkip(e.target.value)} placeholder={'/admin\n/logout'} />
+        <label className="check-row sandbox-row">
+          <input type="checkbox" className="switch" checked={sandbox} onChange={(e) => setSandbox(e.target.checked)} />
+          <span>
+            <b>Sandbox tests</b>: submit each form with made-up test data and call the API without signing in
+          </span>
+        </label>
+        <p className="help small">
+          This writes test data, so it only works when the URL is on this computer (localhost). Use test keys in your app (Stripe test mode and so on). TEA never
+          fills in card, bank or file fields, and never presses delete, cancel or sign out.
+        </p>
       </details>
 
       {error && (

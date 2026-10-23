@@ -32,7 +32,7 @@ The README is for people deciding whether to use TEA: keep it short and plain. D
 ## Try it against the example app
 
 ```bash
-npm run demo         # builds TEA and the example, starts it, runs TEA, verifies the seeded bugs
+npm run demo         # builds TEA and the example, starts it, runs TEA (read-only, then with --sandbox), verifies the seeded bugs
 npm run demo -- --skip-build --keep   # reuse builds and leave the example running
 node scripts/verify-example.mjs tea-report
 ```
@@ -56,6 +56,7 @@ The website demo is the same Workbench, built as a static export (`NEXT_PUBLIC_T
 | `src/report` | `results.json`, `report.md`, `report.html`, feature map, plain-English summary |
 | `src/cli` | The `tea-qa` / `tea` command and pipeline orchestration (`run()`) |
 | `src/wiring` | Frontend-to-API wiring checks: calls nothing serves, wrong methods, endpoints nothing calls |
+| `src/features` | Feature-by-feature QA: the feature inventory, the agent-docs check, each feature's test plan and verdict, and sandbox tests (forms and signed-out API calls, local apps only) |
 | `src/workspace` | The Workbench backend: `tea.config.yaml` (projects, rules, gate; validated, comment-keeping writes), analyses (`RunManager`), folder picker |
 | `web/` | The TEA Workbench (`tea-qa ui`): a Next.js app. Pages are server components that call the engine from `dist/`; API routes under `web/app/api`; `proxy.ts` enforces loopback, the one-time token and same-origin writes |
 | `theme/` | Design tokens shared by the Workbench and the HTML report |

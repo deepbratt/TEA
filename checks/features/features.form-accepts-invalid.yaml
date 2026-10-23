@@ -1,0 +1,9 @@
+id: features.form-accepts-invalid
+title: A form accepts an invalid email address
+description: "TEA typed \"not-an-email\" into an email field and the app saved it. Sandbox tests only, on your local app."
+category: features
+severity: medium
+detect: sandbox-test
+rule: features:form-accepts-invalid
+fix_prompt: prompts/features/form-accepts-invalid.md
+version: 1

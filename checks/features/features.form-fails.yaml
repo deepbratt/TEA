@@ -1,0 +1,9 @@
+id: features.form-fails
+title: A form fails when it's submitted with valid data
+description: "TEA filled in a form with valid test data and submitted it, and it crashed, errored or went nowhere. Sandbox tests only, on your local app."
+category: features
+severity: high
+detect: sandbox-test
+rule: features:form-fails
+fix_prompt: prompts/features/form-fails.md
+version: 1

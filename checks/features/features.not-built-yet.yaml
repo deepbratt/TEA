@@ -1,0 +1,10 @@
+id: features.not-built-yet
+title: A feature the docs list as planned (not built yet)
+description: "Your docs list this as planned or not started. That's fine: TEA shows it so the plan and the app stay in step, and doesn't count it as broken."
+category: features
+severity: info
+detect: static-rule
+rule: features:not-built-yet
+fix_prompt: prompts/features/not-built-yet.md
+suggest_only: true
+version: 1

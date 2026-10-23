@@ -3,7 +3,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { isMap, parseDocument, type Document } from 'yaml';
 import { z } from 'zod';
-import { DEFAULT_GATE, GateSchema, RulesSchema, validateRules, type Catalog } from '../core/index.js';
+import { DEFAULT_GATE, GateSchema, RulesSchema, classifyUrl, validateRules, type Catalog } from '../core/index.js';
 import { CustomRuleSchema } from '../custom/index.js';
 import { SOURCE_ROLES, type SourceFolder } from '../repo-map/index.js';
 
@@ -34,6 +34,10 @@ export const ProjectSchema = z
     skip: z.array(z.string().min(1)).max(100).optional(),
     /** Overrides the workspace gate for this project. */
     gate: GateSchema.optional(),
+    /** Sandbox tests: submit forms with test data and call APIs directly. Only for an app on this computer. */
+    sandbox: z.boolean().optional(),
+    /** Features to leave out of the feature report: things TEA listed that aren't features. */
+    features: z.object({ hide: z.array(z.string().min(1).max(120)).max(500).default([]) }).strict().optional(),
   })
   .strict()
   .superRefine((p, ctx) => {
@@ -41,6 +45,9 @@ export const ProjectSchema = z
     const names = p.sources.map((s) => s.name.toLowerCase());
     if (new Set(names).size !== names.length) ctx.addIssue({ code: 'custom', path: ['sources'], message: 'Each folder needs a different name.' });
     if (p.url && !/^https?:\/\//i.test(p.url)) ctx.addIssue({ code: 'custom', path: ['url'], message: 'Use an http or https address.' });
+    else if (p.sandbox && p.url && classifyUrl(p.url) !== 'local') {
+      ctx.addIssue({ code: 'custom', path: ['sandbox'], message: 'Sandbox tests submit forms with test data, so they only run on an app on this computer (a localhost URL).' });
+    }
   });
 
 export const WorkspaceSchema = z
@@ -93,7 +100,8 @@ rules: {}
 customRules: []
 
 # The gate fails when any condition is met. Metrics: score, issues, critical, high,
-# medium, low, or an area (functional, api, performance, ...). op: lt or gt.
+# medium, low, an area (functional, api, performance, ...), broken-features or
+# feature-coverage (% of features seen working). op: lt or gt.
 gate:
   conditions:
     - { metric: critical, op: gt, value: 0 }

@@ -15,6 +15,8 @@ The build follows 14 steps, one at a time. A step is ticked only when its tests 
 - [ ] **3. Read-only URL scan.** GET/HEAD only, robots.txt, at most 2 requests per second, security headers, cookies, HTTPS/TLS, secrets in bundles and source maps, exposed source maps and endpoints, Supabase/Firebase client config, Lighthouse and axe on up to 5 key pages.
   - Already there: same-origin Playwright crawl (50 pages, screenshots), console and page errors, failed requests, 4xx/5xx, broken links and images, soft 404s, pages slower than 3s, redirect scope guard, reachability check.
 - [ ] **4. Agent-docs reader to `features.md`.**
+  - Done (`src/features`): feature inventory from the code (pages, API routes and calls, forms, models, services, grouped by route); agent docs read (CLAUDE.md, AGENTS.md, GEMINI.md, Cursor/Windsurf/Cline rules, Copilot instructions, README, TODO, ROADMAP, PRD, SPEC); claims checked against paths, capabilities and unserved calls (`features.claimed-missing`, `features.not-built-yet`); a Given/When/Then plan and verdict per feature in `features.md`, `features.json`, the report and the Workbench Features tab; `tea-qa features`; gate metrics `broken-features` and `feature-coverage`. The example's 5 docs bugs plus 2 more (rate limits, shop search) are caught.
+  - Left: "built but undocumented" as its own label, a hand-edited features file as the source of truth.
 - [ ] **5. Code health** (`CODE-HEALTH.md`).
 - [ ] **6. Production-readiness checks** (`PROD-READINESS.md`, Prod Ready score).
 - [ ] **7. Report and score** (`index.html`, `report.md`, versioned `results.json`, sub-scores, score card PNG, cloud hooks).
@@ -22,6 +24,8 @@ The build follows 14 steps, one at a time. A step is ticked only when its tests 
 - [ ] **8. Fix prompts** (`tea-findings.json`, `FIXES.md`, `FIX-PROMPT.md` per finding, fix modes `report` and `suggest`).
 - [ ] **9. Retest** (`tea-qa retest`).
 - [ ] **10. Functional tester (AI)** in sandbox mode only.
+  - Done: `--sandbox` / project `sandbox: true` (localhost only): forms submitted with valid test data and an invalid email, GET API routes called signed out (`features.form-fails`, `features.form-accepts-invalid`, `features.api-open`, `features.api-error`); card, identity and file fields and destructive buttons never touched. `npm run demo` runs and verifies a sandbox pass.
+  - Left: IDOR with two test accounts, persistence after reload, saved Playwright tests (`tea-tests/`), the optional AI explorer (`features.ai-explorer`, planned).
 - [ ] **11. MCP server** (`tea-qa mcp`).
 - [ ] **12. GitHub Action and GitLab CI template.**
 - [ ] **13. Mobile and desktop runners.**

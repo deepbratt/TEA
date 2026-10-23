@@ -75,6 +75,18 @@ export default async function ProjectOverview({ params }: { params: Promise<{ ke
                 <small>{plural(suggestions, 'suggestion')}</small>
               </span>
             </div>
+            {results.features && results.features.summary.total > 0 && (
+              <div className="measure">
+                <Link className="measure-n" href={`${base}/features`}>
+                  {results.features.summary.works}/{results.features.summary.total - results.features.summary.notBuiltYet}
+                </Link>
+                <span>
+                  Features work
+                  <br />
+                  <small>{results.features.summary.broken + results.features.summary.missing} need work</small>
+                </span>
+              </div>
+            )}
             <SeverityCounts counts={last.counts} hrefFor={(s) => `${base}/issues?severity=${s}`} />
           </div>
           <p className="summary">{results.summary}</p>
