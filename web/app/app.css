@@ -379,3 +379,48 @@ input.switch:checked::after { transform: translateX(18px); background: var(--acc
 
 /* Website demo banner. */
 .demo-banner { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; padding: 10px 16px; background: var(--accent-soft); border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); font-size: 14px; text-align: center; }
+
+/* Features: every feature, its test plan and what happened. */
+.st-works { --st: var(--ok); }
+.st-broken { --st: var(--crit); }
+.st-partial { --st: var(--med); }
+.st-missing { --st: var(--high); }
+.st-untested, .st-not-built-yet { --st: var(--muted); }
+.feature-summary { display: grid; gap: 14px; }
+.score-ring .ring-number small { font-size: 13px; font-weight: 600; margin-left: 1px; }
+.status-filters { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.status-chip { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13.5px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.status-chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--st, var(--accent)); }
+.status-chip:hover { border-color: var(--accent); }
+.status-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.feature-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.feature-card { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--st); border-radius: var(--radius-m); animation: rise .3s cubic-bezier(.2,.7,.2,1) both; }
+.feature-card > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; padding: 14px 16px; cursor: pointer; list-style: none; }
+.feature-card > summary::-webkit-details-marker { display: none; }
+.feature-card > summary::after { content: "▸"; margin-left: auto; color: var(--muted); transition: transform .2s; }
+.feature-card[open] > summary::after { transform: rotate(90deg); }
+.feature-status { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--st); min-width: 92px; }
+.feature-name { font-weight: 600; font-size: 15.5px; }
+.feature-count { font-size: 13px; color: var(--muted); }
+.feature-body { padding: 0 16px 16px; display: grid; gap: 12px; }
+.feature-made { display: grid; gap: 6px; margin: 0; font-size: 13.5px; }
+.feature-made div { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.feature-made dt { color: var(--muted); min-width: 52px; }
+.feature-made dd { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.feature-made code { font-family: var(--font-mono); font-size: 12.5px; background: var(--tint); padding: 1px 6px; border-radius: var(--radius-s); overflow-wrap: anywhere; }
+.plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.plan-step { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 8px; padding: 8px 10px; border-radius: var(--radius-s); background: var(--tint); font-size: 14px; }
+.plan-step.r-fail { background: color-mix(in srgb, var(--crit) 11%, var(--surface)); box-shadow: inset 3px 0 0 var(--crit); }
+.plan-mark { font-weight: 700; text-align: center; color: var(--muted); }
+.r-pass .plan-mark { color: var(--ok); }
+.r-fail .plan-mark { color: var(--crit); }
+.plan-gwt, .plan-detail, .plan-issues { margin: 0; }
+.plan-gwt .tag { margin-right: 4px; }
+.plan-detail { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.plan-issues { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; font-size: 13px; }
+.feature-actions { display: flex; justify-content: flex-end; }
+.hidden-features summary { cursor: pointer; font-weight: 600; }
+.hidden-features ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.hidden-features li { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.sandbox-row { margin-top: 14px; align-items: flex-start; }
+@media (prefers-reduced-motion: reduce) { .feature-card { animation: none; } .feature-card > summary::after { transition: none; } }

@@ -4,6 +4,20 @@ export * from './core/index.js';
 export { scanRepo, scanSources, sourceFromPath, inferRole, detectProject, BUILTIN_PLUGINS, SOURCE_ROLES, type ScanResult, type SourceFolder, type SourceRole, type DetectedProject } from './repo-map/index.js';
 export { crawl, crawlFindings } from './scanner/index.js';
 export { wiringFindings } from './wiring/index.js';
+export {
+  buildInventory,
+  evaluateFeatures,
+  renderFeaturesMarkdown,
+  featureLine,
+  FEATURE_STATUSES,
+  STATUS_LABEL as FEATURE_STATUS_LABEL,
+  type Feature,
+  type FeatureCheck,
+  type FeatureReport,
+  type FeatureStatus,
+  type FeatureSummary,
+  type Claim,
+} from './features/index.js';
 export { writeReport, renderHtml, renderMarkdown, AREA_LABEL } from './report/index.js';
 export { run, resolveTarget, VERSION, type RunOptions, type RunOutcome } from './cli/run.js';
 export * from './workspace/index.js';

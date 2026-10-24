@@ -33,12 +33,12 @@ export function BrewCup({ level = 70, brewing = false, size = 96, tone }: { leve
 }
 
 /** The TEA Score as a ring that fills when it appears. */
-export function ScoreRing({ score, tone, label }: { score: number | null; tone?: string; label?: string }) {
+export function ScoreRing({ score, tone, label, name = 'TEA Score', unit = '' }: { score: number | null; tone?: string; label?: string; name?: string; unit?: string }) {
   const r = 34;
   const c = 2 * Math.PI * r;
   const value = score ?? 0;
   return (
-    <div className="score-ring" role="img" aria-label={score === null ? 'No TEA Score yet' : `TEA Score ${score} out of 100${label ? `, ${label}` : ''}`}>
+    <div className="score-ring" role="img" aria-label={score === null ? `No ${name} yet` : `${name} ${score}${unit || ' out of 100'}${label ? `, ${label}` : ''}`}>
       <svg width="92" height="92" viewBox="0 0 80 80" aria-hidden="true">
         <circle className="ring-bg" cx="40" cy="40" r={r} />
         <circle
@@ -49,7 +49,10 @@ export function ScoreRing({ score, tone, label }: { score: number | null; tone?:
           style={{ strokeDasharray: c, ['--ring-to' as string]: c * (1 - value / 100), stroke: tone ? `var(--tea-${tone})` : undefined }}
         />
       </svg>
-      <span className="ring-number">{score ?? '–'}</span>
+      <span className="ring-number">
+        {score ?? '–'}
+        {score !== null && unit ? <small>{unit}</small> : null}
+      </span>
     </div>
   );
 }

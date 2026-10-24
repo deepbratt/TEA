@@ -6,6 +6,19 @@ TEA is created and maintained by [DeepBratt](https://github.com/deepbratt).
 
 ## [Unreleased]
 
+### Added
+- **Feature-by-feature QA, from the repository.** TEA lists every feature first, then tests them one by one, then reports on each:
+  - **Inventory:** pages, the API routes and calls behind them, forms, data models and services, grouped into features people would name (*Sign up*, *Checkout*, *Orders*).
+  - **Docs check:** reads `CLAUDE.md`, `AGENTS.md`, `.cursorrules`, README, TODO, PRD and similar files. Anything they claim that isn't in the code is an issue (`features.claimed-missing`); planned items are *not built yet*, not failures.
+  - **A test plan per feature** in Given / When / Then steps, and a verdict: works, broken, partly works, claimed but missing, not built yet or not tested yet.
+  - **Where it shows:** a new **Features** tab in the Workbench (with *Not a feature: hide it*), a *Feature by feature* section in the report, `features.md` and `features.json`, and a Features number on the project overview.
+  - `tea-qa features <folder>` lists the features and their plans without running anything.
+  - New gate metrics `broken-features` and `feature-coverage`.
+- **Sandbox tests** (`--sandbox`, or *Sandbox tests* in a project's settings). They only run on an app on your own computer:
+  - submit every form with test data, and try an invalid email;
+  - call API routes signed out, and flag private ones that hand out data or routes that crash.
+  - They never touch card, identity or file fields or destructive buttons.
+
 ### Changed
 - **A shorter README, written for people.** It covers what TEA is, how to try it without installing (website, live demo, sample report), the quick start, what it checks, screenshots, and links to more. The detail moved, unchanged, to `docs/GUIDE.md` (using TEA) and `docs/HOW-IT-WORKS.md` (how it works). The developer commands moved to CONTRIBUTING.
 - **Everything is open source; nothing is locked.** The licence-key gating and the "pro pack" loader are gone. The checks that were pro stubs are now ordinary catalog entries, shown as *Coming soon* until their sandbox detectors exist. `TEA_CHECKS` loads community check packs.

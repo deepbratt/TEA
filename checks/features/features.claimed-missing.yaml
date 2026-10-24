@@ -1,0 +1,9 @@
+id: features.claimed-missing
+title: The docs say a feature is built, but it isn't in the code
+description: "Your README, CLAUDE.md, AGENTS.md or TODO says something works, but TEA can't find it in the code: no route, no library, nothing that does it."
+category: features
+severity: high
+detect: static-rule
+rule: features:claimed-missing
+fix_prompt: prompts/features/claimed-missing.md
+version: 1

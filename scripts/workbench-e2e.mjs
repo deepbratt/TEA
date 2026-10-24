@@ -76,8 +76,25 @@ try {
   await page.getByRole('button', { name: 'Run analysis' }).click();
   await page.getByRole('heading', { name: 'Measures' }).waitFor({ timeout: 180_000 });
   const gate = await page.locator('.gate-panel .gate').innerText();
-  // Code only: 2 high issues, under the default gate's "more than 3 high".
-  check(/passed/i.test(gate), `passes the default gate in code-only mode (${gate.trim()})`);
+  // Code only: 2 wiring issues plus 6 things the example's CLAUDE.md claims but doesn't have,
+  // over the default gate's "more than 3 high".
+  check(/failed/i.test(gate), `fails the default gate in code-only mode: the docs claim what isn't built (${gate.trim()})`);
+
+  // Features: every feature listed from the code and the docs, each with its test plan.
+  await page.getByRole('link', { name: 'Features', exact: true }).click();
+  await page.waitForURL('**/features');
+  await page.locator('.feature-name', { hasText: 'CSV export' }).waitFor();
+  check((await page.locator('.feature-card.st-missing').count()) === 2, 'lists features the docs claim but the code lacks (CSV export, health check)');
+  check((await page.locator('.feature-card.st-broken', { hasText: 'Sign up' }).count()) === 1, 'marks Sign up broken: its form posts to a route nothing serves');
+  check((await page.locator('.feature-card.st-not-built-yet').count()) === 3, 'shows TODO items as not built yet, not as failures');
+  await page.locator('.feature-card', { hasText: 'Sign up' }).locator('summary').click();
+  await page.locator('.feature-card', { hasText: 'Sign up' }).getByRole('button', { name: 'Not a feature: hide it' }).click();
+  await page.getByText('Hid “Sign up”').waitFor();
+  check(/hide:\s*\n\s*- signup/.test(await readFile(join(dir, 'tea.config.yaml'), 'utf8')), 'hides a feature and saves it in tea.config.yaml');
+  await page.locator('.hidden-features summary').click();
+  await page.getByRole('button', { name: 'Show again' }).click();
+  await page.getByText('“Sign up” is back').waitFor();
+  check(!(await readFile(join(dir, 'tea.config.yaml'), 'utf8')).includes('- signup'), 'shows a hidden feature again');
 
   await page.getByRole('link', { name: 'Issues', exact: true }).click();
   await page.waitForURL('**/issues');
@@ -85,7 +102,7 @@ try {
   check(true, 'lists the orphan API call as an issue');
   await page.getByLabel('Severity').selectOption('high');
   await page.waitForURL(/severity=high/);
-  check((await page.locator('.issue').count()) === 2, 'filters issues by severity, kept in the URL');
+  check((await page.locator('.issue').count()) === 8, 'filters issues by severity, kept in the URL');
 
   // Rules: turn the orphan-call check off, save, and see it in the config file.
   await page.getByRole('link', { name: 'Rules' }).click();
@@ -113,9 +130,12 @@ try {
   await page.getByText('Saved to the config file').waitFor();
   await page.goto(`${ui.url}/projects/leaf-and-kettle`);
   await page.getByRole('button', { name: 'Run analysis' }).click();
-  await page.locator('.gate-panel .gate', { hasText: /failed/i }).waitFor({ timeout: 180_000 });
-  check(true, 'fails the edited gate on the next analysis');
-  check((await page.locator('.conditions li.failed').count()) === 1, 'marks exactly the failing condition');
+  // The new run's result has the added fourth condition.
+  await page.locator('.conditions li').nth(3).waitFor({ timeout: 180_000 });
+  check(/failed/i.test(await page.locator('.gate-panel .gate').innerText()), 'fails the edited gate on the next analysis');
+  const failed = await page.locator('.conditions li.failed span:first-child').allInnerTexts();
+  const all = await page.locator('.conditions li').count();
+  check(failed.some((t) => /greater than 0/.test(t)) && failed.length < all, `marks exactly the failing conditions (${failed.join('; ')})`);
 
   // Quick setup: the Strict preset, saved in one click.
   await page.getByRole('link', { name: 'Rules' }).click();
@@ -157,7 +177,7 @@ try {
 
   // Accessibility of every page, light and dark.
   const key = 'leaf-and-kettle';
-  const pages = ['/', '/projects/new', `/projects/${key}`, `/projects/${key}/issues`, `/projects/${key}/settings`, '/rules', '/gate', '/config'];
+  const pages = ['/', '/projects/new', `/projects/${key}`, `/projects/${key}/features`, `/projects/${key}/issues`, `/projects/${key}/settings`, '/rules', '/gate', '/config'];
   for (const scheme of ['light', 'dark']) {
     await page.emulateMedia({ colorScheme: scheme });
     for (const path of pages) {

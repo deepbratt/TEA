@@ -1,3 +1,5 @@
+import type { FeatureReport } from '../features/types.js';
+
 export const SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'] as const;
 export type Severity = (typeof SEVERITIES)[number];
 
@@ -174,6 +176,8 @@ export interface Results {
   notRun: string[];
   /** Present when the run had a quality gate. */
   gate?: GateOutcome;
+  /** Feature by feature: every feature TEA found, its test plan and what happened. */
+  features?: FeatureReport;
 }
 
 export interface GateOutcome {

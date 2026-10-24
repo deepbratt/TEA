@@ -1,5 +1,6 @@
 import { scoreVerdict, sortFindings, type AppMap, type Finding, type Results, type Route } from '../core/index.js';
 import { AREA_LABEL, summaryBody, topFindings } from './summary.js';
+import { STATUS_ICON, STATUS_LABEL, featureLine, visibleFeatures } from '../features/render.js';
 
 const SEV_ICON: Record<Finding['severity'], string> = { critical: '🔴', high: '🟠', medium: '🟡', low: '🔵', info: '⚪' };
 
@@ -22,6 +23,20 @@ export function renderMarkdown(results: Results, appMap: AppMap): string {
   out.push('|---|---|---|');
   for (const a of results.areas) out.push(`| ${AREA_LABEL[a.area]} | ${a.score ?? 'not run yet'} | ${a.status === 'ran' ? a.findings : ''} |`);
   out.push('');
+
+  if (results.features && visibleFeatures(results.features).length) {
+    out.push('## Feature by feature');
+    out.push('');
+    out.push(`${featureLine(results.features)}. Every feature's test plan and results are in features.md.`);
+    out.push('');
+    out.push('| Feature | Status | Checks passed |');
+    out.push('|---|---|---|');
+    for (const f of visibleFeatures(results.features)) {
+      const ran = f.checks.filter((c) => c.result !== 'skip');
+      out.push(`| ${cell(f.name)} | ${STATUS_ICON[f.status]} ${STATUS_LABEL[f.status]} | ${ran.filter((c) => c.result === 'pass').length}/${ran.length} |`);
+    }
+    out.push('');
+  }
 
   const top = topFindings(results.findings);
   if (top.length) {

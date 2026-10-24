@@ -200,19 +200,48 @@ flowchart LR
 
 **Nothing is locked.** Every check ships in this repo, free and open source, and anyone can contribute new ones ([how](../CONTRIBUTING.md#adding-a-check)). Checks whose detector isn't built yet are listed on the Rules page as *Coming soon*: multi-role IDOR probes, race conditions, Supabase RLS correctness, Stripe edge cases, database-at-scale proofs, and AI cost and abuse. They need the sandbox tester from [step 10](#%EF%B8%8F-roadmap). Point `TEA_CHECKS` at extra folders (separated like `PATH`) to load community check packs in the same format.
 
-## 📜 features.md: claimed vs reality
+## 📜 Feature by feature: features.md
 
-*Planned (step 4).* TEA reads the docs your AI agents wrote **before** the code: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.cursor/rules/*`, `.windsurfrules`, `replit.md`, `.lovable/`, `.bolt/`, README, PRD/SPEC/TODO/CHANGELOG and `docs/`. It turns every claimed feature into a Given/When/Then check linked to its source line, and labels it *found in code*, *claimed but missing* or *built but undocumented*. You review it once (about 2 minutes); after that it is the source of truth.
-
-```markdown
-## CSV export
-- Given a signed-in user with orders
-- When they click "Export CSV" on /orders
-- Then a CSV with one row per order downloads
-- Source: CLAUDE.md:42 · Status: claimed but missing
+```mermaid
+flowchart LR
+    C[Code: pages, routes,<br/>calls, forms, models] --> I[1. Feature inventory]
+    D[Agent docs: CLAUDE.md,<br/>AGENTS.md, TODO, PRD] --> I
+    I --> P[2. A test plan per feature<br/>Given / When / Then]
+    P --> L[Live: pages load,<br/>calls work]
+    P --> S[Sandbox, local only:<br/>forms, bad input, signed-out APIs]
+    P --> K[Docs: claims are in the code]
+    L --> V[3. A verdict per feature]
+    S --> V
+    K --> V
+    V --> R[features.md, the report,<br/>the Features tab, the gate]
 ```
 
-Docs are untrusted data: TEA never follows instructions in them, and secrets found in docs are reported as leaked (and masked).
+**The inventory** (`src/features/inventory.ts`) groups what TEA found in the code into features named after their route: `/orders`, `/orders/[id]` and `/api/orders` are *Orders*; `/reset-password` and `/api/password-reset` are *Password reset*. A route's API calls and forms belong to the page whose folder they're in, and an API route without a page joins the one page that calls it (`/api/stats`, called only from the dashboard, is part of *Dashboard*). Data models and services (payments, auth) join the features they're named after.
+
+**The docs check** (`src/features/docs.ts` and `claims.ts`) reads `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`, `.cursor/rules/*.mdc`, `.windsurfrules`, `.clinerules`, `.github/copilot-instructions.md`, README, TODO, ROADMAP, FEATURES, PRD, SPEC and REQUIREMENTS files (at the root or in `docs/`). Only list items under feature headings (*What's built*, *Features*, *Roadmap*…) and checklist items count; rules, setup and stack sections are skipped. TEA says a claim is missing only for a concrete reason:
+- a path the docs name that no route serves (`/api/health`);
+- a capability with no library and no code for it: CSV export, PDFs, sending email or SMS, rate limits, search, payments, AI, uploads, real-time, health checks. Comments don't count, so `// TODO: rate limit` is not a rate limit;
+- a thing the UI calls but nothing serves (the wishlist, when `/api/wishlist` has no route).
+
+Anything else is *unverified* (test it by hand), never failed. Planned items are *not built yet*, which is fine.
+
+**The verdict** (`src/features/evaluate.ts`) is one of:
+- *broken*: a page, call, form or API of the feature fails with a serious issue;
+- *partly works*: smaller issues, or docs that claim more than is built;
+- *works*: everything that ran passed, and at least one step ran live;
+- *not tested yet*: nothing ran against it.
+
+```markdown
+## ⚠️ Dashboard: Partly works
+| | Given | When | Then | Result |
+|---|---|---|---|---|
+| ✓ | a visitor who isn't signed in | they open /dashboard | the page loads without errors | Loaded (200) in 0.4s. |
+| ✕ | CLAUDE.md says: "CSV export of orders: done." | TEA looks for it in the code | it's there | TEA found no code for CSV export |
+```
+
+**Sandbox tests** (`src/features/sandbox.ts`) are the only part of TEA that writes. They're off by default and refuse any URL that isn't on your computer. They also block writes to every other host, never fill card, bank, identity or file fields, and never press delete, cancel or sign-out buttons.
+
+Docs are untrusted data: TEA never follows instructions in them. Their text reaches fix prompts only inside the labelled untrusted-evidence block.
 
 ## 🛠️ Fix modes
 
@@ -263,7 +292,7 @@ flowchart LR
     D -->|no / safe| OK2[Allowed]
 ```
 
-- **Read-only against live URLs.** TEA opens pages and never submits forms, logs in or sends write requests, even from your page's own scripts. Forms, logins and writes will only run in a sandbox you set up (step 10).
+- **Read-only against live URLs.** TEA opens pages and never submits forms, logs in or sends write requests, even from your page's own scripts. Form submissions only run as sandbox tests, which you turn on, on an app running on your own computer.
 - **No load tests, active scans or fuzzing against production.**
 - **Your repo is untrusted input.** TEA never runs `npm install` (install scripts are how supply-chain malware gets in), asks before starting your app, refuses dev scripts that look like they download or evaluate code, and ignores plugins and targets from a `tea.yaml` it wasn't given.
 - **Docs and page content never change what TEA does.**
@@ -277,8 +306,8 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    S1[1 Skeleton<br/>and hygiene]:::doing --> S2[2 Buggy<br/>example app]:::part --> S3[3 URL scan]:::part --> S4[4 Docs reader<br/>features.md] --> S5[5 Code health]
-    S5 --> S6[6 Prod<br/>readiness] --> S7[7 Report<br/>and score]:::part --> S8[8 Fix prompts] --> S9[9 Retest] --> S10[10 AI functional<br/>tester]
+    S1[1 Skeleton<br/>and hygiene]:::doing --> S2[2 Buggy<br/>example app]:::part --> S3[3 URL scan]:::part --> S4[4 Docs reader<br/>features.md]:::part --> S5[5 Code health]
+    S5 --> S6[6 Prod<br/>readiness] --> S7[7 Report<br/>and score]:::part --> S8[8 Fix prompts] --> S9[9 Retest] --> S10[10 Functional<br/>tester]:::part
     S10 --> S11[11 MCP server] --> S12[12 GitHub Action<br/>GitLab CI] --> S13[13 Mobile and<br/>desktop runners] --> S14[14 AI design<br/>review]
     classDef doing fill:#f05d61,stroke:#b3262c,color:#141517
     classDef part fill:#c9ccd1,stroke:#5c5f66,color:#141517
@@ -289,11 +318,11 @@ flowchart LR
 | Step | What it adds |
 |---|---|
 | 3 · URL scan | Security headers, cookies, HTTPS/TLS, secrets in JS bundles and source maps, exposed endpoints, Supabase/Firebase client config, Lighthouse and axe |
-| 4 · Docs reader | `features.md`: claimed vs reality from your agent docs |
+| 4 · Docs reader | `features.md`: claimed vs reality from your agent docs. **Built:** the feature inventory, the docs check, and a test plan and verdict per feature |
 | 5 · Code health | Duplication, circular imports, dead code, complexity, committed `.env`, leftover `console.log`, mock data in production → `CODE-HEALTH.md` |
 | 6 · Prod readiness | Auth on every route, rate limits, input validation, CORS, CSP/HSTS, error handling, health checks, migrations, indexes, Stripe webhook signatures, privacy/terms, account deletion → **Prod Ready** score |
 | 8–9 · Fix + retest | `FIXES.md`, one `FIX-PROMPT.md` per finding, patch files, and before/after scores |
-| 10 · AI tester | Generated Playwright tests per feature in a sandbox: happy path, edge cases, IDOR between two test accounts, persistence; saved to `tea-tests/` |
+| 10 · Functional tester | Sandbox tests per feature. **Built:** forms with valid and invalid data, and signed-out API calls. **Next:** IDOR between two test accounts, persistence after a reload, saved Playwright tests in `tea-tests/`, and an optional AI explorer for complex flows |
 | 11–12 · MCP + CI | `tea-qa mcp` for Claude Code, Cursor, Windsurf, Copilot and Codex; a GitHub Action that comments "☕ TEA Report" on PRs and runs nightly |
 | 13–14 | Mobile (Expo/React Native) and desktop (Electron/Tauri) runners with app-store readiness; AI design review |
 

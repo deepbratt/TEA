@@ -69,6 +69,12 @@ try {
   await page.getByRole('heading', { name: 'Measures' }).waitFor({ timeout: 180_000 });
   await shot('04-project-overview', { fullPage: true });
 
+  await page.goto(`${ui.url}/projects/leaf-and-kettle/features`);
+  await page.locator('.feature-card', { hasText: 'Sign up' }).locator('summary').click();
+  await page.locator('.feature-card', { hasText: 'Sign up' }).locator('.plan-step').first().waitFor();
+  await page.locator('.feature-card', { hasText: 'Sign up' }).scrollIntoViewIfNeeded();
+  await shot('10-features');
+
   await page.goto(`${ui.url}/projects/leaf-and-kettle/issues`);
   await page.locator('.issue').first().waitFor();
   await page.locator('.issue-more summary').first().click();

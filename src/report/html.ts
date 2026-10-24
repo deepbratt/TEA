@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { countBySeverity, scoreVerdict, sortFindings, type AppMap, type Finding, type Results, type Route } from '../core/index.js';
 import { AREA_LABEL, summaryBody, topFindings } from './summary.js';
+import { STATUS_LABEL, featureLine, visibleFeatures } from '../features/render.js';
+import type { FeatureReport } from '../features/types.js';
 
 /** The same design tokens as the local UI, inlined so a report stays one self-contained file. */
 const THEME_CSS = readFileSync(new URL('../../theme/tea.css', import.meta.url), 'utf8');
@@ -40,6 +42,32 @@ function findingCard(f: Finding, i?: number): string {
       ${shot ? `<a class="shot" href="${shot}"><img loading="lazy" src="${shot}" alt="Screenshot of ${esc(f.evidence?.url ?? '')}"></a>` : ''}
     </div>
   </article>`;
+}
+
+const RESULT_MARK = { pass: '<span class="ok">✓</span>', fail: '<span class="bad">✕</span>', skip: '<span class="muted">–</span>' } as const;
+
+function featuresSection(r: FeatureReport): string {
+  const shown = visibleFeatures(r);
+  if (!shown.length) return '';
+  const rows = shown
+    .map((f) => {
+      const ran = f.checks.filter((c) => c.result !== 'skip');
+      const made = [
+        f.pages.length ? `<b>Pages</b> ${f.pages.map((p) => `<code>${esc(p)}</code>`).join(' ')}` : '',
+        f.endpoints.length ? `<b>API</b> ${f.endpoints.map((p) => `<code>${esc(p)}</code>`).join(' ')}` : '',
+        f.integrations.length ? `<b>Uses</b> ${esc(f.integrations.join(', '))}` : '',
+      ].filter(Boolean);
+      return `<details class="feature st-${f.status}"><summary><span class="st">${esc(STATUS_LABEL[f.status])}</span><b>${esc(f.name)}</b><span class="muted">${ran.length ? `${ran.filter((c) => c.result === 'pass').length}/${ran.length} checks passed` : `${f.checks.length} planned`}${f.origin === 'docs' ? ' · only in the docs' : ''}</span></summary>
+      ${made.length ? `<p class="meta">${made.join(' · ')}</p>` : ''}
+      ${f.checks.length ? `<div class="table-wrap"><table><thead><tr><th></th><th>Given</th><th>When</th><th>Then</th><th>What happened</th></tr></thead><tbody>${f.checks
+        .map((c) => `<tr><td>${RESULT_MARK[c.result]}</td><td>${esc(c.given ?? '')}</td><td>${esc(c.when)}</td><td>${esc(c.then)}</td><td>${esc(c.detail ?? '')}${c.findings?.length ? ` ${c.findings.map((id) => `<a href="#${esc(id)}">issue</a>`).join(' ')}` : ''}</td></tr>`)
+        .join('')}</tbody></table></div>` : ''}
+    </details>`;
+    })
+    .join('\n');
+  return `<h2 id="features">Feature by feature</h2>
+<p>${esc(featureLine(r))}. ${r.sandbox ? 'Sandbox tests ran: forms were submitted with test data on your local app.' : 'Sandbox tests were off, so forms were not submitted.'}${r.docs.length ? ` Docs read: ${r.docs.map((d) => `<code>${esc(d)}</code>`).join(' ')}.` : ''}</p>
+<div class="features">${rows}</div>`;
 }
 
 function routeStatus(r: Route): string {
@@ -89,6 +117,11 @@ th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);verti
 .table-wrap{overflow-x:auto}.ok{color:var(--ok);font-weight:600}.bad{color:var(--crit);font-weight:600}.muted{color:var(--muted)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px}.chip small{color:var(--muted)}
 .facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}.fact{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}.fact b{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+.features{display:grid;gap:8px}.feature{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:12px;padding:10px 14px}
+.feature>summary{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;cursor:pointer;color:var(--ink);font-size:15px}.feature .st{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.feature.st-works{border-left-color:var(--ok)}.feature.st-broken{border-left-color:var(--crit)}.feature.st-partial{border-left-color:var(--med)}.feature.st-missing{border-left-color:var(--high)}
+.feature.st-works .st{color:var(--ok)}.feature.st-broken .st{color:var(--crit)}.feature.st-partial .st{color:var(--med)}.feature.st-missing .st{color:var(--high)}.feature.st-untested .st,.feature.st-not-built-yet .st{color:var(--muted)}
+.feature table{font-size:13px}
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}.gallery figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .gallery img{width:100%;height:140px;object-fit:cover;object-position:top;display:block}.gallery figcaption{padding:6px 10px;font-size:13px}
 footer{margin-top:48px;color:var(--muted);font-size:13px;text-align:center}
@@ -111,6 +144,8 @@ footer{margin-top:48px;color:var(--muted);font-size:13px;text-align:center}
 <div class="areas">${results.areas
     .map((a) => `<div class="area-card ${a.status}"><div class="l">${esc(AREA_LABEL[a.area])}</div><div class="n">${a.score ?? 'Not run yet'}</div>${a.status === 'ran' ? `<div class="l">${a.findings} issue${a.findings === 1 ? '' : 's'}</div>` : ''}</div>`)
     .join('')}</div>
+
+${results.features ? featuresSection(results.features) : ''}
 
 ${top.length ? `<h2>Fix these first</h2>${top.map((f, i) => findingCard(f, i)).join('')}` : '<h2>No issues found</h2><p>TEA found nothing wrong in what it checked.</p>'}
 ${rest.length ? `<h2>All other issues (${rest.length})</h2>${rest.map((f) => findingCard(f)).join('')}` : ''}

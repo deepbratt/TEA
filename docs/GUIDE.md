@@ -90,6 +90,40 @@ Your rules run in every analysis and show up as issues like any other check.
 
 <sub>Screenshots are generated from the bundled example app by `node scripts/screenshots.mjs`.</sub>
 
+## 📋 Feature by feature
+
+TEA can QA your whole app from its repository: it lists every feature first, then checks them one by one, then reports on each.
+
+<img src="assets/screenshots/10-features.png" alt="The Features tab: feature coverage, status filters, and a feature's test plan with its results" width="100%">
+
+**1. It lists every feature.** From the code: pages, the API routes and calls behind them, forms, data models and services (Stripe, Supabase Auth…), grouped the way a person would name them: *Sign up*, *Checkout*, *Order history*. From the docs your AI agent works from (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`, `.cursor/rules/*.mdc`, `.windsurfrules`, `.github/copilot-instructions.md`, README, TODO, ROADMAP, PRD and SPEC files): every line under a "features" or "what's built" heading, and every checklist item.
+
+**2. It writes a test plan for each one**, in Given / When / Then steps:
+
+| Step | Runs | Example for *Sign up* |
+|---|---|---|
+| Every page loads | Live | Given a visitor, when they open /signup, then the page loads without errors |
+| Every call reaches the backend | Code | When the feature calls POST /api/signup, then a backend route serves it |
+| Forms work with good data | Sandbox | When someone submits valid test data, then it goes through without an error |
+| Forms refuse bad data | Sandbox | When they type "not-an-email", then the form says so |
+| Private APIs refuse strangers | Sandbox | Given someone signed out, when they call GET /api/orders, then it refuses them |
+| What the docs claim is built | Docs | Given CLAUDE.md says "CSV export: done", when TEA looks in the code, then it's there |
+
+**3. It runs them and gives each feature a verdict:** ✅ works, ❌ broken, ⚠️ partly works, ⛔ claimed but missing (the docs say it's built; the code says otherwise), ⏳ not built yet (the docs say it's planned, which is fine), or ⚪ not tested yet.
+
+Where you see it: the **Features** tab of each project, the *Feature by feature* section of the report, and `features.md` / `features.json` next to it. Something TEA listed isn't a feature? Press **Not a feature: hide it**. To list the features without running anything:
+
+```bash
+npx tea-qa features ./my-app        # writes tea-report/features.md with every feature's test plan
+```
+
+**Sandbox tests** (optional) are the steps that change data. Turn them on in the project's **Settings → More options**, or with `--sandbox`. They only run when the app's URL is on your computer (localhost), so run a local copy that uses test keys (Stripe test mode and so on). TEA then:
+- fills in every form with made-up test data and submits it, then tries an invalid email;
+- calls your API routes directly, signed out, and flags private-looking ones (orders, users, admin…) that hand out data;
+- never fills in card, bank, identity or file fields, never presses delete, cancel or sign out, and never calls routes whose names say they do something (send, export, cron, AI…).
+
+An optional AI explorer for complex multi-step flows is coming. Everything above works without AI and costs $0.
+
 ## ⚙️ Configuration guide
 
 You never have to edit a file: every setting has a page in the Workbench. If you like files, everything lives in one, **`tea.config.yaml`**. It sits next to where you ran `npm start` or `tea-qa ui`, or wherever `--workspace <file>` points. Edit it in your editor or on the **Config file** page, and commit it with your code. Every save is checked first, and your comments are kept.
@@ -101,6 +135,7 @@ projects:
   - key: shop                         # short id, used in URLs and `tea-qa run --project shop`
     name: My shop
     url: http://localhost:3000        # optional: where the app runs, to test it live
+    sandbox: true                     # optional: submit forms with test data (localhost only)
     maxPages: 50                      # optional: most pages to visit
     skip: [/admin/**, /logout]        # optional: paths never to visit
     sources:                          # up to 10 code folders, relative to this file
@@ -121,6 +156,7 @@ gate:                                 # the gate fails when ANY condition is met
     - { metric: critical, op: gt, value: 0 }
     - { metric: high, op: gt, value: 3 }
     - { metric: score, op: lt, value: 60 }
+    - { metric: broken-features, op: gt, value: 0 }
 ```
 
 <details>
@@ -135,6 +171,8 @@ gate:                                 # the gate fails when ANY condition is met
 | `url` | Optional. Where the app runs, so TEA can open it in a browser (read-only). Without it, TEA reads the code only. |
 | `sources` | The code folders. `path` is relative to the config file. `role` is `auto` (default), `frontend`, `backend` or `fullstack`. |
 | `maxPages`, `skip` | Optional limits for the live crawl. |
+| `sandbox` | Optional. `true` turns on sandbox tests: forms are submitted with test data and APIs are called signed out. Only allowed with a localhost `url`. |
+| `features.hide` | Optional. Feature keys that aren't features (what **Not a feature** writes), e.g. `{ hide: [privacy, report] }`. |
 | `gate` | Optional. A gate for this project only, replacing the shared one. |
 
 **Rules** (`rules:`): one entry per check id, listing only what you change.
@@ -164,6 +202,8 @@ Every custom rule also has an `id`, a `title`, a `severity`, an optional `descri
 | `issues` | All issues (tips not counted) |
 | `critical`, `high`, `medium`, `low` | Issues of that severity |
 | `functional`, `api`, `security`, `performance`, `accessibility`, `load`, `code` | That area's score, 0 to 100. Areas that didn't run never fail the gate |
+| `broken-features` | Features that are broken, or claimed in the docs but missing |
+| `feature-coverage` | The share of features TEA saw working, 0 to 100. Only measured when the app was tested live |
 
 **Environment variables**
 

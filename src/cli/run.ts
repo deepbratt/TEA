@@ -35,6 +35,19 @@ import { scanSources, sourceFromPath, type ScanSourcesResult, type SourceFolder 
 import { customFindings, type CustomRule } from '../custom/index.js';
 import { wiringFindings } from '../wiring/index.js';
 import { crawl, crawlFindings } from '../scanner/index.js';
+import {
+  SandboxError,
+  assertSandboxAllowed,
+  buildCodeIndex,
+  buildInventory,
+  claimFindings,
+  evaluateFeatures,
+  featureLine,
+  sandboxTests,
+  type CodeIndex,
+  type Feature,
+  type SandboxResult,
+} from '../features/index.js';
 import { AREA_LABEL, plainSummary, topFindings, writeReport } from '../report/index.js';
 import { planLocalStart, startLocalApp, type LocalApp } from './local.js';
 
@@ -63,6 +76,10 @@ export interface RunOptions {
   gate?: Gate;
   /** Your own rules from the workspace config (forbid/require text, files, routes). */
   customRules?: CustomRule[];
+  /** Sandbox tests: submit forms with test data and call APIs directly. Local apps only. */
+  sandbox?: boolean;
+  /** Feature keys to leave out of the feature report ("not a feature"). */
+  hideFeatures?: string[];
 }
 
 export class UsageError extends Error {}
@@ -176,7 +193,7 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
   if (configFile) log.info(`Using ${configFile}`);
 
   if (opts.dryRun) {
-    printDryRun({ url, repo: repoLabel, maxPages, outDir, config: effective, login: !!login, ai: opts.ai !== false });
+    printDryRun({ url, repo: repoLabel, maxPages, outDir, config: effective, login: !!login, ai: opts.ai !== false, sandbox: !!opts.sandbox });
     return { exitCode: 0 };
   }
 
@@ -197,6 +214,17 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
     const stack = scan.stack.filter((st) => st.kind !== 'language').map((st) => st.name);
     log.info(`  Stack: ${stack.join(', ') || 'unknown'}`);
     log.info(`  Found ${scan.routes.filter((r) => r.kind === 'page').length} pages, ${scan.routes.filter((r) => r.kind === 'api').length} API endpoints, ${scan.apiCalls.length} API calls, ${scan.forms.length} forms`);
+  }
+
+  // 1b. List every feature, and check what the docs claim against the code.
+  let index: CodeIndex | undefined;
+  let inventory: Feature[] | undefined;
+  if (scan) {
+    log.step('Listing your features and checking what your docs claim');
+    index = await buildCodeIndex(sources);
+    inventory = buildInventory({ discovery: scan, wiring: scan.wiring, index });
+    const docs = [...index.docs.keys()];
+    log.info(`  ${inventory.length} features${docs.length ? `; read ${docs.join(', ')}` : '; no agent docs (CLAUDE.md, AGENTS.md, README, TODO...) found'}`);
   }
 
   // Code-only: starting the app runs code from the repo, so it needs the user's consent.
@@ -227,7 +255,20 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
   let pages: PageVisit[] = [];
   const findings: Finding[] = [];
   const ran = new Set<Area>();
+  if (inventory && index?.docs.size) {
+    findings.push(...claimFindings(inventory, catalog));
+    ran.add('functional');
+  }
+  let sandbox: SandboxResult | undefined;
+  if (opts.sandbox && !url) notes.push('Sandbox tests need a running app: give TEA its local URL, or let it start the app.');
   try {
+    if (opts.sandbox && url) {
+      try {
+        assertSandboxAllowed(url);
+      } catch (err) {
+        throw err instanceof SandboxError ? new UsageError(err.message) : err;
+      }
+    }
     if (url) {
       await assertReachable(url);
       const kind = classifyUrl(url);
@@ -262,6 +303,24 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
       const slowPageMs = ruleNumber(catalog, rules, 'crawl.slow', 'thresholdMs') ?? effective.crawl.slowPageMs;
       findings.push(...crawlFindings(pages, { catalog, routes: scan?.routes, slowPageMs, baseUrl: url }));
       ran.add('functional').add('performance');
+
+      // 2b. Sandbox: submit each form with test data and call the API routes directly.
+      if (opts.sandbox) {
+        log.step(`Sandbox tests on ${url}: submitting forms with test data and calling your API routes signed out`);
+        sandbox = await sandboxTests({
+          url,
+          pages,
+          routes: scan?.routes ?? [],
+          scope,
+          outDir,
+          catalog,
+          timeoutMs: effective.crawl.timeoutMs,
+          screenshots: opts.screenshots !== false,
+        });
+        findings.push(...sandbox.findings);
+        log.info(`  Tested ${sandbox.forms.filter((t) => t.result !== 'skip').length} form submissions and ${sandbox.apis.filter((t) => t.result !== 'skip').length} API routes`);
+        if (sandbox.apis.some((t) => t.result !== 'skip')) ran.add('api').add('security');
+      }
     }
   } finally {
     await local?.stop();
@@ -289,6 +348,18 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
   const sorted = sortFindings(kept);
   const appMap = buildAppMap({ discovery: scan, pages, target: { url, repo: repoLabel }, startUrl: url });
   appMap.notes.push(...notes);
+
+  // 4. Feature by feature: run each feature's test plan against what TEA saw. Without code, the
+  // features come from the pages the crawl found.
+  const features = evaluateFeatures(inventory ?? buildInventory({ discovery: appMap }), {
+    findings: sorted,
+    pages,
+    live: pages.length > 0,
+    wiring: !!scan?.wiring.comparable,
+    sandbox,
+    hidden: opts.hideFeatures,
+    docs: index ? [...index.docs.keys()] : [],
+  });
   const results: Results = {
     tool: { name: 'tea-qa', version: VERSION },
     startedAt,
@@ -304,9 +375,11 @@ export async function run(opts: RunOptions): Promise<RunOutcome> {
       stack: (scan?.stack ?? []).filter((st) => !['language', 'builder'].includes(st.kind)).map((st) => st.name),
       ranLabels: [...ran].map((a) => AREA_LABEL[a]),
       notRunLabels: notRun.map((a) => AREA_LABEL[a]),
+      features: features.summary.total ? featureLine(features) : undefined,
     }),
     ran: [...ran],
     notRun,
+    features,
   };
   if (local) results.target.url = `${url} (started locally)`;
   if (opts.gate) results.gate = evaluateGate(opts.gate, results);
@@ -381,6 +454,11 @@ export function restrictUntrustedConfig(c: TeaConfig): string[] {
 function printSummary(r: Results, outDir: string): void {
   log.result('');
   log.result(r.summary);
+  const broken = r.features?.features.filter((f) => !r.features!.hidden.includes(f.key) && (f.status === 'broken' || f.status === 'missing')) ?? [];
+  if (broken.length) {
+    log.result('\nFeatures that need work:');
+    broken.slice(0, 10).forEach((f) => log.result(`  - ${f.name}: ${f.status === 'missing' ? 'claimed in the docs but missing' : 'broken'}`));
+  }
   const top = topFindings(r.findings);
   if (top.length) {
     log.result('\nTop issues:');
@@ -389,7 +467,7 @@ function printSummary(r: Results, outDir: string): void {
   log.result(`\nFull report: ${resolve(outDir, 'report.html')}`);
 }
 
-function printDryRun(p: { url?: string; repo?: string; maxPages: number; outDir: string; config: TeaConfig; login: boolean; ai: boolean }): void {
+function printDryRun(p: { url?: string; repo?: string; maxPages: number; outDir: string; config: TeaConfig; login: boolean; ai: boolean; sandbox: boolean }): void {
   log.info('\nDry run: nothing will be opened or changed. This is what TEA would do:\n');
   let n = 1;
   if (p.repo) log.info(`  ${n++}. Read the code in ${p.repo} (read-only; never installs or runs anything from it unless it needs to start the app)`);
@@ -402,6 +480,7 @@ function printDryRun(p: { url?: string; repo?: string; maxPages: number; outDir:
     const hosts = new Scope({ urls: [p.url, ...p.config.urls], allowlist: p.config.allowlist }).hosts;
     log.info(`     Allowed hosts: ${[...hosts].join(', ')}${p.config.skip.length ? `; skipping ${p.config.skip.join(', ')}` : ''}`);
   }
+  if (p.sandbox) log.info(`  ${n++}. Sandbox tests (local apps only): submit each form with made-up test data and call the API routes signed out`);
   log.info(`  ${n++}. Write the report to ${p.outDir}`);
   log.info('\nNot in this version yet: AI test plan and UI agent, API, security, accessibility, load and mobile checks.');
   log.info(`Estimated cost: $0.00 (${p.ai ? 'no AI steps run in this version' : '--no-ai'}; no load test).`);

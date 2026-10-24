@@ -24,6 +24,8 @@ export function plainSummary(input: {
   stack: string[];
   ranLabels: string[];
   notRunLabels: string[];
+  /** One line about the features, e.g. "14 features: 9 work, 3 broken". */
+  features?: string;
 }): string {
   const { score, findings } = input;
   const c = countBySeverity(findings);
@@ -34,6 +36,7 @@ export function plainSummary(input: {
   if (input.pagesChecked) what.push(`opened ${plural(input.pagesChecked, 'page')} in your running app`);
   if (input.stack.length) what.push(`read your code (${input.stack.slice(0, 5).join(', ')})`);
   if (what.length) lines.push(`TEA ${what.join(' and ')}.`);
+  if (input.features) lines.push(`Feature by feature: ${input.features}.`);
 
   const serious = c.critical + c.high;
   if (input.ranLabels.length === 0) {

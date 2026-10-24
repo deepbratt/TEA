@@ -1,5 +1,5 @@
 {
-  "$comment": "Every bug planted in Leaf & Kettle. `check` is the TEA check that should catch it and `step` the build step that adds it. `caughtBy` lists the finding ids (or `appmap:orphan:<path>`) that prove TEA caught it; scripts/verify-example.mjs fails if any listed finding is missing, or if TEA reports anything that isn't a seeded bug (info-level suggestions aside). Bugs without `caughtBy` are waiting for their step. Bugs whose check is still planned in the catalog (no detector yet) have no caughtBy until that detector is built.",
+  "$comment": "Every bug planted in Leaf & Kettle. `caughtBySandbox` lists the findings a --sandbox run (form submissions and signed-out API calls on the local app) must also produce; `node scripts/verify-example.mjs <dir> --sandbox` checks them. `check` is the TEA check that should catch it and `step` the build step that adds it. `caughtBy` lists the finding ids (or `appmap:orphan:<path>`) that prove TEA caught it; scripts/verify-example.mjs fails if any listed finding is missing, or if TEA reports anything that isn't a seeded bug (info-level suggestions aside). Bugs without `caughtBy` are waiting for their step. Bugs whose check is still planned in the catalog (no detector yet) have no caughtBy until that detector is built.",
   "bugs": [
     { "id": "paywall-no-plans", "title": "Tea Club page shows no plans because /api/plans returns 500", "where": "app/pricing/page.tsx, app/api/plans/route.ts", "check": "crawl.api-failure", "step": 3, "caughtBy": ["crawl.api-failure:/pricing:/api/plans"] },
     { "id": "account-500", "title": "Account page crashes for signed-out visitors", "where": "app/account/page.tsx", "check": "crawl.server-error", "step": 3, "caughtBy": ["crawl.server-error:/account"] },
@@ -24,7 +24,7 @@
     { "id": "dead-export-button", "title": "Export button does nothing (console.log only)", "where": "app/dashboard/widgets.tsx", "check": "wiring.dead-click", "step": 3 },
     { "id": "hard-coded-stats", "title": "Dashboard numbers are hard-coded", "where": "app/dashboard/page.tsx", "check": "wiring.static-section", "step": 3 },
     { "id": "orphan-api-call", "title": "UI calls /api/wishlist, which doesn't exist", "where": "app/dashboard/widgets.tsx", "check": "wiring.orphan-call", "step": 3, "caughtBy": ["wiring.orphan-call:GET /api/wishlist"] },
-    { "id": "signup-no-endpoint", "title": "Sign-up form posts to /api/signup, which doesn't exist", "where": "app/signup/page.tsx", "check": "wiring.orphan-call", "step": 3, "caughtBy": ["wiring.orphan-call:POST /api/signup"] },
+    { "id": "signup-no-endpoint", "title": "Sign-up form posts to /api/signup, which doesn't exist", "where": "app/signup/page.tsx", "check": "wiring.orphan-call", "step": 3, "caughtBy": ["wiring.orphan-call:POST /api/signup"], "caughtBySandbox": ["features.form-fails:/signup:POST /api/signup"] },
     { "id": "200-on-error", "title": "Newsletter route returns 200 on failure and logs nothing", "where": "app/api/newsletter/route.ts", "check": "wiring.error-handling", "step": 3 },
     { "id": "no-empty-state", "title": "Orders list has no empty state", "where": "app/orders/page.tsx", "check": "wiring.empty-state", "step": 3 },
     { "id": "blank-without-js", "title": "About page is blank without JavaScript", "where": "app/about/page.tsx", "check": "seo.blank-without-js", "step": 3 },
@@ -32,11 +32,13 @@
     { "id": "missing-sitemap", "title": "No sitemap.xml", "where": "app/", "check": "seo.sitemap", "step": 3 },
     { "id": "broken-og-image", "title": "Open Graph image doesn't exist", "where": "app/page.tsx", "check": "seo.og-image", "step": 3 },
 
-    { "id": "docs-csv-export", "title": "CLAUDE.md says CSV export is done; there is none", "where": "CLAUDE.md", "check": "features.claimed-missing", "step": 4 },
-    { "id": "docs-wishlist", "title": "CLAUDE.md says the wishlist is done; there is no wishlist API", "where": "CLAUDE.md", "check": "features.claimed-missing", "step": 4 },
-    { "id": "docs-health", "title": "CLAUDE.md promises /api/health; it doesn't exist", "where": "CLAUDE.md", "check": "features.claimed-missing", "step": 4 },
-    { "id": "docs-emails", "title": "CLAUDE.md says confirmation emails are sent; nothing sends email", "where": "CLAUDE.md", "check": "features.claimed-missing", "step": 4 },
-    { "id": "docs-todo-not-failure", "title": "TODO.md lists gift cards as not started: must be 'not built yet', not a failure", "where": "TODO.md", "check": "features.not-built-yet", "step": 4 },
+    { "id": "docs-csv-export", "title": "CLAUDE.md says CSV export is done; there is none", "where": "CLAUDE.md", "check": "features.claimed-missing", "step": 4, "caughtBy": ["features.claimed-missing:csv-export"] },
+    { "id": "docs-wishlist", "title": "CLAUDE.md says the wishlist is done; there is no wishlist API", "where": "CLAUDE.md", "check": "features.claimed-missing", "step": 4, "caughtBy": ["features.claimed-missing:wishlist"] },
+    { "id": "docs-health", "title": "CLAUDE.md promises /api/health; it doesn't exist", "where": "CLAUDE.md", "check": "features.claimed-missing", "step": 4, "caughtBy": ["features.claimed-missing:/api/health"] },
+    { "id": "docs-emails", "title": "CLAUDE.md says confirmation emails are sent; nothing sends email", "where": "CLAUDE.md", "check": "features.claimed-missing", "step": 4, "caughtBy": ["features.claimed-missing:email"] },
+    { "id": "docs-rate-limits", "title": "CLAUDE.md says login and AI descriptions are rate limited; nothing limits them", "where": "CLAUDE.md", "check": "features.claimed-missing", "step": 4, "caughtBy": ["features.claimed-missing:rate-limit"] },
+    { "id": "docs-shop-search", "title": "CLAUDE.md says the shop has search; there is none", "where": "CLAUDE.md", "check": "features.claimed-missing", "step": 4, "caughtBy": ["features.claimed-missing:search"] },
+    { "id": "docs-todo-not-failure", "title": "TODO.md lists gift cards as not started: must be 'not built yet', not a failure", "where": "TODO.md", "check": "features.not-built-yet", "step": 4, "caughtBy": ["features.not-built-yet:gift-card"] },
 
     { "id": "duplicated-component", "title": "ProductTile is a near copy of ProductCard", "where": "components/ProductCard.tsx, components/ProductTile.tsx", "check": "code.duplication", "step": 5 },
     { "id": "circular-import", "title": "lib/cart.ts and lib/pricing.ts import each other", "where": "lib/cart.ts, lib/pricing.ts", "check": "code.circular-import", "step": 5 },
@@ -50,7 +52,7 @@
     { "id": "unbounded-read", "title": "findMany() with no limit on a list endpoint", "where": "app/api/orders/route.ts", "check": "db.unbounded-read", "step": 5 },
     { "id": "insert-in-loop", "title": "Order items inserted one by one in a loop", "where": "app/api/orders/route.ts", "check": "db.insert-in-loop", "step": 5 },
 
-    { "id": "route-no-auth", "title": "API routes with no auth check (/api/orders, /api/admin/users)", "where": "app/api/orders/route.ts, app/api/admin/users/route.ts", "check": "prodready.route-auth", "step": 6 },
+    { "id": "route-no-auth", "title": "API routes with no auth check (/api/orders, /api/admin/users)", "where": "app/api/orders/route.ts, app/api/admin/users/route.ts", "check": "prodready.route-auth", "step": 6, "caughtBySandbox": ["features.api-open:/api/orders", "features.api-open:/api/admin/users"] },
     { "id": "login-no-rate-limit", "title": "No rate limit on login", "where": "app/api/login/route.ts", "check": "prodready.auth-rate-limit", "step": 6 },
     { "id": "unvalidated-input", "title": "Reviews API accepts any input", "where": "app/api/reviews/route.ts", "check": "prodready.input-validation", "step": 6 },
     { "id": "sql-concatenation", "title": "SQL built by string concatenation", "where": "app/api/reviews/route.ts", "check": "prodready.injection-pattern", "step": 6 },

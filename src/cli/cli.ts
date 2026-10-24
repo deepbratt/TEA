@@ -7,6 +7,7 @@ import { Workspace, WorkspaceError } from '../workspace/index.js';
 import { startWorkbench } from './workbench.js';
 import { showNoticeOnce } from './notice.js';
 import { run, UsageError, VERSION } from './run.js';
+import { listFeatures } from './features.js';
 
 /** Open a URL in the default browser without going through a shell. */
 function openBrowser(url: string): void {
@@ -50,6 +51,8 @@ async function projectOptions(file: string, key: string) {
     rules: data.rules,
     customRules: data.customRules,
     gate: project.gate ?? data.gate,
+    sandbox: project.sandbox,
+    hideFeatures: project.features?.hide,
   };
 }
 
@@ -79,6 +82,7 @@ function buildProgram(): Command {
     .option('--no-screenshots', 'do not save page screenshots')
     .option('--start', 'in code-only mode, start the app with its own dev script without asking (runs code from the repo)')
     .option('--no-start', 'never start the app locally in code-only mode')
+    .option('--sandbox', 'also submit forms with test data and call API routes directly (local apps only: this writes data)')
     .option('--trust-repo-config', "trust a tea.yaml found in the tested folder: its urls, allowlist and plugins (plugins run as code)")
     .option('--dry-run', 'show what TEA would do, and the estimated cost, without doing it')
     .option('-v, --verbose', 'show more detail')
@@ -101,6 +105,8 @@ function buildProgram(): Command {
         rules: project?.rules,
         customRules: project?.customRules,
         gate: project?.gate,
+        sandbox: o.sandbox ?? project?.sandbox,
+        hideFeatures: project?.hideFeatures,
         out: o.out,
         config: o.config,
         maxPages: o.maxPages ?? project?.maxPages,
@@ -115,6 +121,17 @@ function buildProgram(): Command {
         dryRun: o.dryRun,
       });
       process.exitCode = outcome.exitCode;
+    });
+
+  program
+    .command('features')
+    .description('List every feature in your code and docs, with its test plan, without running anything')
+    .argument('[folder]', 'the app folder', '.')
+    .option('--source <[role=]path>', 'a code folder, repeatable for a separate frontend and backend', source)
+    .option('-o, --out <dir>', 'where to write features.md and features.json', 'tea-report')
+    .action(async (folder: string, o) => {
+      showNoticeOnce();
+      await listFeatures({ sources: o.source ?? [source(folder)[0]!], out: o.out });
     });
 
   program

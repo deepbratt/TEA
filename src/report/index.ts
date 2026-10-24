@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { masker, type AppMap, type Results } from '../core/index.js';
 import { renderHtml } from './html.js';
 import { renderFeatureMap, renderMarkdown } from './markdown.js';
+import { renderFeaturesMarkdown } from '../features/render.js';
 
 export { renderHtml } from './html.js';
 export { renderMarkdown } from './markdown.js';
@@ -25,6 +26,7 @@ export async function writeReport(outDir: string, results: Results, appMap: AppM
     ['report.md', renderMarkdown(r, m)],
     ['report.html', renderHtml(r, m)],
   ];
+  if (r.features) files.push(['features.md', renderFeaturesMarkdown(r.features)], ['features.json', JSON.stringify(r.features, null, 2)]);
   for (const [name, content] of files) await writeFile(join(outDir, name), content + '\n');
   return { dir: outDir, files: files.map(([n]) => n) };
 }

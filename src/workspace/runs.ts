@@ -78,6 +78,8 @@ export class RunManager {
           rules: data.rules,
           customRules: data.customRules,
           gate: project.gate ?? data.gate,
+          sandbox: project.sandbox,
+          hideFeatures: project.features?.hide,
           failOn: 'none',
           // The Workbench never starts apps from their dev scripts: give it a URL to test live.
           start: false,

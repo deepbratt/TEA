@@ -21,9 +21,9 @@ export function PUT(req: Request, { params }: Ctx) {
     await (await tea()).services.workspace.update((ws) => {
       const i = ws.projects.findIndex((p) => p.key === key);
       if (i < 0) throw new HttpError(404, 'No such project.');
-      // This form doesn't edit a project's own gate override, so keep it.
-      const gate = ws.projects[i]!.gate;
-      ws.projects[i] = { ...input, key, ...(gate ? { gate } : {}) };
+      // This form doesn't edit a project's own gate override or its hidden features, so keep them.
+      const { gate, features } = ws.projects[i]!;
+      ws.projects[i] = { ...input, key, ...(gate ? { gate } : {}), ...(features ? { features } : {}) };
     });
     return json({ key });
   });

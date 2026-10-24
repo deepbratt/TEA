@@ -61,6 +61,12 @@ try {
   check(/TEA report/.test(await report.title()), 'opens the recorded full report');
   await report.close();
 
+  await page.getByRole('link', { name: 'Features', exact: true }).click();
+  await page.locator('.feature-card').first().waitFor();
+  await page.locator('.feature-card', { hasText: 'Sign up' }).locator('summary').click();
+  await page.locator('.feature-card', { hasText: 'Sign up' }).locator('.plan-step').first().waitFor();
+  check((await page.locator('.feature-card.st-missing').count()) > 0, 'shows the recorded features and their test plans');
+
   await page.getByRole('link', { name: 'Issues', exact: true }).click();
   await page.locator('.issue').first().waitFor();
   await page.getByLabel('Severity').selectOption('high');
@@ -90,7 +96,7 @@ try {
   check(true, 'detects the example project from the folder picker');
 
   // Every page, with axe.
-  for (const path of ['', 'projects/new/', 'projects/leaf-and-kettle/', 'projects/leaf-and-kettle/issues/', 'projects/leaf-and-kettle/settings/', 'rules/', 'gate/', 'config/']) {
+  for (const path of ['', 'projects/new/', 'projects/leaf-and-kettle/', 'projects/leaf-and-kettle/features/', 'projects/leaf-and-kettle/issues/', 'projects/leaf-and-kettle/settings/', 'rules/', 'gate/', 'config/']) {
     await page.goto(`${origin}/TEA/demo/${path}`);
     await page.locator('main').waitFor();
     await settle();
