@@ -78,7 +78,11 @@
           <img src="assets/screenshots/05-issues.png" alt="Issues with an expanded fix prompt" width="1280" height="800" loading="lazy">
         </li>
         <li class="step reveal">
-          <div><span class="step-n">4</span><h3>Make it yours</h3><p>Pick a preset, switch checks on or off, add rules of your own, and set the gate. It's all saved in one file you can commit.</p></div>
+          <div><span class="step-n">4</span><h3>Check every feature</h3><p>See each feature with its test plan and a verdict: works, broken, or claimed in your AI's docs but never built. Turn on sandbox tests to try every form on a local copy.</p></div>
+          <img src="assets/screenshots/10-features.png" alt="The Features tab with feature coverage and a feature's test plan" width="1280" height="800" loading="lazy">
+        </li>
+        <li class="step reveal">
+          <div><span class="step-n">5</span><h3>Make it yours</h3><p>Pick a preset, switch checks on or off, add rules of your own, and set the gate. It's all saved in one file you can commit.</p></div>
           <img src="assets/screenshots/06-rules.png" alt="Rules page with your own rules and presets" width="1280" height="800" loading="lazy">
         </li>
       </ol>
@@ -109,6 +113,7 @@ projects:
     sources:
       - { name: web, path: ../shop-web }   <span class="c"># role: auto</span>
       - { name: api, path: ../shop-api }
+    sandbox: true                        <span class="c"># local copy only</span>
 
 <span class="c"># Change any built-in check</span>
 rules:
@@ -125,13 +130,14 @@ customRules:
 gate:
   conditions:
     - { metric: critical, op: gt, value: 0 }
+    - { metric: broken-features, op: gt, value: 0 }
     - { metric: score, op: lt, value: 60 }</code></pre>
         </div>
         <dl class="config-list reveal">
-          <dt>projects</dt><dd>Each app: a name, its code folders (frontend, backend or fullstack, or <code>auto</code>), and an optional URL to test it live.</dd>
+          <dt>projects</dt><dd>Each app: a name, its code folders (frontend, backend or fullstack, or <code>auto</code>), an optional URL to test it live, and <code>sandbox: true</code> to submit forms on a copy running on your computer.</dd>
           <dt>rules</dt><dd>Turn any built-in check off, change how serious it is, or tune it (like what counts as a slow page). Only what you change is written.</dd>
           <dt>customRules</dt><dd>Four kinds, no code: the code must <b>not contain</b> some text, must <b>contain</b> some text, a <b>file</b> must exist, a <b>page</b> must exist.</dd>
-          <dt>gate</dt><dd>Conditions on the score, issue counts or an area's score. Every analysis is marked Passed or Failed; in CI, a failed gate fails the build.</dd>
+          <dt>gate</dt><dd>Conditions on the score, issue counts, broken features or an area's score. Every analysis is marked Passed or Failed; in CI, a failed gate fails the build.</dd>
         </dl>
       </div>
       <p class="cta"><a class="btn" href="https://github.com/deepbratt/TEA/blob/main/docs/GUIDE.md#%EF%B8%8F-configuration-guide">Every setting, explained</a></p>
