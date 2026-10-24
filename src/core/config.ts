@@ -22,7 +22,7 @@ export const ConfigSchema = z
     /** Route globs TEA must never visit, e.g. "/admin/**". */
     skip: z.array(z.string()).default([]),
     accounts: z.array(Account).default([]),
-    seed: z.record(z.unknown()).optional(),
+    seed: z.record(z.string(), z.unknown()).optional(),
     crawl: z
       .object({
         maxPages: z.number().int().positive().default(50),
@@ -30,21 +30,21 @@ export const ConfigSchema = z
         slowPageMs: z.number().int().positive().default(3_000),
         viewport: z.object({ width: z.number(), height: z.number() }).default({ width: 1280, height: 800 }),
       })
-      .default({}),
+      .prefault({}),
     load: z
       .object({
         maxUsers: z.number().int().positive().default(100),
         maxDurationSec: z.number().int().positive().default(180),
         maxRequests: z.number().int().positive().default(20_000),
       })
-      .default({}),
+      .prefault({}),
     llm: z
       .object({
         provider: z.enum(['none', 'openai', 'anthropic', 'gemini', 'ollama']).default('none'),
         model: z.string().optional(),
         budgetUsd: z.number().nonnegative().default(1),
       })
-      .default({}),
+      .prefault({}),
     plugins: z.array(z.string()).default([]),
     failOn: z.enum([...SEVERITIES, 'none'] as [string, ...string[]]).default('critical'),
   })
