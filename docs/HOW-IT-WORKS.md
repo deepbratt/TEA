@@ -41,6 +41,7 @@ Every finding comes with a severity, evidence (a screenshot or URL), the likely 
 | `report.html` | The report: TEA Score, area scores, top fixes with screenshots and copy-paste fix prompts, feature map |
 | `report.md` | The same report in Markdown, for PRs and issues |
 | `results.json` | Machine-readable results |
+| `features.md` · `features.json` | Every feature, its Given / When / Then test plan and its verdict ([more below](#-feature-by-feature-featuresmd)) |
 | `app-map.json` · `feature-map.md` | Your stack, pages, API endpoints, forms, auth, payments and env var *names*, plus what's live, what's broken and what nothing links to |
 | `screenshots/` | A full-page screenshot of every page TEA visited |
 

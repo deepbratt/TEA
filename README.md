@@ -122,11 +122,13 @@ projects:
     sources:
       - { name: web, path: ../shop-web }
       - { name: api, path: ../shop-api }
+    sandbox: true                              # optional: test forms on a local copy
 
 gate:
   conditions:
-    - { metric: critical, op: gt, value: 0 }   # no critical issues
-    - { metric: score, op: lt, value: 60 }     # and a score of 60 or more
+    - { metric: critical, op: gt, value: 0 }         # no critical issues
+    - { metric: broken-features, op: gt, value: 0 }  # no broken or missing features
+    - { metric: score, op: lt, value: 60 }           # and a score of 60 or more
 ```
 
 [Every setting, explained →](docs/GUIDE.md#%EF%B8%8F-configuration-guide)
@@ -138,6 +140,8 @@ Run the same checks on every pull request. The build fails when the quality gate
 ```bash
 node dist/cli/bin.js run --project shop
 ```
+
+To list your app's features and their test plans without running anything: `node dist/cli/bin.js features ./my-app`.
 
 [Example GitHub Actions workflow →](docs/GUIDE.md#-use-it-in-ci)
 

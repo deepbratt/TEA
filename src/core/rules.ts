@@ -10,11 +10,11 @@ export const RuleSchema = z
   .object({
     enabled: z.boolean().optional(),
     severity: z.enum(SEVERITIES).optional(),
-    params: z.record(z.union([z.number(), z.string(), z.boolean()])).optional(),
+    params: z.record(z.string(), z.union([z.number(), z.string(), z.boolean()])).optional(),
   })
   .strict();
 
-export const RulesSchema = z.record(RuleSchema);
+export const RulesSchema = z.record(z.string(), RuleSchema);
 
 export type Rule = z.infer<typeof RuleSchema>;
 export type Rules = z.infer<typeof RulesSchema>;
