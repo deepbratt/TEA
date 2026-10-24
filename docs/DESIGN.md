@@ -63,8 +63,10 @@ One npm package (`tea-qa`) with one folder per part under `src/`, TypeScript, No
 | `@tea-qa/report` | results.json, report.md, report.html, feature map, (score card M5) |
 | `tea-qa` (cli) | `tea-qa` / `tea` binaries, orchestration |
 | `src/wiring` | frontend-to-API wiring: calls nothing serves, endpoints nothing calls |
+| `src/features` | feature inventory from code and agent docs, a test plan and verdict per feature, localhost-only sandbox tests |
+| `src/custom` | no-code custom rules from `tea.config.yaml` |
 | `src/workspace` + `web/` | the Workbench: config file, analyses, Next.js UI on 127.0.0.1 |
-| later: `docs-reader`, `spec`, `codehealth`, `prodready`, `fix`, `mcp`, `runners/*` | see BUILD-PROGRESS.md |
+| later: `spec`, `codehealth`, `prodready`, `fix`, `mcp`, `runners/*` | see BUILD-PROGRESS.md |
 
 Plugin API (core): `{ name, detect(ctx) => Detection | null, discover?(ctx) => Partial<AppMap>,
 checks?(ctx) => Finding[] }`. Built-in plugins ship in the scanner; third-party plugins

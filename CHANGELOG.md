@@ -18,12 +18,6 @@ TEA is created and maintained by [DeepBratt](https://github.com/deepbratt).
   - submit every form with test data, and try an invalid email;
   - call API routes signed out, and flag private ones that hand out data or routes that crash.
   - They never touch card, identity or file fields or destructive buttons.
-
-### Changed
-- **A shorter README, written for people.** It covers what TEA is, how to try it without installing (website, live demo, sample report), the quick start, what it checks, screenshots, and links to more. The detail moved, unchanged, to `docs/GUIDE.md` (using TEA) and `docs/HOW-IT-WORKS.md` (how it works). The developer commands moved to CONTRIBUTING.
-- **Everything is open source; nothing is locked.** The licence-key gating and the "pro pack" loader are gone. The checks that were pro stubs are now ordinary catalog entries, shown as *Coming soon* until their sandbox detectors exist. `TEA_CHECKS` loads community check packs.
-
-### Added
 - **A clickable demo of the Workbench** at `/demo/` on the website. It's the real UI, built as a static export from a recorded analysis of the example app:
   - every page and button works on screen;
   - "Run analysis" replays the recorded run;
@@ -49,6 +43,11 @@ TEA is created and maintained by [DeepBratt](https://github.com/deepbratt).
 - **Author and repo information.** The Workbench footer, the report footer and the package metadata name DeepBratt.
 - **Templates.** GitHub issue templates (bug, feature, new check or stack), a pull-request checklist and CODEOWNERS.
 - **Folder picker path box.** The folder picker has a path box you can type into.
+
+### Changed
+- **Docs and website brought up to date** with feature-by-feature QA and sandbox tests: the build progress and seeded-bug counts, the Workbench spec (ash and ember theme, Features page, sandbox as the one exception to read-only), the example app's README, the report files list, and a *Feature by feature* step on the website.
+- **A shorter README, written for people.** It covers what TEA is, how to try it without installing (website, live demo, sample report), the quick start, what it checks, screenshots, and links to more. The detail moved, unchanged, to `docs/GUIDE.md` (using TEA) and `docs/HOW-IT-WORKS.md` (how it works). The developer commands moved to CONTRIBUTING.
+- **Everything is open source; nothing is locked.** The licence-key gating and the "pro pack" loader are gone. The checks that were pro stubs are now ordinary catalog entries, shown as *Coming soon* until their sandbox detectors exist. `TEA_CHECKS` loads community check packs.
 
 ### Fixed
 - **Secret scan:** the 3 known fake fixtures in Milestone 1's history are ignored by exact fingerprint (`.gitleaksignore`).
