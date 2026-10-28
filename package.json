@@ -61,13 +61,13 @@
     "web"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node init && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "start": "node scripts/start.mjs",
+    "start": "node init && node scripts/start.mjs",
     "ui": "node scripts/start.mjs",
     "tea": "node dist/cli/bin.js",
     "browsers": "playwright install chromium",
