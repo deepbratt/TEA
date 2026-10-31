@@ -76,7 +76,7 @@
     "example:start": "npm run start -w buggy-next-app",
     "verify:example": "node scripts/verify-example.mjs",
     "knip": "knip",
-    "build:web": "npm run build -w tea-workbench",
+    "build:web": "node init && npm run build -w tea-workbench",
     "ui:dev": "npm run build --silent && node scripts/workbench-dev.mjs"
   },
   "dependencies": {
