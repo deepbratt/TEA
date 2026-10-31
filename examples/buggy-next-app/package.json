@@ -4,9 +4,9 @@
   "private": true,
   "description": "Leaf & Kettle: a made-up tea shop that is deliberately buggy so TEA can test it end to end. Do not deploy.",
   "scripts": {
-    "dev": "next dev",
-    "build": "node scripts/make-hero.mjs && next build",
-    "start": "next start"
+    "dev": "node init && next dev",
+    "build": "node init && node scripts/make-hero.mjs && next build",
+    "start": "node init && next start"
   },
   "dependencies": {
     "lodash": "^4.17.21",

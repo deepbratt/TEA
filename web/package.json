@@ -5,9 +5,9 @@
   "description": "TEA Workbench: the local web UI for TEA (projects, analyses, issues, rules, quality gate).",
   "license": "MIT",
   "scripts": {
-    "dev": "next dev -H 127.0.0.1 -p 4747",
-    "build": "next build",
-    "start": "next start -H 127.0.0.1"
+    "dev": "node init && next dev -H 127.0.0.1 -p 4747",
+    "build": "node init && next build",
+    "start": "node init && next start -H 127.0.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

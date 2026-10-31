@@ -4,8 +4,6 @@ dist/
 .next/
 tea-report*/
 coverage/
-.env
-.env.local
 !examples/**/.env*
 test-results/
 .tea/
@@ -19,3 +17,4 @@ web/.next-local/
 branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
+config.bat
